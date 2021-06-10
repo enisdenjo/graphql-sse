@@ -58,6 +58,7 @@ interface Stream {
     res: http.ServerResponse,
   ): Promise<void> | void;
   send<E extends StreamEvent>(event: E, data?: unknown): Promise<void>;
+  end(chunk?: unknown): Promise<void>;
 }
 
 export function createHandler(options: HandlerOptions): Handler {
@@ -100,6 +101,15 @@ export function createHandler(options: HandlerOptions): Handler {
       });
     }
 
+    function end(chunk?: unknown): Promise<void> {
+      streams.delete(token);
+      msgs = [];
+      return new Promise((resolve) => {
+        if (!response) return resolve();
+        response.end(chunk, resolve);
+      });
+    }
+
     return {
       get open() {
         return Boolean(response);
@@ -123,14 +133,9 @@ export function createHandler(options: HandlerOptions): Handler {
         res.once('close', () => {
           response = null;
 
-          const destroy = () => {
-            streams.delete(token);
-            msgs = [];
-          };
-
           if (isFinite(reconnectTimeout) && reconnectTimeout > 0)
-            wentAway = setTimeout(destroy, reconnectTimeout);
-          else destroy();
+            wentAway = setTimeout(end, reconnectTimeout);
+          else end();
         });
 
         const rawLastEventId = req.headers['last-event-id'];
@@ -155,6 +160,7 @@ export function createHandler(options: HandlerOptions): Handler {
           // TODO-db-210610 take care of msgs array on successful writes
         }
       },
+      end,
     };
   }
 
