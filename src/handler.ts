@@ -97,7 +97,11 @@ export function createHandler(options: HandlerOptions): Handler {
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
-      const urlToken = new URL(req.url ?? '').searchParams.get('token') ?? '';
+      const urlToken =
+        new URL(
+          req.url ?? '',
+          'http://' + req.headers.host + '/',
+        ).searchParams.get('token') ?? '';
       if (urlToken) return urlToken;
 
       return undefined;
