@@ -4,7 +4,8 @@
  *
  */
 
-import type * as http from 'http';
+import type { IncomingMessage, ServerResponse } from 'http';
+import { ExecutionResult, GraphQLError } from 'graphql';
 
 export interface HandlerOptions {
   /**
@@ -23,7 +24,7 @@ export interface HandlerOptions {
    * @default 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || undefined'
    */
   authenticate?: (
-    req: http.IncomingMessage,
+    req: IncomingMessage,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
    * Authorize the client through the incoming request. Returned string will be
@@ -38,9 +39,23 @@ export interface HandlerOptions {
    * @default UUID // https://gist.github.com/jed/982883
    */
   authorize?: (
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
+    req: IncomingMessage,
+    res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
+  /**
+   * Perform the requested GraphQL operation and return its result.
+   *
+   * If nothing is returned, it is assumed that you handled and ended the
+   * response inside the callback.
+   */
+  perform?: (
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) =>
+    | Promise<{ id: string; result: OperationResult } | undefined | void>
+    | { id: string; result: OperationResult }
+    | undefined
+    | void;
   /**
    * Should the event source messages be compressed.
    *
@@ -63,23 +78,33 @@ export interface HandlerOptions {
 }
 
 export type Handler = (
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
+  req: IncomingMessage,
+  res: ServerResponse,
 ) => Promise<void>;
 
-enum StreamEvent {
+export type OperationResult =
+  | Promise<AsyncIterableIterator<ExecutionResult> | ExecutionResult>
+  | AsyncIterableIterator<ExecutionResult>
+  | ExecutionResult;
+
+export enum StreamEvent {
   Next = 'next',
   Error = 'error',
   Complete = 'complete',
 }
 
+export type StreamData<E extends StreamEvent> = E extends StreamEvent.Next
+  ? { id: string; payload: ExecutionResult }
+  : E extends StreamEvent.Error
+  ? { id: string; payload: readonly GraphQLError[] }
+  : E extends StreamEvent.Complete
+  ? { id: string }
+  : never;
+
 interface Stream {
   readonly open: boolean;
-  use(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-  ): Promise<void> | void;
-  send<E extends StreamEvent>(event: E, data?: unknown): Promise<void>;
+  use(req: IncomingMessage, res: ServerResponse): Promise<void> | void;
+  send<E extends StreamEvent>(event: E, data: StreamData<E>): Promise<void>;
   end(chunk?: unknown): Promise<void>;
 }
 
@@ -111,7 +136,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
   const streams = new Map<string, Stream>();
   function createStream(token: string): Stream {
-    let response: http.ServerResponse | null = null,
+    let response: ServerResponse | null = null,
       currId = 0,
       wentAway: ReturnType<typeof setTimeout>;
 
@@ -204,10 +229,7 @@ export function createHandler(options: HandlerOptions): Handler {
     };
   }
 
-  return async function handler(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-  ) {
+  return async function handler(req: IncomingMessage, res: ServerResponse) {
     // validate and check the accept header
     if (
       ![
