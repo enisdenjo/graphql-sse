@@ -92,16 +92,15 @@ export function createHandler(options: HandlerOptions): Handler {
         return v.toString(16);
       });
     },
-    authenticate = (req) => {
+    authenticate = function extractStreamToken(req) {
       const headerToken = req.headers['x-graphql-stream-token'];
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
-      const urlToken =
-        new URL(
-          req.url ?? '',
-          'http://' + req.headers.host + '/',
-        ).searchParams.get('token') ?? '';
+      const urlToken = new URL(
+        req.url ?? '',
+        'http://localhost/',
+      ).searchParams.get('token');
       if (urlToken) return urlToken;
 
       return undefined;
