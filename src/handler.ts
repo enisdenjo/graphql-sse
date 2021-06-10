@@ -252,8 +252,7 @@ export function createHandler(options: HandlerOptions): Handler {
       await stream.use(req, res);
     } else {
       // accept regular requests
-      res.writeHead(201);
-      res.end();
+      res.writeHead(202).end();
     }
 
     // TODO-db-210610 stream
