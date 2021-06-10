@@ -209,7 +209,7 @@ export function createHandler(options: HandlerOptions): Handler {
         'text/event-stream',
       ].includes(req.headers.accept ?? '')
     )
-      return res.writeHead(406, 'Not Acceptable').end();
+      return res.writeHead(406).end();
     const isEventStream = req.headers.accept === 'text/event-stream';
 
     // try authenticating the client
@@ -228,8 +228,7 @@ export function createHandler(options: HandlerOptions): Handler {
       if (!isEventStream) {
         // authorized and not an event stream request
         res.statusCode = 201;
-        res.statusMessage = 'Stream created';
-        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.write(token);
         return res.end();
       } else {
@@ -249,7 +248,7 @@ export function createHandler(options: HandlerOptions): Handler {
       await stream.use(req, res);
     } else {
       // accept regular requests
-      res.writeHead(201, 'Accepted');
+      res.writeHead(201);
       res.end();
     }
 
