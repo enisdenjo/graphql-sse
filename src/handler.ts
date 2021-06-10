@@ -200,6 +200,19 @@ export function createHandler(options: HandlerOptions): Handler {
     req: http.IncomingMessage,
     res: http.ServerResponse,
   ) {
+    // validate and check the accept header
+    if (
+      ![
+        '',
+        'application/graphql+json',
+        'application/json',
+        'text/event-stream',
+      ].includes(req.headers.accept ?? '')
+    )
+      return res.writeHead(406, 'Not Acceptable').end();
+    const isEventStream = req.headers.accept === 'text/event-stream';
+
+    // try authenticating the client
     let token = await authenticate(req);
 
     // client is not authenticated, authorize
@@ -212,7 +225,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
       streams.set(token, createStream(token));
 
-      if (req.headers.accept !== 'text/event-stream') {
+      if (!isEventStream) {
         // authorized and not an event stream request
         res.statusCode = 201;
         res.statusMessage = 'Stream created';
@@ -230,7 +243,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     // TODO-db-210610 do operation or error out
 
-    if (req.headers.accept === 'text/event-stream') {
+    if (isEventStream) {
       // use the event stream
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
       await stream.use(req, res);
