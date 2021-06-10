@@ -1,24 +1,46 @@
+/**
+ *
+ * handler
+ *
+ */
+
 import type * as http from 'http';
 
 export interface HandlerOptions {
   /**
+   * Authenticate the client. Returning a string indicates that the client
+   * is authenticated and the request is ready to be processed.
+   *
+   * If nothing is returned, the client needs to be authorized using the
+   * `authorize` callback.
+   *
+   * If the returned token has not been authorized before, the handler
+   * will respond with a `401: Unauthorized`. Meaning, if you dont want
+   * to authorize the client (like when wanting to forbid access immediately),
+   * simply return an unused token. Making sure all tokens are lengthy, returning
+   * an empty string (`''`) is a viable option.
+   *
+   * @default 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || undefined'
+   */
+  authenticate?: (
+    req: http.IncomingMessage,
+  ) => Promise<string | undefined | void> | string | undefined | void;
+  /**
    * Authorize the client through the incoming request. Returned string will be
-   * used as an authenticaiton token for the follow-up event stream.
+   * used as a unique authenticaiton token for the follow-up event stream.
    *
    * If nothing is returned, the execution will stop. Meaning, if you want to
    * respond to the client with a custom status or body, you should do so using
-   * the provided arguments and return.
+   * the provided arguments and then return.
    *
-   * Will be called ONLY if the request does not have a `X-GraphQL-Stream-Token`
-   * header set. This token indicates that the client was already authorized
-   * and wants to append operations to the stream behind the token.
+   * Will be called ONLY if the client was not authenticated.
    *
    * @default UUID // https://gist.github.com/jed/982883
    */
   authorize?: (
     req: http.IncomingMessage,
     res: http.ServerResponse,
-  ) => Promise<string | void> | string | void;
+  ) => Promise<string | undefined | void> | string | undefined | void;
   /**
    * Should the event source messages be compressed.
    *
@@ -69,6 +91,16 @@ export function createHandler(options: HandlerOptions): Handler {
           v = c == 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
+    },
+    authenticate = (req) => {
+      const headerToken = req.headers['x-graphql-stream-token'];
+      if (headerToken)
+        return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
+
+      const urlToken = new URL(req.url ?? '').searchParams.get('token') ?? '';
+      if (urlToken) return urlToken;
+
+      return undefined;
     },
     compress,
     reconnectTimeout = 0,
@@ -168,39 +200,46 @@ export function createHandler(options: HandlerOptions): Handler {
     req: http.IncomingMessage,
     res: http.ServerResponse,
   ) {
+    let token = await authenticate(req);
+
+    // client is not authenticated, authorize
+    if (typeof token !== 'string') {
+      token = await authorize(req, res);
+      if (typeof token !== 'string') return;
+
+      if (streams.has(token))
+        throw new Error(`Stream for token "${token}" already exists`);
+
+      streams.set(token, createStream(token));
+
+      if (req.headers.accept !== 'text/event-stream') {
+        // authorized and not an event stream request
+        res.statusCode = 201;
+        res.statusMessage = 'Stream created';
+        res.setHeader('Content-Type', 'text/plain');
+        res.write(token);
+        return res.end();
+      } else {
+        // authorized but is an event stream, continue...
+      }
+    }
+
+    // client is authenticated (or freshly authorized on an event stream)
+    const stream = streams.get(token);
+    if (!stream) return res.writeHead(401).end();
+
+    // TODO-db-210610 do operation or error out
+
     if (req.headers.accept === 'text/event-stream') {
-      // subscription
-
-      const token = new URL(req.url ?? '').searchParams.get('token') ?? '';
-      const stream = streams.get(token);
-      if (!stream) return res.writeHead(401).end();
+      // use the event stream
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
-      return await stream.use(req, res);
+      await stream.use(req, res);
+    } else {
+      // accept regular requests
+      res.writeHead(201, 'Accepted');
+      res.end();
     }
 
-    // auth or operation
-
-    const headerToken = req.headers['x-graphql-stream-token'];
-    if (headerToken) {
-      let token: string;
-      if (Array.isArray(headerToken)) token = headerToken.join('');
-      else token = headerToken;
-
-      const stream = streams.get(token);
-      if (!stream) return res.writeHead(404, 'Stream not found').end();
-
-      // TODO-db-210610 do operation and assign to stream
-      return res.writeHead(501).end();
-    }
-
-    const maybeToken = await authorize(req, res);
-    if (typeof maybeToken !== 'string') return;
-    streams.set(maybeToken, createStream(maybeToken));
-
-    res.statusCode = 201;
-    res.statusMessage = 'Stream created';
-    res.setHeader('Content-Type', 'text/plain');
-    res.write(maybeToken);
-    res.end();
+    // TODO-db-210610 stream
   };
 }
