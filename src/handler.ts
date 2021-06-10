@@ -174,14 +174,19 @@ export function createHandler(options: HandlerOptions): Handler {
         });
 
         const rawLastEventId = req.headers['last-event-id'];
-        if (rawLastEventId)
-          return flush(
-            parseInt(
+        if (rawLastEventId) {
+          let lastEventId: number | null = null;
+          try {
+            lastEventId = parseInt(
               Array.isArray(rawLastEventId)
                 ? rawLastEventId.join('')
                 : rawLastEventId,
-            ),
-          );
+            );
+          } catch {
+            /* noop */
+          }
+          if (lastEventId !== null) return flush(lastEventId);
+        }
       },
       async send(event, data) {
         let msg = `id: ${currId}\nevent: ${event}`;
