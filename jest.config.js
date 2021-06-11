@@ -3,4 +3,5 @@ module.exports = {
   testRunner: 'jest-jasmine2',
   moduleFileExtensions: ['ts', 'js'],
   testRegex: '/tests/.+.ts$',
+  testPathIgnorePatterns: ['/node_modules/', '/utils/'],
 };
