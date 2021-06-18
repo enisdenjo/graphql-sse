@@ -145,6 +145,7 @@ export type StreamData<E extends StreamEvent> = E extends 'value'
   : never;
 
 interface Stream {
+  readonly open: boolean;
   use(req: IncomingMessage, res: ServerResponse): Promise<void> | void;
   from(
     executionResult: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
@@ -180,7 +181,7 @@ export function createHandler(options: HandlerOptions): Handler {
     reconnectTimeout = 0,
   } = options;
 
-  const activeStreams = new Map<string, Stream[]>();
+  const streams = new Map<string, Stream>();
 
   /**
    * If the operation behind an ID is an `AsyncIterator` - the operation
@@ -190,7 +191,7 @@ export function createHandler(options: HandlerOptions): Handler {
    */
   const operations: Record<string, AsyncIterator<unknown> | null> = {};
 
-  function createStream(): Stream {
+  function createStream(token: string): Stream {
     let response: ServerResponse | null = null,
       currId = 0,
       wentAway: ReturnType<typeof setTimeout>;
@@ -233,12 +234,16 @@ export function createHandler(options: HandlerOptions): Handler {
     }
 
     async function end() {
+      streams.delete(token);
       msgs = [];
       response?.end();
       // TODO-db-210618 complete all operations from this stream
     }
 
     return {
+      get open() {
+        return Boolean(response);
+      },
       use(req, res) {
         clearTimeout(wentAway);
 
@@ -447,21 +452,23 @@ export function createHandler(options: HandlerOptions): Handler {
     if (typeof token !== 'string' || res.writableEnded) return; // `authenticate` responded
 
     // find streams behind token
-    const streams = activeStreams.get(token);
+    const stream = streams.get(token);
 
-    // if event stream, add to streams list or perform directly
+    // if event stream, add distinct to streams list or perform directly
     if (req.headers.accept === 'text/event-stream') {
-      const stream = createStream();
-      await stream.use(req, res);
-
-      // if event stream and has not token in list, process it directly
-      if (!streams) {
+      // if event stream is not registered, process it directly
+      if (!stream) {
         // TODO-db-210612 perform operation and respond
         return res.writeHead(501).end();
       }
 
-      // otherwise add it to the list and wait
-      activeStreams.set(token, [...streams, stream]);
+      // open stream cant exist, only one per token is allowed
+      if (stream.open) return res.writeHead(409, 'Stream already open').end();
+
+      await stream.use(req, res);
+
+      // otherwise add it and wait
+      streams.set(token, stream);
       return;
     }
 
@@ -469,10 +476,11 @@ export function createHandler(options: HandlerOptions): Handler {
       // method PUT prepares a stream for future incoming connections.
 
       // streams mustnt exist if putting new one
-      if (streams) return res.writeHead(409).end();
+      if (stream) return res.writeHead(409, 'Stream already registered').end();
 
       // create streams, assign to token
-      activeStreams.set(token, []);
+      streams.set(token, createStream(token));
+
       // and respond with it indicating success
       res
         .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
@@ -482,7 +490,7 @@ export function createHandler(options: HandlerOptions): Handler {
       // method DELETE completes an existing operation streaming in streams
 
       // streams must exist if completing operations
-      if (!streams) return res.writeHead(404).end();
+      if (!stream) return res.writeHead(404).end();
 
       // extract operation id from url
       const id = new URL(
@@ -496,9 +504,9 @@ export function createHandler(options: HandlerOptions): Handler {
       delete operations[id]; // deleting the operation means no further activity should take place
 
       return res.writeHead(200).end();
-    } else if (!streams)
+    } else if (!stream)
       // for all other methods, streams must exist to attach the result onto
-      return res.writeHead(401).end();
+      return res.writeHead(404, 'Stream not found').end();
 
     // ready to perform the requested operation
     const prepared = await prepare(req, res);
@@ -523,9 +531,7 @@ export function createHandler(options: HandlerOptions): Handler {
     }
     if (isAsyncIterable(result)) operations[operationId] = result;
 
-    for (const stream of streams) {
-      stream.from(result, operationId);
-    }
+    stream.from(result, operationId);
 
     return res.writeHead(202).end();
   };
