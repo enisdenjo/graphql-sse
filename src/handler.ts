@@ -234,9 +234,12 @@ export function createHandler(options: HandlerOptions): Handler {
     }
 
     async function end() {
+      // TODO-db-210618 if ended and new response comes in, end it too
+
       streams.delete(token);
       msgs = [];
       response?.end();
+
       // TODO-db-210618 complete all operations from this stream
     }
 
@@ -312,6 +315,9 @@ export function createHandler(options: HandlerOptions): Handler {
           );
         }
         await emit('done', id ? { id } : null);
+
+        // if no id is present, this stream is the operation requester. end it on complete
+        if (!id) end();
       },
     };
   }
