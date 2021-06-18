@@ -260,6 +260,8 @@ export function createHandler(options: HandlerOptions): Handler {
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
         if (compress) res.setHeader('Content-Encoding', 'deflate');
 
+        // TODO-db-210618 make distinction between client disconnect and graceful close?
+
         res.once('close', () => {
           response = null;
 
