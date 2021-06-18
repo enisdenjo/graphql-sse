@@ -136,22 +136,20 @@ export type Handler = (
   res: ServerResponse,
 ) => Promise<void>;
 
-export enum StreamEvent {
-  Value = 'value',
-  Done = 'done',
-}
+export type StreamEvent = 'value' | 'done';
 
-export type StreamData<E extends StreamEvent> = E extends StreamEvent.Value
+export type StreamData<E extends StreamEvent> = E extends 'value'
   ? ExecutionResult | { id: string; payload: ExecutionResult }
-  : E extends StreamEvent.Done
+  : E extends 'done'
   ? null | { id: string }
   : never;
 
 interface Stream {
-  readonly open: boolean;
   use(req: IncomingMessage, res: ServerResponse): Promise<void> | void;
-  emit<E extends StreamEvent>(event: E, data: StreamData<E>): Promise<void>;
-  end(): void;
+  from(
+    executionResult: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
+    id?: string,
+  ): Promise<void>;
 }
 
 export function createHandler(options: HandlerOptions): Handler {
@@ -168,7 +166,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
       const urlToken = new URL(
         req.url ?? '',
-        'http://localhost/',
+        'http://' + req.headers.host + '/',
       ).searchParams.get('token');
       if (urlToken) return urlToken;
 
@@ -183,10 +181,29 @@ export function createHandler(options: HandlerOptions): Handler {
   } = options;
 
   const activeStreams = new Map<string, Stream[]>();
-  function createStream(token: string): Stream {
+
+  /**
+   * If the operation behind an ID is an `AsyncIterator` - the operation
+   * is streaming; on the contrary, if the operation is `null` - it is simply
+   * a reservation, meaning - the operation resolves to a single result or is still
+   * pending/being prepared.
+   */
+  const operations: Record<string, AsyncIterator<unknown> | null> = {};
+
+  function createStream(): Stream {
     let response: ServerResponse | null = null,
       currId = 0,
       wentAway: ReturnType<typeof setTimeout>;
+
+    function write(chunk: unknown) {
+      return new Promise<boolean>((resolve, reject) => {
+        if (!response) return resolve(false);
+        response.write(chunk, (err) => {
+          if (err) return reject(err);
+          resolve(true);
+        });
+      });
+    }
 
     let msgs: { id: number; msg: string }[] = [];
     async function flush(lastId: number) {
@@ -199,26 +216,29 @@ export function createHandler(options: HandlerOptions): Handler {
       }
     }
 
-    function write(chunk: unknown) {
-      return new Promise<boolean>((resolve, reject) => {
-        if (!response) return resolve(false);
-        response.write(chunk, (err) => {
-          if (err) return reject(err);
-          resolve(true);
-        });
-      });
+    async function emit<E extends StreamEvent>(
+      event: E,
+      data: StreamData<E>,
+    ): Promise<void> {
+      let msg = `id: ${currId}\nevent: ${event}`;
+      msg += `\ndata: ${data == null ? '' : JSON.stringify(data)}`;
+      msg += '\n\n';
+      msgs.push({ id: currId, msg });
+      currId++;
+
+      const wrote = await write(msg);
+      if (wrote) {
+        // TODO-db-210610 take care of msgs array on successful writes
+      }
     }
 
-    function end() {
-      activeStreams.delete(token);
+    async function end() {
       msgs = [];
       response?.end();
+      // TODO-db-210618 complete all operations from this stream
     }
 
     return {
-      get open() {
-        return Boolean(response);
-      },
       use(req, res) {
         clearTimeout(wentAway);
 
@@ -258,26 +278,43 @@ export function createHandler(options: HandlerOptions): Handler {
           if (lastEventId !== null) return flush(lastEventId);
         }
       },
-      async emit(event, data) {
-        let msg = `id: ${currId}\nevent: ${event}`;
-        msg += `\ndata: ${data == null ? '' : JSON.stringify(data)}`;
-        msg += '\n\n';
-        msgs.push({ id: currId, msg });
-        currId++;
-
-        const wrote = await write(msg);
-        if (wrote) {
-          // TODO-db-210610 take care of msgs array on successful writes
+      async from(executionResult, id) {
+        if (isAsyncIterable(executionResult)) {
+          /** multiple emitted results */
+          for await (const result of executionResult) {
+            await emit(
+              'value',
+              id
+                ? {
+                    id,
+                    payload: result,
+                  }
+                : result,
+            );
+          }
+        } else {
+          /** single emitted result */
+          await emit(
+            'value',
+            id
+              ? {
+                  id,
+                  payload: executionResult,
+                }
+              : executionResult,
+          );
         }
+        await emit('done', id ? { id } : null);
       },
-      end,
     };
   }
 
-  async function perform(
+  async function prepare(
     req: IncomingMessage,
     res: ServerResponse,
-  ): Promise<OperationResult | void> {
+  ): Promise<
+    [perform: () => OperationResult, operationId: string | undefined] | void
+  > {
     let operationName: string | undefined,
       query: DocumentNode | string | undefined,
       variables: Record<string, unknown> | undefined,
@@ -323,6 +360,17 @@ export function createHandler(options: HandlerOptions): Handler {
       return res.writeHead(400, 'Invalid variables').end();
     if (extensions && typeof extensions !== 'object')
       return res.writeHead(400, 'Invalid extensions').end();
+
+    // the id of the operation to connect in the active streams
+    const operationId =
+      typeof extensions?.operationId === 'string'
+        ? extensions.operationId
+        : undefined;
+    if (operationId) {
+      if (operationId in operations)
+        return res.writeHead(409, 'Operation with ID already exists').end();
+      operations[operationId] = null;
+    }
 
     // if query is a string, parse it
     if (typeof query === 'string') {
@@ -379,11 +427,14 @@ export function createHandler(options: HandlerOptions): Handler {
             ? await context(req, execArgs)
             : context;
 
-      // the execution arguments have been prepared, perform the operation
-      if (operation === 'subscription')
-        return await (subscribe ?? graphqlSubscribe)(execArgs);
-      // operation === 'query' || 'mutation'
-      else return await (execute ?? graphqlExecute)(execArgs);
+      // the execution arguments are ready, prepare to perform the operation
+      return [
+        () =>
+          operation === 'subscription'
+            ? subscribe(execArgs)
+            : execute(execArgs),
+        operationId,
+      ];
     } catch (err) {
       // TODO-db-210618 what if an instance of Error is not thrown?
       return res.writeHead(400, err.message).end();
@@ -395,10 +446,12 @@ export function createHandler(options: HandlerOptions): Handler {
     const token = await authenticate(req, res);
     if (typeof token !== 'string' || res.writableEnded) return; // `authenticate` responded
 
+    // find streams behind token
+    const streams = activeStreams.get(token);
+
     // if event stream, add to streams list or perform directly
     if (req.headers.accept === 'text/event-stream') {
-      const streams = activeStreams.get(token);
-      const stream = createStream(token);
+      const stream = createStream();
       await stream.use(req, res);
 
       // if event stream and has not token in list, process it directly
@@ -412,12 +465,12 @@ export function createHandler(options: HandlerOptions): Handler {
       return;
     }
 
-    // if a regular request is made with the method PUT,
-    // prepare a stream for future incoming connections.
-    // otherwise, just guarantee that the streams exist
     if (req.method === 'PUT') {
+      // method PUT prepares a stream for future incoming connections.
+
       // streams mustnt exist if putting new one
-      if (activeStreams.has(token)) return res.writeHead(409).end();
+      if (streams) return res.writeHead(409).end();
+
       // create streams, assign to token
       activeStreams.set(token, []);
       // and respond with it indicating success
@@ -425,15 +478,62 @@ export function createHandler(options: HandlerOptions): Handler {
         .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
         .write(token);
       return res.end();
-    } else if (!activeStreams.has(token))
+    } else if (req.method === 'DELETE') {
+      // method DELETE completes an existing operation streaming in streams
+
+      // streams must exist if completing operations
+      if (!streams) return res.writeHead(404).end();
+
+      // extract operation id from url
+      const id = new URL(
+        req.url ?? '',
+        'http://' + req.headers.host + '/',
+      ).searchParams.get('operationId');
+      if (!id) return res.writeHead(400, 'Operation ID is missing').end();
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      await operations[id]?.return!(); // iterator must implement the return method
+      delete operations[id]; // deleting the operation means no further activity should take place
+
+      return res.writeHead(200).end();
+    } else if (!streams)
       // for all other methods, streams must exist to attach the result onto
       return res.writeHead(401).end();
 
     // ready to perform the requested operation
-    const result = await perform(req, res);
-    if (!result || res.writableEnded) return; // `perform` responded
+    const prepared = await prepare(req, res);
+    if (!prepared || res.writableEnded) return; // `prepared` responded
+    const [perform, operationId] = prepared;
 
-    // TODO-db-210618 connect result to existing stream
-    return res.writeHead(501).end();
+    // id is required when streaming to active streams
+    if (!operationId)
+      return res.writeHead(400, 'Operation ID is missing').end();
+
+    // operation might have completed before prepared
+    if (!(operationId in operations)) return res.writeHead(204).end();
+
+    // perform and stream result to matching streams
+    const result = await perform();
+
+    // operation might have completed before performed
+    if (!(operationId in operations)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
+      return res.writeHead(204).end();
+    }
+    if (isAsyncIterable(result)) operations[operationId] = result;
+
+    for (const stream of streams) {
+      stream.from(result, operationId);
+    }
+
+    return res.writeHead(202).end();
   };
+}
+
+/** @private */
+export function isAsyncIterable<T = unknown>(
+  val: unknown,
+): val is AsyncIterableIterator<T> {
+  return typeof Object(val)[Symbol.asyncIterator] === 'function';
 }
