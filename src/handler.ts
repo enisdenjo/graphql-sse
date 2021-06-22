@@ -473,10 +473,9 @@ export function createHandler(options: HandlerOptions): Handler {
       // open stream cant exist, only one per token is allowed
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
+      // otherwise use the placeholder
       await stream.use(req, res);
 
-      // otherwise add it and wait
-      streams.set(token, stream);
       return;
     }
 
