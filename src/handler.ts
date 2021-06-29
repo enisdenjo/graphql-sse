@@ -182,7 +182,7 @@ interface Stream {
    */
   from(
     executionResult: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
-    id?: string,
+    opId?: string,
   ): Promise<void>;
 }
 
@@ -316,15 +316,15 @@ export function createHandler(options: HandlerOptions): Handler {
           if (lastEventId !== null) return flush(lastEventId);
         }
       },
-      async from(executionResult, id) {
+      async from(executionResult, opId) {
         if (isAsyncIterable(executionResult)) {
           /** multiple emitted results */
           for await (const result of executionResult) {
             await emit(
               'value',
-              id
+              opId
                 ? {
-                    id,
+                    id: opId,
                     payload: result,
                   }
                 : result,
@@ -334,18 +334,20 @@ export function createHandler(options: HandlerOptions): Handler {
           /** single emitted result */
           await emit(
             'value',
-            id
+            opId
               ? {
-                  id,
+                  id: opId,
                   payload: executionResult,
                 }
               : executionResult,
           );
         }
-        await emit('done', id ? { id } : null);
 
-        // if no id is present, this stream is the operation requester. end it on complete
-        if (!id) end();
+        await emit('done', opId ? { id: opId } : null);
+
+        // when no operation id is present end on complete
+        if (!opId) end();
+        else delete ops[opId];
       },
     };
   }
