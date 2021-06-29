@@ -354,41 +354,37 @@ export function createHandler(options: HandlerOptions): Handler {
     };
   }
 
-  async function parseRequest(req: IncomingMessage): Promise<RequestParams> {
-    let operationName: string | undefined,
-      query: DocumentNode | string | undefined,
-      variables: Record<string, unknown> | undefined,
-      extensions: Record<string, unknown> | undefined;
+  async function parseReq(req: IncomingMessage): Promise<RequestParams> {
+    const params: Partial<RequestParams> = {};
 
     if (req.method === 'GET') {
       // TODO-db-210618 parse query params
     } else if (req.method === 'POST') {
-      const success = await new Promise<boolean>((resolve) => {
+      await new Promise<void>((resolve, reject) => {
         let body = '';
         req.on('data', (chunk) => (body += chunk));
         req.on('end', () => {
           try {
             const data = JSON.parse(body);
-            operationName = data.operationName;
-            query = data.query;
-            variables = data.variables;
-            extensions = data.extensions;
-            resolve(true);
+            params.operationName = data.operationName;
+            params.query = data.query;
+            params.variables = data.variables;
+            params.extensions = data.extensions;
+            resolve();
           } catch {
-            resolve(false);
+            reject(new Error('Unparsable body'));
           }
         });
       });
-      if (!success) throw new Error('Unparsable body');
     } else throw new Error(`Unsupported method ${req.method}`); // should never happen
 
-    if (!query) throw new Error('Missing query');
-    if (variables && typeof variables !== 'object')
+    if (!params.query) throw new Error('Missing query');
+    if (params.variables && typeof params.variables !== 'object')
       throw new Error('Invalid variables');
-    if (extensions && typeof extensions !== 'object')
+    if (params.extensions && typeof params.extensions !== 'object')
       throw new Error('Invalid extensions');
 
-    return { operationName, query, variables, extensions };
+    return params as RequestParams;
   }
 
   async function prepare(
@@ -501,7 +497,7 @@ export function createHandler(options: HandlerOptions): Handler {
       // method DELETE completes an existing operation streaming in streams
 
       // streams must exist when completing operations
-      if (!stream) return res.writeHead(404).end();
+      if (!stream) return res.writeHead(404, 'Stream not found').end();
 
       const opId = new URL(
         req.url ?? '',
@@ -523,7 +519,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     let params;
     try {
-      params = await parseRequest(req);
+      params = await parseReq(req);
     } catch (err) {
       return res.writeHead(400, err.message).end();
     }
@@ -532,7 +528,7 @@ export function createHandler(options: HandlerOptions): Handler {
     if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
     if (opId in stream.ops)
       return res.writeHead(409, 'Operation with ID already exists').end();
-    // reserve space for the operation ID
+    // reserve space for the operation through ID
     stream.ops[opId] = null;
 
     const perform = await prepare(params, req, res);
