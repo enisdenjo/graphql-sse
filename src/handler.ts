@@ -301,6 +301,8 @@ export function createHandler(options: HandlerOptions): Handler {
           else end();
         });
 
+        // TODO-db-210629 keep the connection alive by issuing pings (":\n\n")
+
         const rawLastEventId = req.headers['last-event-id'];
         if (rawLastEventId) {
           let lastEventId: number | null = null;
