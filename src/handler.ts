@@ -354,43 +354,10 @@ export function createHandler(options: HandlerOptions): Handler {
     };
   }
 
-  async function parseReq(req: IncomingMessage): Promise<RequestParams> {
-    const params: Partial<RequestParams> = {};
-
-    if (req.method === 'GET') {
-      // TODO-db-210618 parse query params
-    } else if (req.method === 'POST') {
-      await new Promise<void>((resolve, reject) => {
-        let body = '';
-        req.on('data', (chunk) => (body += chunk));
-        req.on('end', () => {
-          try {
-            const data = JSON.parse(body);
-            params.operationName = data.operationName;
-            params.query = data.query;
-            params.variables = data.variables;
-            params.extensions = data.extensions;
-            resolve();
-          } catch {
-            reject(new Error('Unparsable body'));
-          }
-        });
-      });
-    } else throw new Error(`Unsupported method ${req.method}`); // should never happen
-
-    if (!params.query) throw new Error('Missing query');
-    if (params.variables && typeof params.variables !== 'object')
-      throw new Error('Invalid variables');
-    if (params.extensions && typeof params.extensions !== 'object')
-      throw new Error('Invalid extensions');
-
-    return params as RequestParams;
-  }
-
   async function prepare(
-    { operationName, query, variables }: RequestParams,
     req: IncomingMessage,
     res: ServerResponse,
+    { operationName, query, variables }: RequestParams,
   ): Promise<(() => OperationResult) | void> {
     if (typeof query === 'string') {
       try {
@@ -531,7 +498,7 @@ export function createHandler(options: HandlerOptions): Handler {
     // reserve space for the operation through ID
     stream.ops[opId] = null;
 
-    const perform = await prepare(params, req, res);
+    const perform = await prepare(req, res, params);
     if (!perform || res.writableEnded) return; // `prepare` responded
 
     // operation might have completed before prepared
@@ -551,6 +518,39 @@ export function createHandler(options: HandlerOptions): Handler {
 
     return res.writeHead(202).end();
   };
+}
+
+async function parseReq(req: IncomingMessage): Promise<RequestParams> {
+  const params: Partial<RequestParams> = {};
+
+  if (req.method === 'GET') {
+    // TODO-db-210618 parse query params
+  } else if (req.method === 'POST') {
+    await new Promise<void>((resolve, reject) => {
+      let body = '';
+      req.on('data', (chunk) => (body += chunk));
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          params.operationName = data.operationName;
+          params.query = data.query;
+          params.variables = data.variables;
+          params.extensions = data.extensions;
+          resolve();
+        } catch {
+          reject(new Error('Unparsable body'));
+        }
+      });
+    });
+  } else throw new Error(`Unsupported method ${req.method}`); // should never happen
+
+  if (!params.query) throw new Error('Missing query');
+  if (params.variables && typeof params.variables !== 'object')
+    throw new Error('Invalid variables');
+  if (params.extensions && typeof params.extensions !== 'object')
+    throw new Error('Invalid extensions');
+
+  return params as RequestParams;
 }
 
 function isAsyncIterable<T = unknown>(
