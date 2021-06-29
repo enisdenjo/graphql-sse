@@ -111,12 +111,6 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
-   * Should the event source messages be compressed.
-   *
-   * @default false
-   */
-  compress?: boolean;
-  /**
    * How long should the server wait for the client to reconnect in milisconds
    * before completing its open operations.
    *
@@ -177,7 +171,6 @@ export function createHandler(options: HandlerOptions): Handler {
         return v.toString(16);
       });
     },
-    compress,
     reconnectTimeout = 0,
   } = options;
 
@@ -261,7 +254,6 @@ export function createHandler(options: HandlerOptions): Handler {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('X-Accel-Buffering', 'no');
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
-        if (compress) res.setHeader('Content-Encoding', 'deflate');
 
         // TODO-db-210618 make distinction between client disconnect and graceful close?
 
