@@ -193,7 +193,7 @@ export function createHandler(options: HandlerOptions): Handler {
     validate = graphqlValidate,
     execute = graphqlExecute,
     subscribe = graphqlSubscribe,
-    authenticate = function extractStreamToken(req) {
+    authenticate = function extractOrCreateStreamToken(req) {
       const headerToken = req.headers['x-graphql-stream-token'];
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
