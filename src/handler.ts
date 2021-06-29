@@ -125,22 +125,61 @@ export interface HandlerOptions {
   reconnectTimeout?: number;
 }
 
+/**
+ * The ready-to-use handler. Simply plug it in your favourite HTTP framework
+ * and enjoy.
+ *
+ * Beware that if you're expecting edge case internal errors. You have to take
+ * care of them when implementing the handler. Something like:
+ *
+ * ```ts
+ * const handler = createHandler({ ... });
+ * try {
+ *   await handler(req, res);
+ * } catch (err) {
+ *   return res.writeHead(500).end();
+ * }
+ * ```
+ */
 export type Handler = (
   req: IncomingMessage,
   res: ServerResponse,
 ) => Promise<void>;
 
-export type StreamEvent = 'value' | 'done';
+interface RequestParams {
+  operationName?: string | undefined;
+  query: DocumentNode | string;
+  variables?: Record<string, unknown> | undefined;
+  extensions?: Record<string, unknown> | undefined;
+}
 
-export type StreamData<E extends StreamEvent> = E extends 'value'
+type StreamEvent = 'value' | 'done';
+
+type StreamData<E extends StreamEvent> = E extends 'value'
   ? ExecutionResult | { id: string; payload: ExecutionResult }
   : E extends 'done'
   ? null | { id: string }
   : never;
 
 interface Stream {
+  /**
+   * Does the stream have an open connection to some client.
+   */
   readonly open: boolean;
+  /**
+   * If the operation behind an ID is an `AsyncIterator` - the operation
+   * is streaming; on the contrary, if the operation is `null` - it is simply
+   * a reservation, meaning - the operation resolves to a single result or is still
+   * pending/being prepared.
+   */
+  ops: Record<string, AsyncIterator<unknown> | null>;
+  /**
+   * Use this connection for streaming.
+   */
   use(req: IncomingMessage, res: ServerResponse): Promise<void> | void;
+  /**
+   * Stream from provided execution result to used connection.
+   */
   from(
     executionResult: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
     id?: string,
@@ -174,20 +213,13 @@ export function createHandler(options: HandlerOptions): Handler {
     reconnectTimeout = 0,
   } = options;
 
-  const streams = new Map<string, Stream>();
-
-  /**
-   * If the operation behind an ID is an `AsyncIterator` - the operation
-   * is streaming; on the contrary, if the operation is `null` - it is simply
-   * a reservation, meaning - the operation resolves to a single result or is still
-   * pending/being prepared.
-   */
-  const operations: Record<string, AsyncIterator<unknown> | null> = {};
+  const streams: Record<string, Stream> = {};
 
   function createStream(token: string): Stream {
     let response: ServerResponse | null = null,
       currId = 0,
       wentAway: ReturnType<typeof setTimeout>;
+    const ops: Record<string, AsyncIterator<unknown> | null> = {};
 
     function write(chunk: unknown) {
       return new Promise<boolean>((resolve, reject) => {
@@ -229,17 +261,21 @@ export function createHandler(options: HandlerOptions): Handler {
     async function end() {
       // TODO-db-210618 if ended and new response comes in, end it too
 
-      streams.delete(token);
-      msgs = [];
       response?.end();
 
-      // TODO-db-210618 complete all operations from this stream
+      delete streams[token];
+      msgs = [];
+      for (const op of Object.values(ops)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await op?.return!(); // iterator must implement the return method
+      }
     }
 
     return {
       get open() {
         return Boolean(response);
       },
+      ops,
       use(req, res) {
         clearTimeout(wentAway);
 
@@ -314,30 +350,15 @@ export function createHandler(options: HandlerOptions): Handler {
     };
   }
 
-  async function prepare(
-    req: IncomingMessage,
-    res: ServerResponse,
-  ): Promise<
-    [perform: () => OperationResult, operationId: string | undefined] | void
-  > {
+  async function parseRequest(req: IncomingMessage): Promise<RequestParams> {
     let operationName: string | undefined,
       query: DocumentNode | string | undefined,
       variables: Record<string, unknown> | undefined,
       extensions: Record<string, unknown> | undefined;
 
-    // validate and check the accept header
-    if (
-      ![
-        '',
-        'application/graphql+json',
-        'application/json',
-        'text/event-stream',
-      ].includes(req.headers.accept ?? '')
-    )
-      return res.writeHead(406).end();
-
-    // parse
-    if (req.method === 'POST') {
+    if (req.method === 'GET') {
+      // TODO-db-210618 parse query params
+    } else if (req.method === 'POST') {
       const success = await new Promise<boolean>((resolve) => {
         let body = '';
         req.on('data', (chunk) => (body += chunk));
@@ -354,30 +375,23 @@ export function createHandler(options: HandlerOptions): Handler {
           }
         });
       });
-      if (!success) return res.writeHead(400, 'Unparsable body').end();
-    } else if (req.method === 'GET') {
-      // TODO-db-210618 parse query params
-    } else return res.writeHead(405).end();
+      if (!success) throw new Error('Unparsable body');
+    } else throw new Error(`Unsupported method ${req.method}`); // should never happen
 
-    // validate
-    if (!query) return res.writeHead(400, 'Missing query').end();
+    if (!query) throw new Error('Missing query');
     if (variables && typeof variables !== 'object')
-      return res.writeHead(400, 'Invalid variables').end();
+      throw new Error('Invalid variables');
     if (extensions && typeof extensions !== 'object')
-      return res.writeHead(400, 'Invalid extensions').end();
+      throw new Error('Invalid extensions');
 
-    // the id of the operation to connect in the active streams
-    const operationId =
-      typeof extensions?.operationId === 'string'
-        ? extensions.operationId
-        : undefined;
-    if (operationId) {
-      if (operationId in operations)
-        return res.writeHead(409, 'Operation with ID already exists').end();
-      operations[operationId] = null;
-    }
+    return { operationName, query, variables, extensions };
+  }
 
-    // if query is a string, parse it
+  async function prepare(
+    { operationName, query, variables }: RequestParams,
+    req: IncomingMessage,
+    res: ServerResponse,
+  ): Promise<(() => OperationResult) | void> {
     if (typeof query === 'string') {
       try {
         query = parse(query);
@@ -386,7 +400,6 @@ export function createHandler(options: HandlerOptions): Handler {
       }
     }
 
-    // detect query opration
     let operation: OperationTypeNode;
     try {
       const ast = getOperationAST(query, operationName);
@@ -411,7 +424,6 @@ export function createHandler(options: HandlerOptions): Handler {
         schema: typeof schema === 'function' ? await schema(req, args) : schema,
       };
 
-      // validate execution arguments
       const validationErrs = validate(execArgs.schema, execArgs.document);
       if (validationErrs.length) {
         res
@@ -425,21 +437,14 @@ export function createHandler(options: HandlerOptions): Handler {
         return res.end();
       }
 
-      // inject context
       if (!('contextValue' in execArgs))
         execArgs.contextValue =
           typeof context === 'function'
             ? await context(req, execArgs)
             : context;
 
-      // the execution arguments are ready, prepare to perform the operation
-      return [
-        () =>
-          operation === 'subscription'
-            ? subscribe(execArgs)
-            : execute(execArgs),
-        operationId,
-      ];
+      return () =>
+        operation === 'subscription' ? subscribe(execArgs) : execute(execArgs);
     } catch (err) {
       // TODO-db-210618 what if an instance of Error is not thrown?
       return res.writeHead(400, err.message).end();
@@ -447,27 +452,33 @@ export function createHandler(options: HandlerOptions): Handler {
   }
 
   return async function handler(req: IncomingMessage, res: ServerResponse) {
+    if (
+      ![
+        '',
+        'application/graphql+json',
+        'application/json',
+        'text/event-stream',
+      ].includes(req.headers.accept ?? '')
+    )
+      return res.writeHead(406).end();
+
     // authenticate first and acquire unique identification token
     const token = await authenticate(req, res);
     if (typeof token !== 'string' || res.writableEnded) return; // `authenticate` responded
 
-    // find streams behind token
-    const stream = streams.get(token);
+    const stream = streams[token];
 
-    // if event stream, add distinct to streams list or perform directly
     if (req.headers.accept === 'text/event-stream') {
-      // if event stream is not registered, process it directly
       if (!stream) {
-        // TODO-db-210612 perform operation and respond
+        // if event stream is not registered, process it directly
+        // TODO-db-210612 parse, perform and respond
         return res.writeHead(501).end();
       }
 
       // open stream cant exist, only one per token is allowed
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
-      // otherwise use the placeholder
       await stream.use(req, res);
-
       return;
     }
 
@@ -477,10 +488,7 @@ export function createHandler(options: HandlerOptions): Handler {
       // streams mustnt exist if putting new one
       if (stream) return res.writeHead(409, 'Stream already registered').end();
 
-      // create streams, assign to token
-      streams.set(token, createStream(token));
-
-      // and respond with it indicating success
+      streams[token] = createStream(token);
       res
         .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
         .write(token);
@@ -488,56 +496,64 @@ export function createHandler(options: HandlerOptions): Handler {
     } else if (req.method === 'DELETE') {
       // method DELETE completes an existing operation streaming in streams
 
-      // streams must exist if completing operations
+      // streams must exist when completing operations
       if (!stream) return res.writeHead(404).end();
 
-      // extract operation id from url
-      const id = new URL(
+      const opId = new URL(
         req.url ?? '',
         'http://' + req.headers.host + '/',
       ).searchParams.get('operationId');
-      if (!id) return res.writeHead(400, 'Operation ID is missing').end();
+      if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await operations[id]?.return!(); // iterator must implement the return method
-      delete operations[id]; // deleting the operation means no further activity should take place
+      stream.ops[opId]?.return!(); // iterator must implement the return method
+      delete stream.ops[opId]; // deleting the operation means no further activity should take place
 
       return res.writeHead(200).end();
-    } else if (!stream)
+    } else if (req.method !== 'GET' && req.method !== 'POST')
+      // only POSTs and GETs are accepted at this point
+      return res.writeHead(405).end();
+    else if (!stream)
       // for all other methods, streams must exist to attach the result onto
       return res.writeHead(404, 'Stream not found').end();
 
-    // ready to perform the requested operation
-    const prepared = await prepare(req, res);
-    if (!prepared || res.writableEnded) return; // `prepared` responded
-    const [perform, operationId] = prepared;
+    let params;
+    try {
+      params = await parseRequest(req);
+    } catch (err) {
+      return res.writeHead(400, err.message).end();
+    }
 
-    // id is required when streaming to active streams
-    if (!operationId)
-      return res.writeHead(400, 'Operation ID is missing').end();
+    const opId = String(params.extensions?.operationId ?? '');
+    if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
+    if (opId in stream.ops)
+      return res.writeHead(409, 'Operation with ID already exists').end();
+    // reserve space for the operation ID
+    stream.ops[opId] = null;
+
+    const perform = await prepare(params, req, res);
+    if (!perform || res.writableEnded) return; // `prepare` responded
 
     // operation might have completed before prepared
-    if (!(operationId in operations)) return res.writeHead(204).end();
+    if (!(opId in stream.ops)) return res.writeHead(204).end();
 
-    // perform and stream result to matching streams
     const result = await perform();
 
     // operation might have completed before performed
-    if (!(operationId in operations)) {
+    if (!(opId in stream.ops)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
       return res.writeHead(204).end();
     }
-    if (isAsyncIterable(result)) operations[operationId] = result;
 
-    stream.from(result, operationId);
+    if (isAsyncIterable(result)) stream.ops[opId] = result;
+    stream.from(result, opId);
 
     return res.writeHead(202).end();
   };
 }
 
-/** @private */
-export function isAsyncIterable<T = unknown>(
+function isAsyncIterable<T = unknown>(
   val: unknown,
 ): val is AsyncIterableIterator<T> {
   return typeof Object(val)[Symbol.asyncIterator] === 'function';
