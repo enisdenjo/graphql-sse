@@ -5,7 +5,12 @@ export function request(
   url: string,
   params: Record<string, unknown> = {},
   headers: Record<string, string> = {},
-): Promise<string> {
+): Promise<{
+  statusCode: number;
+  statusMessage: string;
+  headers: http.IncomingHttpHeaders;
+  data: string;
+}> {
   const u = new URL(url);
 
   if (method !== 'POST')
@@ -21,7 +26,16 @@ export function request(
           data += chunk;
         });
         res.on('end', () => {
-          resolve(data);
+          if (!res.statusCode)
+            return reject(new Error('No status code in response'));
+          if (!res.statusMessage)
+            return reject(new Error('No status message in response'));
+          resolve({
+            statusCode: res.statusCode,
+            statusMessage: res.statusMessage,
+            headers: res.headers,
+            data,
+          });
         });
       })
       .on('error', reject);
