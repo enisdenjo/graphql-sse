@@ -7,6 +7,23 @@
 import { startTServer } from './utils/tserver';
 import { request } from './utils/request';
 
+it('should only accept valid accept headers', async () => {
+  const { url } = await startTServer();
+
+  let res = await request('GET', url, { accept: 'gibberish' });
+  expect(res.statusCode).toBe(406);
+
+  res = await request('GET', url, { accept: 'application/graphql+json' });
+  expect(res.statusCode).toBe(404); // no token registered
+
+  res = await request('GET', url, { accept: 'application/json' });
+  expect(res.statusCode).toBe(404); // no token registered
+
+  // TODO-db-210701 implement
+  res = await request('GET', url, { accept: 'text/event-stream' });
+  expect(res.statusCode).toBe(501); // no token registered
+});
+
 it('should get a token with PUT request', async () => {
   const { url } = await startTServer({
     authenticate: () => 'token',

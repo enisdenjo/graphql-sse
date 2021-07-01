@@ -3,8 +3,8 @@ import http from 'http';
 export function request(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
+  headers: http.IncomingHttpHeaders = {},
   params: Record<string, unknown> = {},
-  headers: Record<string, string> = {},
 ): Promise<{
   statusCode: number;
   statusMessage: string;
