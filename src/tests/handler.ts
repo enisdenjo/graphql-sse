@@ -24,18 +24,6 @@ it('should only accept valid accept headers', async () => {
   expect(res.statusCode).toBe(501); // no token registered
 });
 
-it('should get a token with PUT request', async () => {
-  const { url } = await startTServer({
-    authenticate: () => 'token',
-  });
-
-  const { statusCode, headers, data } = await request('PUT', url);
-
-  expect(statusCode).toBe(201);
-  expect(headers['content-type']).toBe('text/plain; charset=utf-8');
-  expect(data).toBe('token');
-});
-
 it('should respond with 404s when token was not previously registered', async () => {
   const { url } = await startTServer();
 
@@ -53,4 +41,16 @@ it('should respond with 404s when token was not previously registered', async ()
   res = await request('DELETE', url);
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
+});
+
+it('should get a token with PUT request', async () => {
+  const { url } = await startTServer({
+    authenticate: () => 'token',
+  });
+
+  const { statusCode, headers, data } = await request('PUT', url);
+
+  expect(statusCode).toBe(201);
+  expect(headers['content-type']).toBe('text/plain; charset=utf-8');
+  expect(data).toBe('token');
 });
