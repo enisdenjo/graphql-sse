@@ -6,6 +6,7 @@
 
 import http from 'http';
 import net from 'net';
+import { schema } from '../fixtures/simple';
 import { createHandler, HandlerOptions } from '../../handler';
 
 type Dispose = () => Promise<void>;
@@ -28,9 +29,9 @@ export interface TServer {
 }
 
 export async function startTServer(
-  options: HandlerOptions = {},
+  options: Partial<HandlerOptions> = {},
 ): Promise<TServer> {
-  const server = http.createServer(createHandler(options));
+  const server = http.createServer(createHandler({ schema, ...options }));
 
   const sockets = new Set<net.Socket>();
   server.on('connection', (socket) => {
