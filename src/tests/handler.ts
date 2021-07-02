@@ -38,7 +38,7 @@ it('should respond with 404s when token was not previously registered', async ()
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
 
-  // completing/ending a stream
+  // completing/ending an operation
   res = await request('DELETE', url);
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
