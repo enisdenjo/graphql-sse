@@ -44,9 +44,7 @@ it('should respond with 404s when token was not previously registered', async ()
 });
 
 it('should get a token with PUT request', async () => {
-  const { url } = await startTServer({
-    authenticate: () => 'token',
-  });
+  const { url } = await startTServer({ authenticate: () => 'token' });
 
   const { statusCode, headers, data } = await request('PUT', url);
 
