@@ -22,7 +22,7 @@ it('should only accept valid accept headers', async () => {
 
   // TODO-db-210701 implement
   res = await request('GET', url, { accept: 'text/event-stream' });
-  expect(res.statusCode).toBe(501); // no token registered
+  expect(res.statusCode).toBe(501); // not implemented
 });
 
 it('should respond with 404s when token was not previously registered', async () => {
