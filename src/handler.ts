@@ -290,6 +290,7 @@ export function createHandler(options: HandlerOptions): Handler {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('X-Accel-Buffering', 'no');
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
 
         // TODO-db-210618 make distinction between client disconnect and graceful close?
 
