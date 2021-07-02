@@ -43,6 +43,7 @@ export async function startTServer(
     for (const socket of sockets) {
       socket.destroy();
     }
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     leftovers.splice(leftovers.indexOf(dispose), 1);
   };
   leftovers.push(dispose);
