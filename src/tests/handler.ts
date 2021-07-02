@@ -5,49 +5,48 @@
  */
 
 import { startTServer } from './utils/tserver';
-import { request } from './utils/request';
 import EventSource from 'eventsource';
 
 it('should only accept valid accept headers', async () => {
-  const { url } = await startTServer();
+  const { request } = await startTServer();
 
-  let res = await request('GET', url, { accept: 'gibberish' });
+  let res = await request('GET', { accept: 'gibberish' });
   expect(res.statusCode).toBe(406);
 
-  res = await request('GET', url, { accept: 'application/graphql+json' });
+  res = await request('GET', { accept: 'application/graphql+json' });
   expect(res.statusCode).toBe(404); // no token registered
 
-  res = await request('GET', url, { accept: 'application/json' });
+  res = await request('GET', { accept: 'application/json' });
   expect(res.statusCode).toBe(404); // no token registered
 
   // TODO-db-210701 implement
-  res = await request('GET', url, { accept: 'text/event-stream' });
+  res = await request('GET', { accept: 'text/event-stream' });
   expect(res.statusCode).toBe(501); // not implemented
 });
 
 it('should respond with 404s when token was not previously registered', async () => {
-  const { url } = await startTServer();
+  const { request } = await startTServer();
 
   // maybe POST gql request
-  let res = await request('POST', url);
+  let res = await request('POST');
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
 
   // maybe GET gql request
-  res = await request('GET', url);
+  res = await request('GET');
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
 
   // completing/ending an operation
-  res = await request('DELETE', url);
+  res = await request('DELETE');
   expect(res.statusCode).toBe(404);
   expect(res.statusMessage).toBe('Stream not found');
 });
 
 it('should get a token with PUT request', async () => {
-  const { url } = await startTServer({ authenticate: () => 'token' });
+  const { request } = await startTServer({ authenticate: () => 'token' });
 
-  const { statusCode, headers, data } = await request('PUT', url);
+  const { statusCode, headers, data } = await request('PUT');
 
   expect(statusCode).toBe(201);
   expect(headers['content-type']).toBe('text/plain; charset=utf-8');
@@ -55,7 +54,7 @@ it('should get a token with PUT request', async () => {
 });
 
 it('should allow event streams on reservations only', async () => {
-  const { url } = await startTServer();
+  const { url, request } = await startTServer();
 
   // no reservation no connect
   let es = new EventSource(url);
@@ -67,7 +66,7 @@ it('should allow event streams on reservations only', async () => {
   });
 
   // token can be sent through the header
-  let res = await request('PUT', url);
+  let res = await request('PUT');
   es = new EventSource(url, {
     headers: { ['x-graphql-stream-token']: res.data },
   });
@@ -81,7 +80,7 @@ it('should allow event streams on reservations only', async () => {
   es.close();
 
   // token can be sent through the url
-  res = await request('PUT', url);
+  res = await request('PUT');
   es = new EventSource(url + '?token=' + res.data);
   await new Promise<void>((resolve, reject) => {
     es.onopen = () => resolve();
