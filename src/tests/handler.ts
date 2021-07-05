@@ -152,3 +152,25 @@ it('should stream subscription operations to connected event source', async (don
   );
   expect(statusCode).toBe(202);
 });
+
+it('should report operation validation issues to request', async () => {
+  const { url, request } = await startTServer();
+
+  const { data: token } = await request('PUT');
+
+  const es = new EventSource(url + '?token=' + token);
+  es.addEventListener('value', () => {
+    fail('Shouldnt have omitted');
+  });
+  es.addEventListener('done', () => {
+    fail('Shouldnt have omitted');
+  });
+
+  const { statusCode, data } = await request(
+    'POST',
+    { 'x-graphql-stream-token': token },
+    { query: '{ notExists }', extensions: { operationId: '1' } },
+  );
+  expect(statusCode).toBe(400);
+  expect(data).toMatchSnapshot();
+});

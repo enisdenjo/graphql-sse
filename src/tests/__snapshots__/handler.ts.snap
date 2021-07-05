@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`should report operation validation issues to request 1`] = `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}"`;
+
 exports[`should stream query operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
 
 exports[`should stream subscription operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}"`;
