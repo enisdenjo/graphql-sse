@@ -91,3 +91,40 @@ it('should allow event streams on reservations only', async () => {
   });
   es.close();
 });
+
+it('should not allow operations without providing an operation id', async () => {
+  const { request } = await startTServer();
+
+  const { data: token } = await request('PUT');
+
+  const { statusCode, statusMessage } = await request(
+    'POST',
+    { 'x-graphql-stream-token': token },
+    { query: '{ getValue }' },
+  );
+
+  expect(statusCode).toBe(400);
+  expect(statusMessage).toBe('Operation ID is missing');
+});
+
+it('should stream operations to connected event source', async (done) => {
+  const { url, request } = await startTServer();
+
+  const { data: token } = await request('PUT');
+
+  const es = new EventSource(url + '?token=' + token);
+  es.addEventListener('value', (event) => {
+    expect((event as any).data).toMatchSnapshot();
+  });
+  es.addEventListener('done', () => {
+    es.close();
+    done();
+  });
+
+  const { statusCode } = await request(
+    'POST',
+    { 'x-graphql-stream-token': token },
+    { query: '{ getValue }', extensions: { operationId: '1' } },
+  );
+  expect(statusCode).toBe(202);
+});
