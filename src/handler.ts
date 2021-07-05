@@ -314,7 +314,7 @@ export function createHandler(options: HandlerOptions): Handler {
                 : rawLastEventId,
             );
           } catch {
-            /* noop */
+            // noop
           }
           if (lastEventId !== null) return flush(lastEventId);
         }
