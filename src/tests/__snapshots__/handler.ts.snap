@@ -1,3 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should stream operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
+exports[`should stream query operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
+
+exports[`should stream subscription operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}"`;
+
+exports[`should stream subscription operations to connected event source 2`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}}"`;
+
+exports[`should stream subscription operations to connected event source 3`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hola\\"}}}"`;
+
+exports[`should stream subscription operations to connected event source 4`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}}"`;
+
+exports[`should stream subscription operations to connected event source 5`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}}"`;

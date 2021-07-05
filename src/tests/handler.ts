@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  *
  * handler
@@ -107,7 +108,7 @@ it('should not allow operations without providing an operation id', async () => 
   expect(statusMessage).toBe('Operation ID is missing');
 });
 
-it('should stream operations to connected event source', async (done) => {
+it('should stream query operations to connected event source', async (done) => {
   const { url, request } = await startTServer();
 
   const { data: token } = await request('PUT');
@@ -125,6 +126,29 @@ it('should stream operations to connected event source', async (done) => {
     'POST',
     { 'x-graphql-stream-token': token },
     { query: '{ getValue }', extensions: { operationId: '1' } },
+  );
+  expect(statusCode).toBe(202);
+});
+
+it('should stream subscription operations to connected event source', async (done) => {
+  const { url, request } = await startTServer();
+
+  const { data: token } = await request('PUT');
+
+  const es = new EventSource(url + '?token=' + token);
+  es.addEventListener('value', (event) => {
+    // called 5 times
+    expect((event as any).data).toMatchSnapshot();
+  });
+  es.addEventListener('done', () => {
+    es.close();
+    done();
+  });
+
+  const { statusCode } = await request(
+    'POST',
+    { 'x-graphql-stream-token': token },
+    { query: 'subscription { greetings }', extensions: { operationId: '1' } },
   );
   expect(statusCode).toBe(202);
 });
