@@ -515,6 +515,8 @@ export function createHandler(options: HandlerOptions): Handler {
     }
 
     if (isAsyncIterable(result)) stream.ops[opId] = result;
+
+    // TODO-db-210705 decide if streaming to an empty reservation is ok (will be flushed on connect)
     stream.from(result, opId);
 
     return res.writeHead(202).end();
