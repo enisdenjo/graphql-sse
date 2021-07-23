@@ -20,6 +20,7 @@ import {
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
 } from 'graphql';
+import { RequestParams, StreamEvent, StreamData } from './common';
 
 /**
  * A concrete GraphQL execution context value type.
@@ -145,21 +146,6 @@ export type Handler = (
   req: IncomingMessage,
   res: ServerResponse,
 ) => Promise<void>;
-
-interface RequestParams {
-  operationName?: string | undefined;
-  query: DocumentNode | string;
-  variables?: Record<string, unknown> | undefined;
-  extensions?: Record<string, unknown> | undefined;
-}
-
-type StreamEvent = 'value' | 'done';
-
-type StreamData<E extends StreamEvent> = E extends 'value'
-  ? ExecutionResult | { id: string; payload: ExecutionResult }
-  : E extends 'done'
-  ? null | { id: string }
-  : never;
 
 interface Stream {
   /**
