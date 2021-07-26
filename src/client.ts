@@ -9,6 +9,7 @@ import {
   validateStreamEvent,
   validateStreamData,
   RequestParams,
+  StreamDataForID,
 } from './common';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -48,6 +49,243 @@ export async function* subscribe<T = unknown>(
         throw new Error(`Unexpected event "${msg.event}"`);
     }
   }
+}
+
+/** @category Client */
+export interface ClientOptions extends StreamOptions {
+  /**
+   * Control the wait time between retries. You may implement your own strategy
+   * by timing the resolution of the returned promise with the retries count.
+   *
+   * `retries` argument counts actual connection attempts, so it will begin with
+   * 0 after the first retryable disconnect.
+   *
+   * Throwing an error will error out all subscribers and stop the retries.
+   *
+   * @default 'Randomised exponential backoff, 5 times'
+   */
+  retry?: (retries: number, retryingErr: unknown) => Promise<void>;
+}
+
+/** @category Client */
+export interface Client {
+  /**
+   * Subscribes to receive through the single SSE connection.
+   *
+   * Use the provided `AbortSignal` for completing the subscription.
+   */
+  subscribe<T = unknown>(
+    signal: AbortSignal,
+    payload: RequestParams,
+  ): AsyncIterableIterator<T>;
+}
+
+/**
+ * Creates a disposable GraphQL over SSE client that reuses
+ * a single SSE connection to transmit GraphQL operation
+ * results.
+ *
+ * Useful for HTTP/1 only servers which have SSE connection
+ * limitations on browsers.
+ *
+ * @category Client
+ */
+export function createClient(options: ClientOptions): Client {
+  const {
+    retry = async function randomisedExponentialBackoff(retries, retryingErr) {
+      if (retries > 5) throw retryingErr;
+      let retryDelay = 1000; // start with 1s delay
+      for (let i = 0; i < retries; i++) {
+        retryDelay *= 2;
+      }
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          retryDelay +
+            // add random timeout from 300ms to 3s
+            Math.floor(Math.random() * (3000 - 300) + 300),
+        ),
+      );
+    },
+  } = options;
+
+  const fetchFn = (options.fetchFn || fetch) as typeof fetch;
+
+  type Connected = [
+    url: string, // because it might change when supplying a function
+    getPayloadUntilDone: (
+      id: string,
+    ) => AsyncIterableIterator<StreamDataForID<'value'>['payload']>,
+  ];
+  let connecting: Promise<Connected> | undefined,
+    token = '',
+    locks = 0,
+    retryingErr = null as unknown,
+    retries = 0;
+  async function connect(signal: AbortSignal): Promise<Connected> {
+    return await (connecting ??
+      (connecting = (async () => {
+        if (retryingErr) {
+          await retry(retries, retryingErr);
+
+          // subscriptions might complete while waiting for retry
+          if (!locks) {
+            connecting = undefined;
+            throw new Error('All subscriptions gone');
+          }
+
+          retries++;
+        }
+
+        const control = new AbortController();
+
+        const url =
+          typeof options.url === 'function' ? await options.url() : options.url;
+        const headers =
+          typeof options.headers === 'function'
+            ? await options.headers()
+            : options.headers;
+
+        // PUT/register only when no existing token
+        if (!token) {
+          const res = await fetchFn(url, {
+            signal: control.signal,
+            method: 'PUT',
+            headers,
+          });
+          if (res.status !== 201) throw res;
+          token = await res.text();
+        }
+
+        const waiting: {
+          [id: string]: { proceed: () => void };
+        } = {};
+        const queue: { [id: string]: StreamMessage[] } = {};
+        let error: unknown = null,
+          done = false;
+        (async () => {
+          try {
+            // TODO-db-210726 use last-event-id
+
+            const stream = await createStream({
+              ...options,
+              control,
+              url,
+              headers: { ...headers, 'x-graphql-stream-token': token },
+            });
+            retryingErr = null; // future connects are not retries
+            retries = 0; // reset the retries on connect
+
+            for await (const msg of stream) {
+              if (!msg.data) throw new Error('Message data missing');
+              if (!('id' in msg.data))
+                throw new Error('Message data ID missing');
+
+              const id = msg.data.id;
+              if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
+
+              queue[id].push(msg);
+              waiting[id]?.proceed();
+            }
+
+            done = true;
+          } catch (err) {
+            error = err;
+          } finally {
+            connecting = undefined;
+            Object.values(waiting).forEach(({ proceed }) => proceed());
+          }
+        })();
+
+        return [
+          url,
+          async function* getPayloadUntilDone(id) {
+            if (id in queue)
+              throw new Error(`Queue already registered for ID: "${id}"`);
+
+            queue[id] = [];
+
+            try {
+              for (;;) {
+                if (signal.aborted) return;
+
+                while (queue[id].length) {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  const { event, data } = queue[id].shift()!;
+                  switch (event) {
+                    case 'value':
+                      if (!data) throw new Error('Message data missing');
+                      if (!('payload' in data))
+                        throw new Error('Missing data payload');
+                      yield data.payload;
+                      break;
+                    case 'done':
+                      return;
+                    default:
+                      throw new Error(`Unexpected event "${event}"`);
+                  }
+                }
+                if (error) throw error;
+                if (done) return;
+
+                // wait for action or abort
+                await new Promise<void>((resolve) => {
+                  const proceed = () => {
+                    signal.removeEventListener('abort', proceed);
+                    resolve();
+                  };
+                  signal.addEventListener('abort', proceed);
+                  waiting[id] = { proceed };
+                }).then(() => delete waiting[id]);
+              }
+            } finally {
+              delete queue[id];
+              if (locks === 0 && !control.signal.aborted) control.abort();
+            }
+          },
+        ] as Connected;
+      })()));
+  }
+
+  return {
+    async *subscribe(signal, payload) {
+      const id = ''; // TODO-db-210726
+
+      locks++;
+      signal.addEventListener('abort', () => locks--);
+
+      payload = {
+        ...payload,
+        extensions: { ...payload.extensions, operationId: id },
+      };
+
+      for (;;) {
+        try {
+          const [url, getPayloadUntilDone] = await connect(signal);
+
+          const res = await fetchFn(url, {
+            method: 'POST',
+            headers: {
+              'x-graphql-stream-token': token,
+            },
+            signal,
+            body: JSON.stringify(payload),
+          });
+          if (res.status !== 202) throw res;
+
+          for await (const payload of getPayloadUntilDone(id)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            yield payload as any;
+          }
+
+          return; // aborted, shouldnt try again
+        } catch (err) {
+          if (signal.aborted) return; // aborted, shouldnt try again
+          retryingErr = err;
+        }
+      }
+    },
+  };
 }
 
 /** @private */
