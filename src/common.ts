@@ -26,7 +26,7 @@ export interface RequestParams {
 export interface StreamMessage<E extends StreamEvent = StreamEvent> {
   id: string;
   event: E;
-  data: StreamData<E>;
+  data: StreamData<E> | StreamDataForID<E>;
   // retry?: number; TODO-db-210726 decide if necessary for graphql-sse
 }
 
@@ -48,15 +48,34 @@ export function validateStreamEvent(e: unknown): StreamEvent {
  * @category Common
  */
 export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'value'
-  ? ExecutionResult | { id: string; payload: ExecutionResult }
+  ? ExecutionResult
   : E extends 'done'
-  ? null | { id: string }
+  ? null
   : never;
 
 /**
  * @category Common
  */
 export function validateStreamData(e: unknown): StreamData {
+  if (isObject(e)) throw new Error('Invalid stream data');
+  // TODO-db-210723
+  return e as StreamData;
+}
+
+/**
+ * @category Common
+ */
+export type StreamDataForID<E extends StreamEvent = StreamEvent> =
+  E extends 'value'
+    ? { id: string; payload: ExecutionResult }
+    : E extends 'done'
+    ? { id: string }
+    : never;
+
+/**
+ * @category Common
+ */
+export function validateStreamDataForID(e: unknown): StreamData {
   if (isObject(e)) throw new Error('Invalid stream data');
   // TODO-db-210723
   return e as StreamData;

@@ -20,7 +20,12 @@ import {
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
 } from 'graphql';
-import { RequestParams, StreamEvent, StreamData } from './common';
+import {
+  RequestParams,
+  StreamEvent,
+  StreamData,
+  StreamDataForID,
+} from './common';
 
 /**
  * A concrete GraphQL execution context value type.
@@ -230,7 +235,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     async function emit<E extends StreamEvent>(
       event: E,
-      data: StreamData<E>,
+      data: StreamData<E> | StreamDataForID<E>,
     ): Promise<void> {
       let msg = `id: ${currId}\nevent: ${event}`;
       msg += `\ndata: ${data == null ? '' : JSON.stringify(data)}`;
