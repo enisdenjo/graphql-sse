@@ -300,7 +300,8 @@ export function createClient(options: ClientOptions): Client {
           return; // aborted, shouldnt try again
         } catch (err) {
           if (signal.aborted) return; // aborted, shouldnt try again
-          retryingErr = err;
+          throw err;
+          retryingErr = err; // TODO-db-210810 implement retrying
         }
       }
     },
