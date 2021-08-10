@@ -411,23 +411,15 @@ export function createHandler(options: HandlerOptions): Handler {
   }
 
   return async function handler(req: IncomingMessage, res: ServerResponse) {
-    if (
-      ![
-        '',
-        'application/graphql+json',
-        'application/json',
-        'text/event-stream',
-      ].includes(req.headers.accept ?? '')
-    )
-      return res.writeHead(406).end();
-
     // authenticate first and acquire unique identification token
     const token = await authenticate(req, res);
     if (typeof token !== 'string' || res.writableEnded) return; // `authenticate` responded
 
+    const accept = req.headers.accept ?? '*/*';
+
     const stream = streams[token];
 
-    if (req.headers.accept === 'text/event-stream') {
+    if (accept === 'text/event-stream') {
       if (!stream) {
         // if event stream is not registered, process it directly
         // TODO-db-210612 parse, perform and respond
@@ -443,6 +435,9 @@ export function createHandler(options: HandlerOptions): Handler {
 
     if (req.method === 'PUT') {
       // method PUT prepares a stream for future incoming connections.
+
+      if (!['*/*', 'text/plain'].includes(accept))
+        return res.writeHead(406).end();
 
       // streams mustnt exist if putting new one
       if (stream) return res.writeHead(409, 'Stream already registered').end();
@@ -475,6 +470,11 @@ export function createHandler(options: HandlerOptions): Handler {
     else if (!stream)
       // for all other methods, streams must exist to attach the result onto
       return res.writeHead(404, 'Stream not found').end();
+
+    if (
+      !['*/*', 'application/graphql+json', 'application/json'].includes(accept)
+    )
+      return res.writeHead(406).end();
 
     let params;
     try {
