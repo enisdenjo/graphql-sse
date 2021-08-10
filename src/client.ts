@@ -388,9 +388,9 @@ function toAsyncIterator(
     val = val as ReadableStream;
     const reader = val.getReader();
     for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) return chunk.value;
-      yield chunk.value;
+      const { value, done } = await reader.read();
+      if (done) return value;
+      yield value;
     }
   })();
 }
