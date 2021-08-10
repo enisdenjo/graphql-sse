@@ -173,4 +173,6 @@ it('should report operation validation issues to request', async () => {
   );
   expect(statusCode).toBe(400);
   expect(data).toMatchSnapshot();
+
+  es.close();
 });
