@@ -368,6 +368,7 @@ async function* createStream(
   try {
     const res = await fetchFn(url, {
       signal: control.signal,
+      method: 'POST',
       headers: {
         ...headers,
         accept: 'text/event-stream',
