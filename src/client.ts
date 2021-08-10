@@ -49,6 +49,16 @@ export async function* subscribe<T = unknown>(
 /** @category Client */
 export interface ClientOptions extends StreamOptions {
   /**
+   * A custom ID generator for identifying subscriptions.
+   *
+   * The default generates a v4 UUID to be used as the ID using `Math`
+   * as the random number generator. Supply your own generator
+   * in case you need more uniqueness.
+   *
+   * Reference: https://gist.github.com/jed/982883
+   */
+  generateID?: () => string;
+  /**
    * Control the wait time between retries. You may implement your own strategy
    * by timing the resolution of the returned promise with the retries count.
    *
@@ -87,6 +97,20 @@ export interface Client {
  */
 export function createClient(options: ClientOptions): Client {
   const {
+    /**
+     * Generates a v4 UUID to be used as the ID using `Math`
+     * as the random number generator. Supply your own generator
+     * in case you need more uniqueness.
+     *
+     * Reference: https://gist.github.com/jed/982883
+     */
+    generateID = function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0,
+          v = c == 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    },
     retry = async function randomisedExponentialBackoff(retries, retryingErr) {
       if (retries > 5) throw retryingErr;
       let retryDelay = 1000; // start with 1s delay
@@ -244,7 +268,7 @@ export function createClient(options: ClientOptions): Client {
 
   return {
     async *subscribe(signal, payload) {
-      const id = ''; // TODO-db-210726
+      const id = generateID();
 
       locks++;
       signal.addEventListener('abort', () => locks--);
