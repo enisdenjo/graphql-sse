@@ -259,11 +259,11 @@ export function createClient(options: ClientOptions): Client {
           const [url, getPayloadUntilDone] = await connect(signal);
 
           const res = await fetchFn(url, {
+            signal,
             method: 'POST',
             headers: {
               'x-graphql-stream-token': token,
             },
-            signal,
             body: JSON.stringify(payload),
           });
           if (res.status !== 202) throw res;
@@ -330,10 +330,14 @@ async function* createStream(
 
   const url =
     typeof options.url === 'function' ? await options.url() : options.url;
+  if (control.signal.aborted) return;
+
   const headers =
     typeof options.headers === 'function'
       ? await options.headers()
       : options.headers;
+  if (control.signal.aborted) return;
+
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
 
   try {
