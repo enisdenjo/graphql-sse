@@ -160,48 +160,45 @@ export function createClient(options: ClientOptions): Client {
   // TODO-db-210815 implement
   if (!lazy) throw new Error('Non-lazy mode not implemented');
 
-  let control = new AbortController(),
-    connection: Promise<Connection> | undefined,
+  let connCtrl = new AbortController(),
+    conn: Promise<Connection> | undefined,
     token = '',
     locks = 0,
     retryingErr = null as unknown,
     retries = 0;
   async function getOrConnect(): Promise<Connection> {
-    return await (connection ??
-      (connection = (async () => {
+    return await (conn ??
+      (conn = (async () => {
         if (retryingErr) {
           if (retries > retryAttempts) throw retryingErr;
           await retry(retries);
 
           // connection might've been aborted while waiting for retry
-          if (control.signal.aborted) throw new Error('Connection aborted');
+          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
           // TODO-db-210726 use last-event-id
           retries++;
         }
 
         // we must create a new controller here because lazy mode aborts currently active ones
-        control = new AbortController();
-        control.signal.addEventListener(
-          'abort',
-          () => (connection = undefined),
-        );
+        connCtrl = new AbortController();
+        connCtrl.signal.addEventListener('abort', () => (conn = undefined));
 
         const url =
           typeof options.url === 'function' ? await options.url() : options.url;
-        if (control.signal.aborted) throw new Error('Connection aborted');
+        if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
         const headers =
           typeof options.headers === 'function'
             ? await options.headers()
             : options.headers ?? {};
-        if (control.signal.aborted) throw new Error('Connection aborted');
+        if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
         // TODO-db-210815 allow the user to provide and store the token
         // PUT/register only when no existing token
         if (!token) {
           const res = await fetchFn(url, {
-            signal: control.signal,
+            signal: connCtrl.signal,
             method: 'PUT',
             headers,
           });
@@ -210,7 +207,7 @@ export function createClient(options: ClientOptions): Client {
         }
 
         const connected = await connect({
-          signal: control.signal,
+          signal: connCtrl.signal,
           headers,
           url,
           fetchFn,
@@ -224,13 +221,18 @@ export function createClient(options: ClientOptions): Client {
 
   return {
     async *subscribe(signal, payload) {
+      locks++;
       const id = generateID();
 
-      locks++;
-      signal.addEventListener('abort', () => {
+      let completed = false;
+      function complete() {
+        if (completed) return;
+        completed = true;
+
         // release lock and disconnect if no locks are present
-        if (--locks === 0) control.abort();
-      });
+        if (--locks === 0) connCtrl.abort();
+      }
+      signal.addEventListener('abort', complete);
 
       payload = {
         ...payload,
@@ -256,7 +258,7 @@ export function createClient(options: ClientOptions): Client {
             yield result as any;
           }
 
-          return; // aborted, shouldnt try again
+          return complete();
         } catch (err) {
           if (signal.aborted) return; // aborted, shouldnt try again
           throw err;
