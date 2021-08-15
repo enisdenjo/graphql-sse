@@ -8,23 +8,6 @@
 import { startTServer } from './utils/tserver';
 import EventSource from 'eventsource';
 
-it('should only accept valid accept headers', async () => {
-  const { request } = await startTServer();
-
-  let res = await request('GET', { accept: 'gibberish' });
-  expect(res.statusCode).toBe(406);
-
-  res = await request('GET', { accept: 'application/graphql+json' });
-  expect(res.statusCode).toBe(404); // no token registered
-
-  res = await request('GET', { accept: 'application/json' });
-  expect(res.statusCode).toBe(404); // no token registered
-
-  // TODO-db-210701 implement
-  res = await request('GET', { accept: 'text/event-stream' });
-  expect(res.statusCode).toBe(501); // not implemented
-});
-
 it('should respond with 404s when token was not previously registered', async () => {
   const { request } = await startTServer();
 
@@ -52,6 +35,36 @@ it('should get a token with PUT request', async () => {
   expect(statusCode).toBe(201);
   expect(headers['content-type']).toBe('text/plain; charset=utf-8');
   expect(data).toBe('token');
+});
+
+it('should only accept valid accept headers', async () => {
+  const { request } = await startTServer();
+
+  const { data: token } = await request('PUT');
+
+  let res = await request('GET', {
+    accept: 'gibberish',
+    ['x-graphql-stream-token']: token,
+  });
+  expect(res.statusCode).toBe(406);
+
+  res = await request('GET', {
+    accept: 'application/graphql+json',
+    ['x-graphql-stream-token']: token,
+  });
+  expect(res.statusCode).toBe(400);
+  expect(res.statusMessage).toBe('Missing query');
+
+  res = await request('GET', {
+    accept: 'application/json',
+    ['x-graphql-stream-token']: token,
+  });
+  expect(res.statusCode).toBe(400);
+  expect(res.statusMessage).toBe('Missing query');
+
+  // TODO-db-210701 implement
+  res = await request('GET', { accept: 'text/event-stream' });
+  expect(res.statusCode).toBe(501); // not implemented
 });
 
 it('should allow event streams on reservations only', async () => {
