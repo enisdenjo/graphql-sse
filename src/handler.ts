@@ -117,9 +117,40 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
-   * Called when a new event stream has connected.
+   * Called when a new event stream has connected right before the
+   * accepting the stream.
+   *
+   * If you want to respond to the client with a custom status or body,
+   * you should do so using the provided `res` argument which will stop
+   * further execution.
    */
-  onConnect?: (req: IncomingMessage, res: ServerResponse) => void;
+  onConnect?: (
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) => Promise<void> | void;
+  /**
+   * Executed after the operation call resolves. For streaming
+   * operations, triggering this callback does not necessarely
+   * mean that there is already a result available - it means
+   * that the subscription process for the stream has resolved
+   * and that the client is now subscribed.
+   *
+   * The `OperationResult` argument is the result of operation
+   * execution. It can be an iterator or already a value.
+   *
+   * Use this callback to listen for GraphQL operations and
+   * execution result manipulation.
+   *
+   * If you want to respond to the client with a custom status or body,
+   * you should do so using the provided `res` argument which will stop
+   * further execution.
+   */
+  onOperation?: (
+    req: IncomingMessage,
+    res: ServerResponse,
+    args: ExecutionArgs,
+    result: OperationResult,
+  ) => Promise<OperationResult | void> | OperationResult | void;
 }
 
 /**
@@ -193,6 +224,7 @@ export function createHandler(options: HandlerOptions): Handler {
       });
     },
     onConnect,
+    onOperation,
   } = options;
 
   const streams: Record<string, Stream> = {};
@@ -360,8 +392,18 @@ export function createHandler(options: HandlerOptions): Handler {
             ? await context(req, execArgs)
             : context;
 
-      return () =>
-        operation === 'subscription' ? subscribe(execArgs) : execute(execArgs);
+      return async function perform() {
+        let result;
+        result =
+          operation === 'subscription'
+            ? subscribe(execArgs)
+            : execute(execArgs);
+
+        const maybeResult = await onOperation?.(req, res, execArgs, result);
+        if (maybeResult) result = maybeResult;
+
+        return result;
+      };
     } catch (err) {
       // TODO-db-210618 what if an instance of Error is not thrown?
       return res.writeHead(400, err.message).end();
@@ -378,9 +420,13 @@ export function createHandler(options: HandlerOptions): Handler {
     const stream = streams[token];
 
     if (accept === 'text/event-stream') {
+      // if event stream is not registered, process it directly.
+      // this means that distinct event streams are used for
+      // graphql operations
       if (!stream) {
-        // if event stream is not registered, process it directly
-        onConnect?.(req, res);
+        await onConnect?.(req, res);
+        if (res.writableEnded) return; // `onConnect` responded
+
         // TODO-db-210612 parse, perform and respond
         return res.writeHead(501).end();
       }
@@ -388,8 +434,9 @@ export function createHandler(options: HandlerOptions): Handler {
       // open stream cant exist, only one per token is allowed
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
+      await onConnect?.(req, res);
+      if (res.writableEnded) return; // `onConnect` responded
       await stream.use(req, res);
-      onConnect?.(req, res);
       return;
     }
 
@@ -457,6 +504,9 @@ export function createHandler(options: HandlerOptions): Handler {
     if (!(opId in stream.ops)) return res.writeHead(204).end();
 
     const result = await perform();
+    if (res.writableEnded)
+      // TODO-db-210816 should the result cleanup be done by the lib here
+      return; // `onOperation` responded
 
     // operation might have completed before performed
     if (!(opId in stream.ops)) {

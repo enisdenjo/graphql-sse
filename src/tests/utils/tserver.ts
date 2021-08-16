@@ -6,7 +6,8 @@
 
 import http from 'http';
 import net from 'net';
-import { schema } from '../fixtures/simple';
+import { EventEmitter } from 'events';
+import { schema, pong } from '../fixtures/simple';
 import { createHandler, HandlerOptions } from '../../handler';
 
 type Dispose = () => Promise<void>;
@@ -35,13 +36,42 @@ export interface TServer {
     headers: http.IncomingHttpHeaders;
     data: string;
   }>;
+  pong: typeof pong;
+  waitForConnect(
+    test?: (req: http.IncomingMessage, res: http.ServerResponse) => void,
+    expire?: number,
+  ): Promise<void>;
+  waitForOperation(test?: () => void, expire?: number): Promise<void>;
   dispose: Dispose;
 }
 
 export async function startTServer(
   options: Partial<HandlerOptions> = {},
 ): Promise<TServer> {
-  const server = http.createServer(createHandler({ schema, ...options }));
+  const emitter = new EventEmitter();
+
+  const pendingConnections: [
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+  ][] = [];
+  let pendingOperations = 0;
+  const server = http.createServer(
+    createHandler({
+      schema,
+      ...options,
+      onConnect: async (...args) => {
+        pendingConnections.push([args[0], args[1]]);
+        await options?.onConnect?.(...args);
+        emitter.emit('conn');
+      },
+      onOperation: async (...args) => {
+        pendingOperations++;
+        const maybeResult = await options?.onOperation?.(...args);
+        emitter.emit('operation');
+        return maybeResult;
+      },
+    }),
+  );
 
   const sockets = new Set<net.Socket>();
   server.on('connection', (socket) => {
@@ -98,6 +128,42 @@ export async function startTServer(
         if (method === 'POST' && Object.keys(params).length)
           req.write(JSON.stringify(params));
         req.end();
+      });
+    },
+    pong,
+    waitForConnect(test, expire) {
+      return new Promise((resolve) => {
+        debugger;
+        function done() {
+          // the on connect listener below will be called before our listener, populating the queue
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const args = pendingConnections.shift()!;
+          test?.(...args);
+          resolve();
+        }
+        if (pendingConnections.length > 0) return done();
+        emitter.once('conn', done);
+        if (expire)
+          setTimeout(() => {
+            emitter.off('conn', done); // expired
+            resolve();
+          }, expire);
+      });
+    },
+    waitForOperation(test, expire) {
+      return new Promise((resolve) => {
+        function done() {
+          pendingOperations--;
+          test?.();
+          resolve();
+        }
+        if (pendingOperations > 0) return done();
+        emitter.once('operation', done);
+        if (expire)
+          setTimeout(() => {
+            emitter.off('operation', done); // expired
+            resolve();
+          }, expire);
       });
     },
     dispose,
