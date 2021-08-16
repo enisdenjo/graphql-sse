@@ -106,9 +106,9 @@ export interface HandlerOptions {
    * Authenticate the client. Returning a string indicates that the client
    * is authenticated and the request is ready to be processed.
    *
-   * If nothing is returned, the execution will stop. Meaning, if you want to
-   * respond to the client with a custom status or body, you should do so using
-   * the provided arguments and then return.
+   * If undefined or void is returned, the execution will stop. Meaning, if you
+   * want to respond to the client with a custom status or body, you should do so
+   * using the provided arguments and then return.
    *
    * @default 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
@@ -129,6 +129,10 @@ export interface HandlerOptions {
    * @default 0
    */
   reconnectTimeout?: number;
+  /**
+   * Called when a new event stream has connected.
+   */
+  onConnect?: (req: IncomingMessage, res: ServerResponse) => void;
 }
 
 /**
@@ -202,6 +206,7 @@ export function createHandler(options: HandlerOptions): Handler {
       });
     },
     reconnectTimeout = 0,
+    onConnect,
   } = options;
 
   const streams: Record<string, Stream> = {};
@@ -284,6 +289,8 @@ export function createHandler(options: HandlerOptions): Handler {
         res.flushHeaders();
 
         // TODO-db-210618 make distinction between client disconnect and graceful close?
+        // req then res close event -> client close
+        // res then req close event -> server close
 
         res.once('close', () => {
           response = null;
@@ -422,6 +429,7 @@ export function createHandler(options: HandlerOptions): Handler {
     if (accept === 'text/event-stream') {
       if (!stream) {
         // if event stream is not registered, process it directly
+        onConnect?.(req, res);
         // TODO-db-210612 parse, perform and respond
         return res.writeHead(501).end();
       }
@@ -430,6 +438,7 @@ export function createHandler(options: HandlerOptions): Handler {
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
       await stream.use(req, res);
+      onConnect?.(req, res);
       return;
     }
 
