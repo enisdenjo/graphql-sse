@@ -24,7 +24,7 @@ export interface RequestParams {
  * @category Common
  */
 export interface StreamMessage<E extends StreamEvent = StreamEvent> {
-  id: string;
+  // id: string; TODO-db-210816 use in future releases when connection recovery is implemented
   event: E;
   data: StreamData<E> | StreamDataForID<E>;
   // retry?: number; TODO-db-210726 decide if necessary for graphql-sse

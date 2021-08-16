@@ -117,19 +117,6 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
-   * How long should the server wait for the client to reconnect in milisconds
-   * before completing its open operations.
-   *
-   * When set, the server will keep all operations open if the client disconnects
-   * abruptly for the set amount of time. If the client does not reconnect before the
-   * timeout expires, all open operations will be Doned. However, if the client
-   * does connect in a timely matter, missed messages will be flushed starting from the
-   * `Last-Event-Id` header value.
-   *
-   * @default 0
-   */
-  reconnectTimeout?: number;
-  /**
    * Called when a new event stream has connected.
    */
   onConnect?: (req: IncomingMessage, res: ServerResponse) => void;
@@ -171,7 +158,7 @@ interface Stream {
   /**
    * Use this connection for streaming.
    */
-  use(req: IncomingMessage, res: ServerResponse): Promise<void> | void;
+  use(req: IncomingMessage, res: ServerResponse): Promise<void>;
   /**
    * Stream from provided execution result to used connection.
    */
@@ -205,7 +192,6 @@ export function createHandler(options: HandlerOptions): Handler {
         return v.toString(16);
       });
     },
-    reconnectTimeout = 0,
     onConnect,
   } = options;
 
@@ -213,54 +199,39 @@ export function createHandler(options: HandlerOptions): Handler {
 
   function createStream(token: string): Stream {
     let response: ServerResponse | null = null,
-      currId = 0,
-      wentAway: ReturnType<typeof setTimeout>;
+      pendingMsgs: string[] = [];
     const ops: Record<string, AsyncIterator<unknown> | null> = {};
 
-    function write(chunk: unknown) {
+    function write(msg: unknown) {
       return new Promise<boolean>((resolve, reject) => {
         if (!response) return resolve(false);
-        response.write(chunk, (err) => {
+        response.write(msg, (err) => {
           if (err) return reject(err);
           resolve(true);
         });
       });
     }
 
-    let msgs: { id: number; msg: string }[] = [];
-    async function flush(lastId: number) {
-      while (msgs.length) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const { id, msg } = msgs.shift()!;
-        if (id > lastId) {
-          if (!(await write(msg))) throw new Error('Unable to flush messages');
-        }
-      }
-    }
-
     async function emit<E extends StreamEvent>(
       event: E,
       data: StreamData<E> | StreamDataForID<E>,
     ): Promise<void> {
-      let msg = `id: ${currId}\nevent: ${event}`;
+      let msg = `event: ${event}`;
       msg += `\ndata: ${data == null ? '' : JSON.stringify(data)}`;
       msg += '\n\n';
-      msgs.push({ id: currId, msg });
-      currId++;
 
       const wrote = await write(msg);
-      if (wrote) {
-        // TODO-db-210610 take care of msgs array on successful writes
-      }
+      if (!wrote) pendingMsgs.push(msg);
     }
 
-    async function end() {
+    async function dispose() {
       // TODO-db-210618 if ended and new response comes in, end it too
 
       response?.end();
+      response = null;
 
       delete streams[token];
-      msgs = [];
+      pendingMsgs = [];
       for (const op of Object.values(ops)) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await op?.return!(); // iterator must implement the return method
@@ -272,10 +243,9 @@ export function createHandler(options: HandlerOptions): Handler {
         return Boolean(response);
       },
       ops,
-      use(req, res) {
-        clearTimeout(wentAway);
-
+      async use(req, res) {
         response = res;
+        res.once('close', dispose);
 
         req.socket.setTimeout(0);
         req.socket.setNoDelay(true);
@@ -288,33 +258,13 @@ export function createHandler(options: HandlerOptions): Handler {
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
 
-        // TODO-db-210618 make distinction between client disconnect and graceful close?
-        // req then res close event -> client close
-        // res then req close event -> server close
-
-        res.once('close', () => {
-          response = null;
-
-          if (isFinite(reconnectTimeout) && reconnectTimeout > 0)
-            wentAway = setTimeout(end, reconnectTimeout);
-          else end();
-        });
-
         // TODO-db-210629 keep the connection alive by issuing pings (":\n\n")
 
-        const rawLastEventId = req.headers['last-event-id'];
-        if (rawLastEventId) {
-          let lastEventId: number | null = null;
-          try {
-            lastEventId = parseInt(
-              Array.isArray(rawLastEventId)
-                ? rawLastEventId.join('')
-                : rawLastEventId,
-            );
-          } catch {
-            // noop
-          }
-          if (lastEventId !== null) return flush(lastEventId);
+        while (pendingMsgs.length) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const msg = pendingMsgs.shift()!;
+          const wrote = await write(msg);
+          if (!wrote) throw new Error('Unable to flush messages');
         }
       },
       async from(executionResult, opId) {
@@ -346,8 +296,9 @@ export function createHandler(options: HandlerOptions): Handler {
 
         await emit('done', opId ? { id: opId } : null);
 
-        // when no operation id is present end on complete
-        if (!opId) end();
+        // end on complete when no operation id is present
+        // because distinct event streams are used for each operation
+        if (!opId) dispose();
         else delete ops[opId];
       },
     };
@@ -516,7 +467,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     if (isAsyncIterable(result)) stream.ops[opId] = result;
 
-    // TODO-db-210705 decide if streaming to an empty reservation is ok (will be flushed on connect)
+    // streaming to an empty reservation is ok (will be flushed on connect)
     stream.from(result, opId);
 
     return res.writeHead(202).end();
