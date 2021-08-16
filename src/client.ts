@@ -100,12 +100,10 @@ export interface Client {
   /**
    * Subscribes to receive through a SSE connection.
    *
-   * Use the provided `AbortSignal` for completing the subscription.
+   * It uses the `sink` to emit received data or errors. Returns a _dispose_
+   * function used for dropping the subscription and cleaning stuff up.
    */
-  subscribe<T = unknown>(
-    signal: AbortSignal,
-    payload: RequestParams,
-  ): AsyncIterableIterator<T>;
+  subscribe<T = unknown>(request: RequestParams, sink: Sink<T>): () => void;
 }
 
 /**
@@ -228,78 +226,61 @@ export function createClient(options: ClientOptions): Client {
   }
 
   return {
-    async *subscribe(signal, payload) {
+    subscribe(request, sink) {
       locks++;
       const id = generateID();
 
-      let completed = false;
-      function complete() {
-        if (completed) return;
-        completed = true;
-
+      const control = new AbortController();
+      control.signal.addEventListener('abort', () => {
         // release lock and disconnect if no locks are present
         if (--locks === 0) connCtrl.abort();
-      }
-      signal.addEventListener('abort', complete);
+      });
 
-      payload = {
-        ...payload,
-        extensions: { ...payload.extensions, operationId: id },
+      request = {
+        ...request,
+        extensions: { ...request.extensions, operationId: id },
       };
 
-      for (;;) {
-        try {
-          const { url, token, getResultsUntilDone } = await getOrConnect();
+      (async () => {
+        for (;;) {
+          try {
+            const { url, token, getResultsUntilDone } = await getOrConnect();
+            const res = await fetchFn(url, {
+              signal: control.signal,
+              method: 'POST',
+              headers: {
+                'x-graphql-stream-token': token,
+              },
+              body: JSON.stringify(request),
+            });
+            if (res.status !== 202) throw res;
 
-          const res = await fetchFn(url, {
-            signal,
-            method: 'POST',
-            headers: {
-              'x-graphql-stream-token': token,
-            },
-            body: JSON.stringify(payload),
-          });
-          if (res.status !== 202) throw res;
+            for await (const result of getResultsUntilDone(id)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              sink.next(result as any);
+            }
 
-          for await (const result of getResultsUntilDone(id)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            yield result as any;
+            return control.abort();
+          } catch (err) {
+            if (control.signal.aborted) return;
+            if (err instanceof FatalError) throw err;
+
+            // retries are not allowed or we tried to many times, report error
+            if (!retryAttempts || retries >= retryAttempts) throw err;
+
+            // try again
+            retryingErr = err;
           }
-
-          return complete();
-        } catch (err) {
-          if (signal.aborted) return;
-          if (err instanceof FatalError) throw err;
-
-          // retries are not allowed or we tried to many times, report error
-          if (!retryAttempts || retries >= retryAttempts) throw err;
-
-          // try again
-          retryingErr = err;
         }
-      }
+      })()
+        .catch((err) => sink.error(err))
+        .then(() => sink.complete());
+
+      return () => {
+        if (!control.signal.aborted) control.abort();
+      };
     },
   };
-}
-
-/**
- * A utility function that emits iterator values and events
- * to the passed sink.
- *
- * @category Client
- */
-export async function asyncIteratorToSink<T = unknown>(
-  iterator: AsyncIterableIterator<T>,
-  sink: Sink<T>,
-): Promise<void> {
-  try {
-    for await (const value of iterator) {
-      sink.next(value);
-    }
-    sink.complete();
-  } catch (err) {
-    sink.error(err);
-  }
 }
 
 /** @private */
