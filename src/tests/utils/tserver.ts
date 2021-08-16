@@ -133,7 +133,6 @@ export async function startTServer(
     pong,
     waitForConnect(test, expire) {
       return new Promise((resolve) => {
-        debugger;
         function done() {
           // the on connect listener below will be called before our listener, populating the queue
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
