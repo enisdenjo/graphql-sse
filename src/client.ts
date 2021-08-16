@@ -161,12 +161,11 @@ export function createClient(options: ClientOptions): Client {
   if (!lazy) throw new Error('Non-lazy mode not implemented');
 
   let connCtrl = new AbortController(),
-    conn: Promise<Connection> | undefined,
-    token = '',
+    conn: Promise<Connection & { token: string }> | undefined,
     locks = 0,
     retryingErr = null as unknown,
     retries = 0;
-  async function getOrConnect(): Promise<Connection> {
+  async function getOrConnect(): Promise<NonNullable<typeof conn>> {
     try {
       return await (conn ??
         (conn = (async () => {
@@ -198,19 +197,15 @@ export function createClient(options: ClientOptions): Client {
           if (connCtrl.signal.aborted)
             throw new FatalError('Connection aborted');
 
-          // TODO-db-210815 allow the user to provide and store the token
-          // PUT/register only when no existing token
-          if (!token) {
-            const res = await fetchFn(url, {
-              signal: connCtrl.signal,
-              method: 'PUT',
-              headers,
-            });
-            if (res.status !== 201) throw res;
-            headers['x-graphql-stream-token'] = token = await res.text();
-          }
+          const res = await fetchFn(url, {
+            signal: connCtrl.signal,
+            method: 'PUT',
+            headers,
+          });
+          if (res.status !== 201) throw res;
+          const token = await res.text();
+          headers['x-graphql-stream-token'] = token;
 
-          // TODO-db-210726 use last-event-id
           const connected = await connect({
             signal: connCtrl.signal,
             headers,
@@ -223,10 +218,10 @@ export function createClient(options: ClientOptions): Client {
           // whatever happens, the connection is gone
           connected.waitForDoneOrThrow.finally(() => (conn = undefined));
 
-          return connected;
+          return { ...connected, token };
         })()));
     } catch (err) {
-      // whatever problem happens here means the connection was not established
+      // whatever problem happens during connect means the connection was not established
       conn = undefined;
       throw err;
     }
@@ -254,7 +249,7 @@ export function createClient(options: ClientOptions): Client {
 
       for (;;) {
         try {
-          const { url, getResultsUntilDone } = await getOrConnect();
+          const { url, token, getResultsUntilDone } = await getOrConnect();
 
           const res = await fetchFn(url, {
             signal,
@@ -318,7 +313,7 @@ interface Connection {
 interface ConnectOptions {
   signal: AbortSignal;
   url: string;
-  headers: Record<string, string> | undefined;
+  headers?: Record<string, string> | undefined;
   body?: string;
   fetchFn: typeof fetch;
 }
