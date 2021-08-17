@@ -1,0 +1,99 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should accept valid events only 1`] = `"Invalid stream event \\"complete\\""`;
+
+exports[`should accept valid events only 2`] = `"Invalid stream event \\"next\\""`;
+
+exports[`should ignore comments 1`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "value",
+    "id": "",
+  },
+]
+`;
+
+exports[`should parse chunked message 1`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "value",
+    "id": "1",
+  },
+]
+`;
+
+exports[`should parse message whose lines are separated by \\r\\n 1`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "value",
+    "id": "1",
+  },
+]
+`;
+
+exports[`should parse multiple messages from one chunk 1`] = `
+Array [
+  Object {
+    "data": Object {},
+    "event": "value",
+    "id": "1",
+  },
+  Object {
+    "data": Object {
+      "no": "data",
+    },
+    "event": "value",
+    "id": "2",
+  },
+]
+`;
+
+exports[`should parse multiple messages from one chunk 2`] = `
+Array [
+  Object {
+    "data": Object {
+      "almost": "done",
+    },
+    "event": "value",
+    "id": "3",
+  },
+  Object {
+    "data": Object {},
+    "event": "done",
+    "id": "4",
+  },
+]
+`;
+
+exports[`should parse whole message 1`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "value",
+    "id": "1",
+  },
+]
+`;
+
+exports[`should parse whole message 2`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "value",
+    "id": "1",
+  },
+]
+`;
