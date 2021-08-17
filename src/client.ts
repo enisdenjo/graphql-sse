@@ -247,7 +247,8 @@ export function createClient(options: ClientOptions): Client {
       (async () => {
         for (;;) {
           try {
-            const { url, token, getResultsUntilDone } = await getOrConnect();
+            const { url, headers, token, getResultsUntilDone } =
+              await getOrConnect();
 
             let res;
             try {
@@ -255,6 +256,7 @@ export function createClient(options: ClientOptions): Client {
                 signal: control.signal,
                 method: 'POST',
                 headers: {
+                  ...headers,
                   'x-graphql-stream-token': token,
                 },
                 body: JSON.stringify(request),
@@ -327,7 +329,8 @@ export class NetworkError extends Error {
 }
 
 interface Connection {
-  url: string; // because it might change when supplying a function
+  url: string;
+  headers: Record<string, string> | undefined;
   waitForDoneOrThrow: Promise<void>;
   getResultsUntilDone: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
@@ -354,6 +357,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
     done = false;
   return {
     url,
+    headers,
     waitForDoneOrThrow: (async () => {
       try {
         let res;
