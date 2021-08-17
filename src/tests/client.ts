@@ -1,94 +1,63 @@
 import fetch from 'node-fetch';
 import { startTServer } from './utils/tserver';
-import { createClient, Client, RequestParams } from '../client';
+import { createClient } from '../client';
 
-export function subscribe<T = unknown>(
-  client: Client,
-  payload: RequestParams,
-): AsyncIterableIterator<T> & { dispose: () => void } {
-  let deferred: {
-    resolve: (done: boolean) => void;
-    reject: (err: unknown) => void;
-  } | null = null;
-  const pending: T[] = [];
-  let throwMe: unknown = null,
-    done = false;
-  const dispose = client.subscribe<T>(payload, {
-    next: (data) => {
-      pending.push(data);
-      deferred?.resolve(false);
-    },
-    error: (err) => {
-      throwMe = err;
-      deferred?.reject(throwMe);
-    },
-    complete: () => {
-      done = true;
-      deferred?.resolve(true);
-    },
-  });
-  return {
-    [Symbol.asyncIterator]() {
-      return this;
-    },
-    async next() {
-      if (done) return { done: true, value: undefined };
-      if (throwMe) throw throwMe;
-      if (pending.length)
-        return {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          value: pending.shift()!,
-        };
-      return (await new Promise<boolean>(
-        (resolve, reject) => (deferred = { resolve, reject }),
-      ))
-        ? { done: true, value: undefined }
-        : {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            value: pending.shift()!,
-          };
-    },
-    dispose,
-  };
+// just does nothing
+function noop(): void {
+  /**/
 }
 
-it('should execute a simple query', async () => {
+it('should execute a simple query', async (done) => {
+  expect.hasAssertions();
+
   const { url } = await startTServer();
 
   const client = createClient({
     url,
     fetchFn: fetch,
+    retryAttempts: 0,
   });
 
-  const sub = subscribe(client, {
-    query: '{ getValue }',
-  });
-
-  for await (const val of sub) {
-    expect(val).toMatchSnapshot();
-  }
+  client.subscribe(
+    {
+      query: '{ getValue }',
+    },
+    {
+      next: (val) => expect(val).toMatchSnapshot(),
+      error: (err) => fail(err),
+      complete: done,
+    },
+  );
 });
 
-it('should complete subscription by disposing', async () => {
+it('should complete subscription by disposing', async (done) => {
+  expect.hasAssertions();
+
   const { url, waitForOperation, pong } = await startTServer();
 
   const client = createClient({
     url,
     fetchFn: fetch,
+    retryAttempts: 0,
   });
 
-  const sub = subscribe(client, {
-    query: 'subscription { ping }',
-  });
+  const dispose = client.subscribe(
+    {
+      query: 'subscription { ping }',
+    },
+    {
+      next: (val) => {
+        expect(val).toMatchSnapshot();
+        dispose();
+      },
+      error: (err) => fail(err),
+      complete: done,
+    },
+  );
 
   await waitForOperation();
 
   pong();
-
-  for await (const val of sub) {
-    expect(val).toMatchSnapshot();
-    sub.dispose();
-  }
 });
 
 it('should connect on operation and disconnect after completion', async (done) => {
@@ -97,15 +66,23 @@ it('should connect on operation and disconnect after completion', async (done) =
   const client = createClient({
     url,
     fetchFn: fetch,
+    retryAttempts: 0,
   });
 
-  const sub = subscribe(client, {
-    query: 'subscription { ping }',
-  });
+  const dispose = client.subscribe(
+    {
+      query: 'subscription { ping }',
+    },
+    {
+      next: noop,
+      error: (err) => fail(err),
+      complete: done,
+    },
+  );
 
   await waitForConnect((req) => {
     req.once('close', done);
   });
 
-  sub.dispose();
+  dispose();
 });
