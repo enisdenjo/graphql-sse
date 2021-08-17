@@ -467,7 +467,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   };
 }
 
-/**  Isomorphic ReadableStream to AsyncIterator converter. */
+/** Isomorphic ReadableStream to AsyncIterator converter. */
 function toAsyncIterator(
   val: ReadableStream | NodeJS.ReadableStream,
 ): AsyncIterableIterator<string | Buffer | Uint8Array> {
