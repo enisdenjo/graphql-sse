@@ -1,9 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- *
- * handler
- *
- */
 
 import { startTServer } from './utils/tserver';
 import EventSource from 'eventsource';
