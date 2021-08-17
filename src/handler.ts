@@ -106,9 +106,12 @@ export interface HandlerOptions {
    * Authenticate the client. Returning a string indicates that the client
    * is authenticated and the request is ready to be processed.
    *
-   * If undefined or void is returned, the execution will stop. Meaning, if you
-   * want to respond to the client with a custom status or body, you should do so
-   * using the provided arguments and then return.
+   * A token of type string MUST be supplied; if there is no token, you may
+   * return an empty string (`''`);
+   *
+   * If you want to respond to the client with a custom status or body,
+   * you should do so using the provided `res` argument which will stop
+   * further execution.
    *
    * @default 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
@@ -413,7 +416,8 @@ export function createHandler(options: HandlerOptions): Handler {
   return async function handler(req: IncomingMessage, res: ServerResponse) {
     // authenticate first and acquire unique identification token
     const token = await authenticate(req, res);
-    if (typeof token !== 'string' || res.writableEnded) return; // `authenticate` responded
+    if (res.writableEnded) return;
+    if (typeof token !== 'string') throw new Error('Token was not supplied');
 
     const accept = req.headers.accept ?? '*/*';
 
@@ -498,7 +502,11 @@ export function createHandler(options: HandlerOptions): Handler {
     stream.ops[opId] = null;
 
     const perform = await prepare(req, res, params);
-    if (!perform || res.writableEnded) return; // `prepare` responded
+    if (res.writableEnded) return;
+    if (!perform)
+      throw new Error(
+        "Operation preparation didn't respond, yet it was not prepared",
+      );
 
     // operation might have completed before prepared
     if (!(opId in stream.ops)) return res.writeHead(204).end();
