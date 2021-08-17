@@ -57,7 +57,7 @@ export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'value'
  * @category Common
  */
 export function validateStreamData(e: unknown): StreamData {
-  if (isObject(e)) throw new Error('Invalid stream data');
+  if (!isObject(e)) throw new Error('Invalid stream data');
   // TODO-db-210723
   return e as StreamData;
 }
@@ -76,7 +76,7 @@ export type StreamDataForID<E extends StreamEvent = StreamEvent> =
  * @category Common
  */
 export function validateStreamDataForID(e: unknown): StreamData {
-  if (isObject(e)) throw new Error('Invalid stream data');
+  if (!isObject(e)) throw new Error('Invalid stream data');
   // TODO-db-210723
   return e as StreamData;
 }
