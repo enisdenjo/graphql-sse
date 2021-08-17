@@ -1,15 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should report operation validation issues to request 1`] = `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}"`;
+exports[`single stream mode should report operation validation issues to request 1`] = `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}"`;
 
-exports[`should stream query operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
+exports[`single stream mode should stream query operations to connected event stream 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
 
-exports[`should stream subscription operations to connected event source 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}"`;
+exports[`single stream mode should stream subscription operations to connected event stream 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}"`;
 
-exports[`should stream subscription operations to connected event source 2`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}}"`;
+exports[`single stream mode should stream subscription operations to connected event stream 2`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}}"`;
 
-exports[`should stream subscription operations to connected event source 3`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hola\\"}}}"`;
+exports[`single stream mode should stream subscription operations to connected event stream 3`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hola\\"}}}"`;
 
-exports[`should stream subscription operations to connected event source 4`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}}"`;
+exports[`single stream mode should stream subscription operations to connected event stream 4`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}}"`;
 
-exports[`should stream subscription operations to connected event source 5`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}}"`;
+exports[`single stream mode should stream subscription operations to connected event stream 5`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}}"`;
