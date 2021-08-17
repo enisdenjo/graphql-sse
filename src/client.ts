@@ -171,7 +171,8 @@ export function createClient(options: ClientOptions): Client {
             await retry(retries);
 
             // connection might've been aborted while waiting for retry
-            if (connCtrl.signal.aborted) throw new Error('Connection aborted');
+            if (connCtrl.signal.aborted)
+              throw new Error('Connection aborted by the client');
 
             retries++;
           }
@@ -184,13 +185,15 @@ export function createClient(options: ClientOptions): Client {
             typeof options.url === 'function'
               ? await options.url()
               : options.url;
-          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
+          if (connCtrl.signal.aborted)
+            throw new Error('Connection aborted by the client');
 
           const headers =
             typeof options.headers === 'function'
               ? await options.headers()
               : options.headers ?? {};
-          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
+          if (connCtrl.signal.aborted)
+            throw new Error('Connection aborted by the client');
 
           let res;
           try {
