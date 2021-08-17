@@ -283,14 +283,12 @@ export function createClient(options: ClientOptions): Client {
   };
 }
 
-/** @private */
 interface Connection {
   url: string; // because it might change when supplying a function
   waitForDoneOrThrow: Promise<void>;
   getResultsUntilDone: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
 
-/** @private */
 interface ConnectOptions {
   signal: AbortSignal;
   url: string;
@@ -299,7 +297,6 @@ interface ConnectOptions {
   fetchFn: typeof fetch;
 }
 
-/** @private */
 async function connect(options: ConnectOptions): Promise<Connection> {
   const { signal, url, headers, body, fetchFn } = options;
 
@@ -418,8 +415,6 @@ async function connect(options: ConnectOptions): Promise<Connection> {
 
 /**
  * Isomorphic ReadableStream to AsyncIterator converter.
- *
- * @private
  */
 function toAsyncIterator(
   val: ReadableStream | NodeJS.ReadableStream,
