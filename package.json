@@ -1,6 +1,21 @@
 {
   "name": "graphql-sse",
   "version": "1.0.0",
+  "description": "Zero-dependency, HTTP/1 safe, simple, GraphQL over Server-Sent Events server and client",
+  "keywords": [
+    "graphql",
+    "client",
+    "relay",
+    "express",
+    "apollo",
+    "server",
+    "sse",
+    "transport",
+    "server-sent-events",
+    "observables",
+    "subscriptions",
+    "fastify"
+  ],
   "author": "Denis Badurina <badurinadenis@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/enisdenjo/graphql-sse#readme",
