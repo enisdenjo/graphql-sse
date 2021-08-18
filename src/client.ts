@@ -4,7 +4,7 @@
  *
  */
 
-import { messageReader } from './parse';
+import { createParser } from './parser';
 import { StreamMessage, RequestParams, StreamDataForID } from './common';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -348,13 +348,13 @@ async function* createStream(
     if (!res.ok) throw res;
     if (!res.body) throw new Error('Missing response body');
 
-    const read = messageReader();
+    const parse = createParser();
     for await (const chunk of toAsyncIterator(res.body)) {
       if (typeof chunk === 'string')
         throw new Error(`Unexpected string chunk "${chunk}"`);
 
       // read chunk and if message is ready, yield it
-      const msg = read(chunk);
+      const msg = parse(chunk);
       if (!msg) continue;
 
       yield msg;
