@@ -16,7 +16,6 @@ Object {
     ],
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -24,7 +23,6 @@ exports[`distinct streams mode should report operation validation issues by stre
 Object {
   "data": null,
   "event": "complete",
-  "id": "",
 }
 `;
 
@@ -36,7 +34,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -44,7 +41,6 @@ exports[`distinct streams mode should stream query operations to connected event
 Object {
   "data": null,
   "event": "complete",
-  "id": "",
 }
 `;
 
@@ -56,7 +52,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -68,7 +63,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -80,7 +74,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -92,7 +85,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -104,7 +96,6 @@ Object {
     },
   },
   "event": "next",
-  "id": "",
 }
 `;
 
@@ -112,7 +103,6 @@ exports[`distinct streams mode should stream subscription operations to connecte
 Object {
   "data": null,
   "event": "complete",
-  "id": "",
 }
 `;
 

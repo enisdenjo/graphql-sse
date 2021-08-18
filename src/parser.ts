@@ -80,11 +80,13 @@ export function createParser(): (
         // empty line denotes end of incoming message
         if (!message.id && !message.event && !message.data) return; // server ping ":\n\n"
         if (!message.event) throw new Error('Missing message event');
+        const id = message.id;
         const event = validateStreamEvent(message.event);
+        const data = parseStreamData(event, message.data);
         pending.push({
-          ...message,
+          ...(id ? { id } : undefined), // completely omit id field when empty
           event,
-          data: parseStreamData(event, message.data),
+          data,
         });
         message = { id: '', event: '', data: '' };
       } else if (fieldLength > 0) {
@@ -110,9 +112,6 @@ export function createParser(): (
             // append the new value if the message has data
             message.data = message.data ? message.data + '\n' + value : value;
             break;
-          case 'retry':
-            // TODO-db-210722 we dont expect retries from the SSE server, should we?
-            throw new Error('Unexpected "retry" message');
         }
       }
 

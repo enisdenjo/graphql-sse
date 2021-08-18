@@ -11,7 +11,6 @@ Array [
       "iAm": "data",
     },
     "event": "next",
-    "id": "",
   },
 ]
 `;
@@ -103,7 +102,6 @@ Array [
   Object {
     "data": null,
     "event": "complete",
-    "id": "",
   },
 ]
 `;
