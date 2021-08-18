@@ -37,7 +37,7 @@ import {
  *
  * @category Server
  */
-export type GraphQLExecutionContextValue =
+export type ExecutionContext =
   // eslint-disable-next-line @typescript-eslint/ban-types
   | object // you can literally pass "any" JS object as the context value
   | symbol
@@ -74,13 +74,11 @@ export interface HandlerOptions {
    * in subscriptions here: https://github.com/graphql/graphql-js/issues/894.
    */
   context?:
-    | GraphQLExecutionContextValue
+    | ExecutionContext
     | ((
         req: IncomingMessage,
         args: ExecutionArgs,
-      ) =>
-        | Promise<GraphQLExecutionContextValue>
-        | GraphQLExecutionContextValue);
+      ) => Promise<ExecutionContext> | ExecutionContext);
   /**
    * A custom GraphQL validate function allowing you to apply your
    * own validation rules.
