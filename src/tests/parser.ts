@@ -14,6 +14,9 @@ it('should parse whole message', () => {
   expect(
     parse(encoder.encode('id:1\nevent:value\ndata:{ "iAm": "data" }\n\n')),
   ).toMatchSnapshot();
+
+  // no data or id
+  expect(parse(encoder.encode('event: done\n\n'))).toMatchSnapshot();
 });
 
 it('should parse chunked message', () => {

@@ -4,12 +4,7 @@
  *
  */
 
-import {
-  StreamMessage,
-  validateStreamEvent,
-  validateStreamData,
-  StreamEvent,
-} from './common';
+import { StreamMessage, validateStreamEvent, parseStreamData } from './common';
 
 enum ControlChars {
   NewLine = 10,
@@ -83,11 +78,11 @@ export function createParser(): (chunk: Uint8Array) => StreamMessage[] | void {
         // empty line denotes end of incoming message
         if (!message.id && !message.event && !message.data) return; // server ping ":\n\n"
         if (!message.event) throw new Error('Missing message event');
-        if (!message.data) throw new Error('Missing message data');
+        const event = validateStreamEvent(message.event);
         pending.push({
           ...message,
-          event: message.event as StreamEvent, // already validated, see below
-          data: validateStreamData(JSON.parse(message.data)),
+          event,
+          data: parseStreamData(event, message.data),
         });
         message = { id: '', event: '', data: '' };
       } else if (fieldLength > 0) {
@@ -107,7 +102,7 @@ export function createParser(): (chunk: Uint8Array) => StreamMessage[] | void {
             message.id = value;
             break;
           case 'event':
-            message.event = validateStreamEvent(value);
+            message.event = value;
             break;
           case 'data':
             // append the new value if the message has data

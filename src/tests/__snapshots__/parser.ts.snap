@@ -97,3 +97,13 @@ Array [
   },
 ]
 `;
+
+exports[`should parse whole message 3`] = `
+Array [
+  Object {
+    "data": null,
+    "event": "done",
+    "id": "",
+  },
+]
+`;
