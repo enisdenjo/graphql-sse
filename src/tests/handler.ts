@@ -38,6 +38,8 @@ it('should only accept valid accept headers', async () => {
   expect(res.statusMessage).toBe('Missing query');
 });
 
+it.todo('should throw all unexpected errors from the handler');
+
 describe('single stream mode', () => {
   it('should respond with 404s when token was not previously registered', async () => {
     const { request } = await startTServer();

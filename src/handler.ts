@@ -199,16 +199,35 @@ export interface HandlerOptions {
  * The ready-to-use handler. Simply plug it in your favourite HTTP framework
  * and enjoy.
  *
- * Beware that if you're expecting edge case internal errors. You have to take
- * care of them when implementing the handler. Something like:
+ * Beware that the handler resolves only after the whole operation completes.
+ * - If query/mutation, waits for result
+ * - If subscription, waits for complete
+ *
+ * Errors thrown from **any** of the provided options or callbacks (or even due to
+ * library misuse or potential bugs) will reject the handler's promise. They are
+ * considered internal errors and you should take care of them accordingly.
+ *
+ * For production environments, its recommended not to transmit the exact internal
+ * error details to the client, but instead report to an error logging tool or simply
+ * the console. Roughly:
  *
  * ```ts
+ * import http from 'http';
+ * import { createHandler } from 'graphql-sse';
+ *
  * const handler = createHandler({ ... });
- * try {
- *   await handler(req, res);
- * } catch (err) {
- *   return res.writeHead(500).end();
- * }
+ *
+ * http.createServer(async (req, res) => {
+ *   try {
+ *     await handler(req, res);
+ *   } catch (err) {
+ *     console.error(err);
+ *     // or
+ *     Sentry.captureException(err);
+ *
+ *     res.writeHead(500, 'Internal Server Error').end();
+ *   }
+ * });
  * ```
  */
 export type Handler = (
@@ -363,8 +382,6 @@ export function createHandler(options: HandlerOptions): Handler {
         }
       },
       async from(operationReq, args, result, opId) {
-        // TODO-db-210818 catch and report errors
-
         if (isAsyncIterable(result)) {
           /** multiple emitted results */
           for await (let part of result) {
@@ -437,67 +454,60 @@ export function createHandler(options: HandlerOptions): Handler {
         .writeHead(405, 'Cannot perform mutations over GET', { Allow: 'POST' })
         .end();
 
-    try {
-      const args = {
-        operationName,
-        document: query,
-        variableValues: variables,
-      };
-      const execArgs: ExecutionArgs = {
-        ...args,
-        schema: typeof schema === 'function' ? await schema(req, args) : schema,
-      };
+    const args = {
+      operationName,
+      document: query,
+      variableValues: variables,
+    };
+    const execArgs: ExecutionArgs = {
+      ...args,
+      schema: typeof schema === 'function' ? await schema(req, args) : schema,
+    };
 
-      const validationErrs = validate(execArgs.schema, execArgs.document);
-      if (validationErrs.length) {
-        if (req.headers.accept === 'text/event-stream') {
-          // accept the request and stream the validation error
-          // for event streams promoting graceful reporting.
-          // Read more: https://www.w3.org/TR/eventsource/#processing-model
-          return [
-            execArgs,
-            function perform() {
-              return { errors: validationErrs };
-            },
-          ];
-        }
-
-        res
-          .writeHead(400, {
-            'Content-Type':
-              req.headers.accept === 'application/json'
-                ? 'application/json; charset=utf-8'
-                : 'application/graphql+json; charset=utf-8',
-          })
-          .write(JSON.stringify({ errors: validationErrs }));
-        return res.end();
+    const validationErrs = validate(execArgs.schema, execArgs.document);
+    if (validationErrs.length) {
+      if (req.headers.accept === 'text/event-stream') {
+        // accept the request and stream the validation error
+        // for event streams promoting graceful reporting.
+        // Read more: https://www.w3.org/TR/eventsource/#processing-model
+        return [
+          execArgs,
+          function perform() {
+            return { errors: validationErrs };
+          },
+        ];
       }
 
-      if (!('contextValue' in execArgs))
-        execArgs.contextValue =
-          typeof context === 'function'
-            ? await context(req, execArgs)
-            : context;
-
-      return [
-        execArgs,
-        async function perform() {
-          let result;
-          result =
-            operation === 'subscription'
-              ? subscribe(execArgs)
-              : execute(execArgs);
-
-          const maybeResult = await onOperation?.(req, res, execArgs, result);
-          if (maybeResult) result = maybeResult;
-
-          return result;
-        },
-      ];
-    } catch (err) {
-      // TODO-db-210618 what if an instance of Error is not thrown?
-      return res.writeHead(400, err.message).end();
+      res
+        .writeHead(400, {
+          'Content-Type':
+            req.headers.accept === 'application/json'
+              ? 'application/json; charset=utf-8'
+              : 'application/graphql+json; charset=utf-8',
+        })
+        .write(JSON.stringify({ errors: validationErrs }));
+      return res.end();
     }
+
+    if (!('contextValue' in execArgs))
+      execArgs.contextValue =
+        typeof context === 'function' ? await context(req, execArgs) : context;
+
+    return [
+      execArgs,
+      async function perform() {
+        let result;
+        result =
+          operation === 'subscription'
+            ? subscribe(execArgs)
+            : execute(execArgs);
+
+        const maybeResult = await onOperation?.(req, res, execArgs, result);
+        if (maybeResult) result = maybeResult;
+
+        return result;
+      },
+    ];
   }
 
   return async function handler(req: IncomingMessage, res: ServerResponse) {
@@ -547,7 +557,7 @@ export function createHandler(options: HandlerOptions): Handler {
         await onConnect?.(req, res);
         if (res.writableEnded) return; // `onConnect` responded
         await distinctStream.use(req, res);
-        distinctStream.from(req, args, result);
+        await distinctStream.from(req, args, result);
         return;
       }
 
@@ -646,10 +656,10 @@ export function createHandler(options: HandlerOptions): Handler {
 
     if (isAsyncIterable(result)) stream.ops[opId] = result;
 
-    // streaming to an empty reservation is ok (will be flushed on connect)
-    stream.from(req, args, result, opId);
+    res.writeHead(202).end();
 
-    return res.writeHead(202).end();
+    // streaming to an empty reservation is ok (will be flushed on connect)
+    await stream.from(req, args, result, opId);
   };
 }
 
