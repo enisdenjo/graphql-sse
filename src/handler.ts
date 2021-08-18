@@ -221,7 +221,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
       const urlToken = new URL(
         req.url ?? '',
-        'http://' + req.headers.host + '/',
+        'http://localhost/',
       ).searchParams.get('token');
       if (urlToken) return urlToken;
 
@@ -514,10 +514,9 @@ export function createHandler(options: HandlerOptions): Handler {
       // streams must exist when completing operations
       if (!stream) return res.writeHead(404, 'Stream not found').end();
 
-      const opId = new URL(
-        req.url ?? '',
-        'http://' + req.headers.host + '/',
-      ).searchParams.get('operationId');
+      const opId = new URL(req.url ?? '', 'http://localhost/').searchParams.get(
+        'operationId',
+      );
       if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
