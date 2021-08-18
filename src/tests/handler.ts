@@ -230,22 +230,4 @@ describe('distinct streams mode', () => {
 
     await waitForDisconnect();
   });
-
-  it('should stream subscription operations to connected event stream and then disconnect', async () => {
-    const { url, waitForDisconnect } = await startTServer();
-
-    const control = new AbortController();
-
-    const msgs = await eventStream({
-      signal: control.signal,
-      url,
-      body: { query: 'subscription { greetings }' },
-    });
-
-    for await (const msg of msgs) {
-      expect(msg).toMatchSnapshot();
-    }
-
-    await waitForDisconnect();
-  });
 });
