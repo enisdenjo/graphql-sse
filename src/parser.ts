@@ -20,7 +20,9 @@ enum ControlChars {
  *
  * @private
  */
-export function createParser(): (chunk: Uint8Array) => StreamMessage[] | void {
+export function createParser(): (
+  chunk: Uint8Array,
+) => (StreamMessage<false> | StreamMessage<true>)[] | void {
   let buffer: Uint8Array | undefined;
   let position: number; // current read position
   let fieldLength: number; // length of the `field` portion of the line
