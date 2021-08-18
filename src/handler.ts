@@ -130,6 +130,30 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<void> | void;
   /**
+   * The subscribe callback executed right after processing the request
+   * before proceeding with the GraphQL operation execution.
+   *
+   * If you return `ExecutionArgs` from the callback, it will be used instead of
+   * trying to build one internally. In this case, you are responsible for providing
+   * a ready set of arguments which will be directly plugged in the operation execution.
+   *
+   * Omitting the fields `contextValue` from the returned `ExecutionArgs` will use the
+   * provided `context` option, if available.
+   *
+   * If you want to respond to the client with a custom status or body,
+   * you should do so using the provided `res` argument which will stop
+   * further execution.
+   *
+   * Useful for preparing the execution arguments following a custom logic. A typical
+   * use-case is persisted queries. You can identify the query from the request parameters
+   * and supply the appropriate GraphQL operation execution arguments.
+   */
+  onSubscribe?: (
+    req: IncomingMessage,
+    res: ServerResponse,
+    params: RequestParams,
+  ) => Promise<ExecutionArgs | void> | ExecutionArgs | void;
+  /**
    * Executed after the operation call resolves. For streaming
    * operations, triggering this callback does not necessarely
    * mean that there is already a result available - it means
@@ -287,6 +311,7 @@ export function createHandler(options: HandlerOptions): Handler {
       });
     },
     onConnect,
+    onSubscribe,
     onOperation,
     onNext,
     onComplete,
@@ -429,49 +454,70 @@ export function createHandler(options: HandlerOptions): Handler {
   async function prepare(
     req: IncomingMessage,
     res: ServerResponse,
-    { operationName, query, variables }: RequestParams,
+    params: RequestParams,
   ): Promise<[args: ExecutionArgs, perform: () => OperationResult] | void> {
-    if (typeof query === 'string') {
-      try {
-        query = parse(query);
-      } catch {
-        return res.writeHead(400, 'GraphQL query syntax error').end();
+    let args: ExecutionArgs, operation: OperationTypeNode;
+
+    const maybeExecArgs = await onSubscribe?.(req, res, params);
+    if (maybeExecArgs) args = maybeExecArgs;
+    else {
+      const { operationName, variables } = params;
+      let { query } = params;
+
+      if (typeof query === 'string') {
+        try {
+          query = parse(query);
+        } catch {
+          return res.writeHead(400, 'GraphQL query syntax error').end();
+        }
       }
+
+      const argsWithoutSchema = {
+        operationName,
+        document: query,
+        variableValues: variables,
+      };
+      args = {
+        ...argsWithoutSchema,
+        schema:
+          typeof schema === 'function'
+            ? await schema(req, argsWithoutSchema)
+            : schema,
+      };
     }
 
-    let operation: OperationTypeNode;
     try {
-      const ast = getOperationAST(query, operationName);
+      const ast = getOperationAST(args.document, args.operationName);
       if (!ast) throw null;
       operation = ast.operation;
     } catch {
-      return res.writeHead(400, 'Invalid GraphQL query operation').end();
+      return res.writeHead(400, 'Unable to detect operation AST').end();
     }
 
-    // mutations cannot happen over GETs
+    // mutations cannot happen over GETs as per the spec
+    // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#get
     if (operation === 'mutation' && req.method === 'GET')
       return res
-        .writeHead(405, 'Cannot perform mutations over GET', { Allow: 'POST' })
+        .writeHead(405, 'Cannot perform mutations over GET', {
+          Allow: 'POST',
+        })
         .end();
 
-    const args = {
-      operationName,
-      document: query,
-      variableValues: variables,
-    };
-    const execArgs: ExecutionArgs = {
-      ...args,
-      schema: typeof schema === 'function' ? await schema(req, args) : schema,
-    };
+    if (!('contextValue' in args))
+      args.contextValue =
+        typeof context === 'function' ? await context(req, args) : context;
 
-    const validationErrs = validate(execArgs.schema, execArgs.document);
+    // we validate after injecting the context because the process of
+    // reporting the validation errors might need the supplied context value
+    const validationErrs = validate(args.schema, args.document);
     if (validationErrs.length) {
       if (req.headers.accept === 'text/event-stream') {
-        // accept the request and stream the validation error
-        // for event streams promoting graceful reporting.
+        // accept the request and emit the validation error in event streams,
+        // promoting graceful GraphQL error reporting
         // Read more: https://www.w3.org/TR/eventsource/#processing-model
+        // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#document-validation
         return [
-          execArgs,
+          args,
           function perform() {
             return { errors: validationErrs };
           },
@@ -489,20 +535,13 @@ export function createHandler(options: HandlerOptions): Handler {
       return res.end();
     }
 
-    if (!('contextValue' in execArgs))
-      execArgs.contextValue =
-        typeof context === 'function' ? await context(req, execArgs) : context;
-
     return [
-      execArgs,
+      args,
       async function perform() {
         let result;
-        result =
-          operation === 'subscription'
-            ? subscribe(execArgs)
-            : execute(execArgs);
+        result = operation === 'subscription' ? subscribe(args) : execute(args);
 
-        const maybeResult = await onOperation?.(req, res, execArgs, result);
+        const maybeResult = await onOperation?.(req, res, args, result);
         if (maybeResult) result = maybeResult;
 
         return result;
