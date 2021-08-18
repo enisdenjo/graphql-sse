@@ -153,6 +153,36 @@ export interface HandlerOptions {
     result: OperationResult,
   ) => Promise<OperationResult | void> | OperationResult | void;
   /**
+   * Executed after an operation has emitted a result right before
+   * that result has been sent to the client.
+   *
+   * Results from both single value and streaming operations will
+   * invoke this callback.
+   *
+   * Use this callback if you want to format the execution result
+   * before it reaches the client.
+   */
+  onNext?: (
+    req: IncomingMessage,
+    args: ExecutionArgs,
+    result: ExecutionResult,
+  ) => Promise<ExecutionResult | void> | ExecutionResult | void;
+  /**
+   * The complete callback is executed after the operation
+   * has completed and the client has been notified.
+   *
+   * Since the library makes sure to complete streaming
+   * operations even after an abrupt closure, this callback
+   * will always be called.
+   *
+   * First argument, the request, is always the event stream
+   * request.
+   */
+  onComplete?: (
+    req: IncomingMessage,
+    args: ExecutionArgs,
+  ) => Promise<void> | void;
+  /**
    * Called when an event stream has disconnected right before the
    * accepting the stream.
    */
@@ -200,7 +230,9 @@ interface Stream {
    * Stream from provided execution result to used connection.
    */
   from(
-    executionResult: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
+    operationReq: IncomingMessage, // holding the operation request (not necessarily the event stream)
+    args: ExecutionArgs,
+    result: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
     opId?: string,
   ): Promise<void>;
 }
@@ -231,6 +263,8 @@ export function createHandler(options: HandlerOptions): Handler {
     },
     onConnect,
     onOperation,
+    onNext,
+    onComplete,
     onDisconnect,
   } = options;
 
@@ -322,30 +356,38 @@ export function createHandler(options: HandlerOptions): Handler {
           if (!wrote) throw new Error('Unable to flush messages');
         }
       },
-      async from(executionResult, opId) {
-        if (isAsyncIterable(executionResult)) {
+      async from(operationReq, args, result, opId) {
+        // TODO-db-210818 catch and report errors
+
+        if (isAsyncIterable(result)) {
           /** multiple emitted results */
-          for await (const result of executionResult) {
+          for await (let part of result) {
+            const maybeResult = await onNext?.(operationReq, args, part);
+            if (maybeResult) part = maybeResult;
+
             await emit(
               'next',
               opId
                 ? {
                     id: opId,
-                    payload: result,
+                    payload: part,
                   }
-                : result,
+                : part,
             );
           }
         } else {
           /** single emitted result */
+          const maybeResult = await onNext?.(operationReq, args, result);
+          if (maybeResult) result = maybeResult;
+
           await emit(
             'next',
             opId
               ? {
                   id: opId,
-                  payload: executionResult,
+                  payload: result,
                 }
-              : executionResult,
+              : result,
           );
         }
 
@@ -353,8 +395,10 @@ export function createHandler(options: HandlerOptions): Handler {
 
         // end on complete when no operation id is present
         // because distinct event streams are used for each operation
-        if (!opId) dispose();
+        if (!opId) await dispose();
         else delete ops[opId];
+
+        await onComplete?.(operationReq, args);
       },
     };
   }
@@ -363,7 +407,7 @@ export function createHandler(options: HandlerOptions): Handler {
     req: IncomingMessage,
     res: ServerResponse,
     { operationName, query, variables }: RequestParams,
-  ): Promise<(() => OperationResult) | void> {
+  ): Promise<[args: ExecutionArgs, perform: () => OperationResult] | void> {
     if (typeof query === 'string') {
       try {
         query = parse(query);
@@ -404,9 +448,12 @@ export function createHandler(options: HandlerOptions): Handler {
           // accept the request and stream the validation error
           // for event streams promoting graceful reporting.
           // Read more: https://www.w3.org/TR/eventsource/#processing-model
-          return function perform() {
-            return { errors: validationErrs };
-          };
+          return [
+            execArgs,
+            function perform() {
+              return { errors: validationErrs };
+            },
+          ];
         }
 
         res
@@ -426,18 +473,21 @@ export function createHandler(options: HandlerOptions): Handler {
             ? await context(req, execArgs)
             : context;
 
-      return async function perform() {
-        let result;
-        result =
-          operation === 'subscription'
-            ? subscribe(execArgs)
-            : execute(execArgs);
+      return [
+        execArgs,
+        async function perform() {
+          let result;
+          result =
+            operation === 'subscription'
+              ? subscribe(execArgs)
+              : execute(execArgs);
 
-        const maybeResult = await onOperation?.(req, res, execArgs, result);
-        if (maybeResult) result = maybeResult;
+          const maybeResult = await onOperation?.(req, res, execArgs, result);
+          if (maybeResult) result = maybeResult;
 
-        return result;
-      };
+          return result;
+        },
+      ];
     } catch (err) {
       // TODO-db-210618 what if an instance of Error is not thrown?
       return res.writeHead(400, err.message).end();
@@ -471,12 +521,13 @@ export function createHandler(options: HandlerOptions): Handler {
         // reserve space for the operation
         distinctStream.ops[''] = null;
 
-        const perform = await prepare(req, res, params);
+        const prepared = await prepare(req, res, params);
         if (res.writableEnded) return;
-        if (!perform)
+        if (!prepared)
           throw new Error(
             "Operation preparation didn't respond, yet it was not prepared",
           );
+        const [args, perform] = prepared;
 
         const result = await perform();
         if (res.writableEnded) {
@@ -490,7 +541,7 @@ export function createHandler(options: HandlerOptions): Handler {
         await onConnect?.(req, res);
         if (res.writableEnded) return; // `onConnect` responded
         await distinctStream.use(req, res);
-        distinctStream.from(result);
+        distinctStream.from(req, args, result);
         return;
       }
 
@@ -561,12 +612,13 @@ export function createHandler(options: HandlerOptions): Handler {
     // reserve space for the operation through ID
     stream.ops[opId] = null;
 
-    const perform = await prepare(req, res, params);
+    const prepared = await prepare(req, res, params);
     if (res.writableEnded) return;
-    if (!perform)
+    if (!prepared)
       throw new Error(
         "Operation preparation didn't respond, yet it was not prepared",
       );
+    const [args, perform] = prepared;
 
     // operation might have completed before prepared
     if (!(opId in stream.ops)) return res.writeHead(204).end();
@@ -589,7 +641,7 @@ export function createHandler(options: HandlerOptions): Handler {
     if (isAsyncIterable(result)) stream.ops[opId] = result;
 
     // streaming to an empty reservation is ok (will be flushed on connect)
-    stream.from(result, opId);
+    stream.from(req, args, result, opId);
 
     return res.writeHead(202).end();
   };

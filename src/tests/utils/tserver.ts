@@ -36,6 +36,7 @@ export interface TServer {
     expire?: number,
   ): Promise<void>;
   waitForOperation(test?: () => void, expire?: number): Promise<void>;
+  waitForComplete(test?: () => void, expire?: number): Promise<void>;
   waitForDisconnect(test?: () => void, expire?: number): Promise<void>;
   dispose: Dispose;
 }
@@ -50,6 +51,7 @@ export async function startTServer(
     res: http.ServerResponse,
   ][] = [];
   let pendingOperations = 0,
+    pendingCompletes = 0,
     pendingDisconnects = 0;
   const server = http.createServer(
     createHandler({
@@ -66,11 +68,15 @@ export async function startTServer(
         emitter.emit('operation');
         return maybeResult;
       },
+      onComplete: async (...args) => {
+        pendingCompletes++;
+        await options?.onComplete?.(...args);
+        emitter.emit('complete');
+      },
       onDisconnect: async (...args) => {
         pendingDisconnects++;
-        const maybeResult = await options?.onDisconnect?.(...args);
+        await options?.onDisconnect?.(...args);
         emitter.emit('disconn');
-        return maybeResult;
       },
     }),
   );
@@ -163,6 +169,22 @@ export async function startTServer(
         if (expire)
           setTimeout(() => {
             emitter.off('operation', done); // expired
+            resolve();
+          }, expire);
+      });
+    },
+    waitForComplete(test, expire) {
+      return new Promise((resolve) => {
+        function done() {
+          pendingCompletes--;
+          test?.();
+          resolve();
+        }
+        if (pendingCompletes > 0) return done();
+        emitter.once('complete', done);
+        if (expire)
+          setTimeout(() => {
+            emitter.off('complete', done); // expired
             resolve();
           }, expire);
       });
