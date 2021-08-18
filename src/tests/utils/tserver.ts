@@ -36,6 +36,7 @@ export interface TServer {
     expire?: number,
   ): Promise<void>;
   waitForOperation(test?: () => void, expire?: number): Promise<void>;
+  waitForDisconnect(test?: () => void, expire?: number): Promise<void>;
   dispose: Dispose;
 }
 
@@ -48,7 +49,8 @@ export async function startTServer(
     req: http.IncomingMessage,
     res: http.ServerResponse,
   ][] = [];
-  let pendingOperations = 0;
+  let pendingOperations = 0,
+    pendingDisconnects = 0;
   const server = http.createServer(
     createHandler({
       schema,
@@ -62,6 +64,12 @@ export async function startTServer(
         pendingOperations++;
         const maybeResult = await options?.onOperation?.(...args);
         emitter.emit('operation');
+        return maybeResult;
+      },
+      onDisconnect: async (...args) => {
+        pendingDisconnects++;
+        const maybeResult = await options?.onDisconnect?.(...args);
+        emitter.emit('disconn');
         return maybeResult;
       },
     }),
@@ -155,6 +163,22 @@ export async function startTServer(
         if (expire)
           setTimeout(() => {
             emitter.off('operation', done); // expired
+            resolve();
+          }, expire);
+      });
+    },
+    waitForDisconnect(test, expire) {
+      return new Promise((resolve) => {
+        function done() {
+          pendingDisconnects--;
+          test?.();
+          resolve();
+        }
+        if (pendingDisconnects > 0) return done();
+        emitter.once('disconn', done);
+        if (expire)
+          setTimeout(() => {
+            emitter.off('disconn', done); // expired
             resolve();
           }, expire);
       });

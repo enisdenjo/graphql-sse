@@ -154,6 +154,11 @@ export interface HandlerOptions {
     args: ExecutionArgs,
     result: OperationResult,
   ) => Promise<OperationResult | void> | OperationResult | void;
+  /**
+   * Called when an event stream has disconnected right before the
+   * accepting the stream.
+   */
+  onDisconnect?: (req: IncomingMessage) => Promise<void> | void;
 }
 
 /**
@@ -228,6 +233,7 @@ export function createHandler(options: HandlerOptions): Handler {
     },
     onConnect,
     onOperation,
+    onDisconnect,
   } = options;
 
   const streams: Record<string, Stream> = {};
@@ -271,6 +277,9 @@ export function createHandler(options: HandlerOptions): Handler {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await op?.return!(); // iterator must implement the return method
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      onDisconnect?.(request!); // request must exist at this point
     }
 
     return {
@@ -279,13 +288,14 @@ export function createHandler(options: HandlerOptions): Handler {
       },
       ops,
       async use(req, res) {
+        request = req;
         response = res;
-        res.once('close', dispose);
 
         req.socket.setTimeout(0);
         req.socket.setNoDelay(true);
         req.socket.setKeepAlive(true);
 
+        res.once('close', dispose);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
