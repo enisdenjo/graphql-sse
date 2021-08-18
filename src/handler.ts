@@ -238,9 +238,11 @@ export function createHandler(options: HandlerOptions): Handler {
 
   const streams: Record<string, Stream> = {};
 
-  function createStream(token: string): Stream {
-    let response: ServerResponse | null = null,
-      pendingMsgs: string[] = [];
+  function createStream(token: string | null): Stream {
+    let request: IncomingMessage | null = null,
+      response: ServerResponse | null = null,
+      disposed = false;
+    const pendingMsgs: string[] = [];
     const ops: Record<string, AsyncIterator<unknown> | null> = {};
 
     function write(msg: unknown) {
@@ -266,20 +268,30 @@ export function createHandler(options: HandlerOptions): Handler {
     }
 
     async function dispose() {
-      // TODO-db-210618 if ended and new response comes in, end it too
+      if (disposed) return;
+      disposed = true;
 
-      response?.end();
-      response = null;
+      // make room for another potential stream while this one is being disposed
+      if (typeof token === 'string') delete streams[token];
 
-      delete streams[token];
-      pendingMsgs = [];
+      // complete all operations and flush messages queue before ending the stream
       for (const op of Object.values(ops)) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await op?.return!(); // iterator must implement the return method
       }
+      while (pendingMsgs.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const msg = pendingMsgs.shift()!;
+        await write(msg);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      response!.end(); // response must exist at this point
+      response = null;
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       onDisconnect?.(request!); // request must exist at this point
+      request = null;
     }
 
     return {
@@ -438,11 +450,37 @@ export function createHandler(options: HandlerOptions): Handler {
       // this means that distinct event streams are used for
       // graphql operations
       if (!stream) {
+        let params;
+        try {
+          params = await parseReq(req);
+        } catch (err) {
+          return res.writeHead(400, err.message).end();
+        }
+
+        const distinctStream = createStream(null);
+
+        // reserve space for the operation
+        distinctStream.ops[''] = null;
+
+        const perform = await prepare(req, res, params);
+        if (res.writableEnded) return;
+        if (!perform)
+          throw new Error(
+            "Operation preparation didn't respond, yet it was not prepared",
+          );
+
+        const result = await perform();
+        if (res.writableEnded)
+          // TODO-db-210816 should the result cleanup be done by the lib here
+          return; // `onOperation` responded
+
+        if (isAsyncIterable(result)) distinctStream.ops[''] = result;
+
         await onConnect?.(req, res);
         if (res.writableEnded) return; // `onConnect` responded
-
-        // TODO-db-210612 parse, perform and respond
-        return res.writeHead(501).end();
+        await distinctStream.use(req, res);
+        distinctStream.from(result);
+        return;
       }
 
       // open stream cant exist, only one per token is allowed

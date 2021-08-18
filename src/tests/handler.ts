@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { startTServer } from './utils/tserver';
+import { eventStream } from './utils/eventStream';
 import EventSource from 'eventsource';
 
 it('should only accept valid accept headers', async () => {
@@ -29,10 +30,12 @@ it('should only accept valid accept headers', async () => {
   expect(res.statusMessage).toBe('Missing query');
 
   res = await request('GET', { accept: 'text/event-stream' });
-  expect(res.statusCode).toBe(501); // not implemented
+  expect(res.statusCode).toBe(400);
+  expect(res.statusMessage).toBe('Missing query');
 
   res = await request('POST', { accept: 'text/event-stream' }, { query: '' });
-  expect(res.statusCode).toBe(501); // not implemented
+  expect(res.statusCode).toBe(400);
+  expect(res.statusMessage).toBe('Missing query');
 });
 
 describe('single stream mode', () => {
@@ -188,5 +191,25 @@ describe('single stream mode', () => {
     expect(data).toMatchSnapshot();
 
     es.close();
+  });
+});
+
+describe('distinct streams mode', () => {
+  it('should stream query operations to connected event stream and then disconnect', async () => {
+    const { url, waitForDisconnect } = await startTServer();
+
+    const control = new AbortController();
+
+    const msgs = await eventStream({
+      signal: control.signal,
+      url,
+      body: { query: '{ getValue }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
   });
 });

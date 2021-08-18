@@ -1,5 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`distinct streams mode should stream query operations to connected event stream and then disconnect 1`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "getValue": "value",
+    },
+  },
+  "event": "value",
+  "id": "",
+}
+`;
+
+exports[`distinct streams mode should stream query operations to connected event stream and then disconnect 2`] = `
+Object {
+  "data": null,
+  "event": "done",
+  "id": "",
+}
+`;
+
 exports[`single stream mode should report operation validation issues to request 1`] = `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}"`;
 
 exports[`single stream mode should stream query operations to connected event stream 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;
