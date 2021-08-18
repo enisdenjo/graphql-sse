@@ -128,10 +128,10 @@ describe('single stream mode', () => {
     const { data: token } = await request('PUT');
 
     const es = new EventSource(url + '?token=' + token);
-    es.addEventListener('value', (event) => {
+    es.addEventListener('next', (event) => {
       expect((event as any).data).toMatchSnapshot();
     });
-    es.addEventListener('done', () => {
+    es.addEventListener('complete', () => {
       es.close();
       done();
     });
@@ -152,11 +152,11 @@ describe('single stream mode', () => {
     const { data: token } = await request('PUT');
 
     const es = new EventSource(url + '?token=' + token);
-    es.addEventListener('value', (event) => {
+    es.addEventListener('next', (event) => {
       // called 5 times
       expect((event as any).data).toMatchSnapshot();
     });
-    es.addEventListener('done', () => {
+    es.addEventListener('complete', () => {
       es.close();
       done();
     });
@@ -175,10 +175,10 @@ describe('single stream mode', () => {
     const { data: token } = await request('PUT');
 
     const es = new EventSource(url + '?token=' + token);
-    es.addEventListener('value', () => {
+    es.addEventListener('next', () => {
       fail('Shouldnt have omitted');
     });
-    es.addEventListener('done', () => {
+    es.addEventListener('complete', () => {
       fail('Shouldnt have omitted');
     });
 
@@ -204,6 +204,42 @@ describe('distinct streams mode', () => {
       signal: control.signal,
       url,
       body: { query: '{ getValue }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
+  });
+
+  it('should stream subscription operations to connected event stream and then disconnect', async () => {
+    const { url, waitForDisconnect } = await startTServer();
+
+    const control = new AbortController();
+
+    const msgs = await eventStream({
+      signal: control.signal,
+      url,
+      body: { query: 'subscription { greetings }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
+  });
+
+  it('should stream subscription operations to connected event stream and then disconnect', async () => {
+    const { url, waitForDisconnect } = await startTServer();
+
+    const control = new AbortController();
+
+    const msgs = await eventStream({
+      signal: control.signal,
+      url,
+      body: { query: 'subscription { greetings }' },
     });
 
     for await (const msg of msgs) {

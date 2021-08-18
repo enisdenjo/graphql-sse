@@ -329,7 +329,7 @@ export function createHandler(options: HandlerOptions): Handler {
           /** multiple emitted results */
           for await (const result of executionResult) {
             await emit(
-              'value',
+              'next',
               opId
                 ? {
                     id: opId,
@@ -341,7 +341,7 @@ export function createHandler(options: HandlerOptions): Handler {
         } else {
           /** single emitted result */
           await emit(
-            'value',
+            'next',
             opId
               ? {
                   id: opId,
@@ -351,7 +351,7 @@ export function createHandler(options: HandlerOptions): Handler {
           );
         }
 
-        await emit('done', opId ? { id: opId } : null);
+        await emit('complete', opId ? { id: opId } : null);
 
         // end on complete when no operation id is present
         // because distinct event streams are used for each operation

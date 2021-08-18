@@ -33,23 +33,24 @@ export interface StreamMessage<E extends StreamEvent = StreamEvent> {
 /**
  * @category Common
  */
-export type StreamEvent = 'value' | 'done'; // TODO-db-210726 decide if `err` event is necessary
+export type StreamEvent = 'next' | 'complete'; // TODO-db-210726 decide if `error` event is necessary
 
 /**
  * @category Common
  */
 export function validateStreamEvent(e: unknown): StreamEvent {
-  if (e !== 'value' && e !== 'done')
+  e = e as StreamEvent;
+  if (e !== 'next' && e !== 'complete')
     throw new Error(`Invalid stream event "${e}"`);
-  return e as StreamEvent;
+  return e;
 }
 
 /**
  * @category Common
  */
-export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'value'
+export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'next'
   ? ExecutionResult
-  : E extends 'done'
+  : E extends 'complete'
   ? null
   : never;
 
@@ -57,9 +58,9 @@ export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'value'
  * @category Common
  */
 export type StreamDataForID<E extends StreamEvent = StreamEvent> =
-  E extends 'value'
+  E extends 'next'
     ? { id: string; payload: ExecutionResult }
-    : E extends 'done'
+    : E extends 'complete'
     ? { id: string }
     : never;
 
@@ -75,8 +76,8 @@ export function parseStreamData(e: StreamEvent, data: string): StreamData {
     }
   }
 
-  if (e === 'value' && !data)
-    throw new Error('Stream data must be an object for "value" events');
+  if (e === 'next' && !data)
+    throw new Error('Stream data must be an object for "next" events');
 
   return (data || null) as StreamData;
 }

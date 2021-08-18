@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should accept valid events only 1`] = `"Invalid stream event \\"complete\\""`;
+exports[`should accept valid events only 1`] = `"Invalid stream event \\"done\\""`;
 
-exports[`should accept valid events only 2`] = `"Invalid stream event \\"next\\""`;
+exports[`should accept valid events only 2`] = `"Invalid stream event \\"value\\""`;
 
 exports[`should ignore comments 1`] = `
 Array [
@@ -10,7 +10,7 @@ Array [
     "data": Object {
       "iAm": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "",
   },
 ]
@@ -22,7 +22,7 @@ Array [
     "data": Object {
       "iAm": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "1",
   },
 ]
@@ -34,7 +34,7 @@ Array [
     "data": Object {
       "iAm": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "1",
   },
 ]
@@ -44,14 +44,14 @@ exports[`should parse multiple messages from one chunk 1`] = `
 Array [
   Object {
     "data": Object {},
-    "event": "value",
+    "event": "next",
     "id": "1",
   },
   Object {
     "data": Object {
       "no": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "2",
   },
 ]
@@ -63,12 +63,12 @@ Array [
     "data": Object {
       "almost": "done",
     },
-    "event": "value",
+    "event": "next",
     "id": "3",
   },
   Object {
     "data": Object {},
-    "event": "done",
+    "event": "complete",
     "id": "4",
   },
 ]
@@ -80,7 +80,7 @@ Array [
     "data": Object {
       "iAm": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "1",
   },
 ]
@@ -92,7 +92,7 @@ Array [
     "data": Object {
       "iAm": "data",
     },
-    "event": "value",
+    "event": "next",
     "id": "1",
   },
 ]
@@ -102,7 +102,7 @@ exports[`should parse whole message 3`] = `
 Array [
   Object {
     "data": null,
-    "event": "done",
+    "event": "complete",
     "id": "",
   },
 ]
