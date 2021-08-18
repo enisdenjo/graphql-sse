@@ -78,7 +78,6 @@ export function createParser(): (
         break;
       } else if (lineStart === lineEnd) {
         // empty line denotes end of incoming message
-        if (!message.id && !message.event && !message.data) return; // server ping ":\n\n"
         if (!message.event) throw new Error('Missing message event');
         const id = message.id;
         const event = validateStreamEvent(message.event);
