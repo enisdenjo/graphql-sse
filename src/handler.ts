@@ -145,6 +145,9 @@ export interface HandlerOptions {
    * If you want to respond to the client with a custom status or body,
    * you should do so using the provided `res` argument which will stop
    * further execution.
+   *
+   * First argument, the request, is always the GraphQL operation
+   * request.
    */
   onOperation?: (
     req: IncomingMessage,
@@ -161,6 +164,9 @@ export interface HandlerOptions {
    *
    * Use this callback if you want to format the execution result
    * before it reaches the client.
+   *
+   * First argument, the request, is always the GraphQL operation
+   * request.
    */
   onNext?: (
     req: IncomingMessage,
@@ -175,7 +181,7 @@ export interface HandlerOptions {
    * operations even after an abrupt closure, this callback
    * will always be called.
    *
-   * First argument, the request, is always the event stream
+   * First argument, the request, is always the GraphQL operation
    * request.
    */
   onComplete?: (
