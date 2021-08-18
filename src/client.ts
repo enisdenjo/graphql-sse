@@ -5,7 +5,7 @@
  */
 
 import { createParser } from './parser';
-import { RequestParams, Sink, StreamDataForID } from './common';
+import { RequestParams, Sink, StreamMessage } from './common';
 import { ExecutionResult } from 'graphql';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -364,10 +364,10 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   const waiting: {
     [id: string]: { proceed: () => void };
   } = {};
-  const queue: { [id: string]: (ExecutionResult | 'done')[] } = {};
+  const queue: { [id: string]: (ExecutionResult | 'complete')[] } = {};
 
   let error: unknown = null,
-    done = false;
+    complete = false;
   return {
     url,
     headers,
@@ -406,16 +406,15 @@ async function connect(options: ConnectOptions): Promise<Connection> {
             if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
 
             switch (msg.event) {
-              case 'value':
+              case 'next':
                 if ('id' in msg.data)
                   queue[id].push(
-                    // TODO-db-210815 derive instead of assert
-                    (msg.data as StreamDataForID<'value'>).payload,
+                    (msg as StreamMessage<true, 'next'>).data.payload,
                   );
                 else queue[id].push(msg.data);
                 break;
-              case 'done':
-                queue[id].push('done');
+              case 'complete':
+                queue[id].push('complete');
                 break;
               default:
                 throw new Error(`Unexpected message event "${msg.event}"`);
@@ -430,7 +429,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
             "Connection closed but some subscriptions haven't been completed",
           );
 
-        done = true;
+        complete = true;
       } catch (err) {
         error = err;
       } finally {
@@ -454,11 +453,11 @@ async function connect(options: ConnectOptions): Promise<Connection> {
           while (queue[id].length) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const result = queue[id].shift()!;
-            if (result === 'done') return;
+            if (result === 'complete') return;
             yield result;
           }
           if (error) throw error;
-          if (done) return;
+          if (complete) return;
 
           // wait for action or abort
           await new Promise<void>((resolve) => {
