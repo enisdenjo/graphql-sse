@@ -248,4 +248,22 @@ describe('distinct streams mode', () => {
 
     await waitForDisconnect();
   });
+
+  it('should complete subscription operations after client disconnects', async () => {
+    const { url, waitForOperation, waitForComplete } = await startTServer();
+
+    const control = new AbortController();
+
+    await eventStream({
+      signal: control.signal,
+      url,
+      body: { query: 'subscription { ping }' },
+    });
+
+    await waitForOperation();
+
+    control.abort();
+
+    await waitForComplete();
+  });
 });
