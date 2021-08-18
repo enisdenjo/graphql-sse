@@ -31,7 +31,7 @@ export interface StreamMessage<
   ForID extends boolean = false,
   E extends StreamEvent = StreamEvent,
 > {
-  id?: string; // TODO-db-210816 will be used in future releases for connection recovery
+  // id?: string; might be used in future releases for connection recovery
   event: E;
   data: ForID extends true ? StreamDataForID<E> : StreamData<E>;
   // retry?: number; ignored since graphql-sse implements custom retry strategies

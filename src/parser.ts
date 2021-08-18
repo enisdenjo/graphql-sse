@@ -27,7 +27,7 @@ export function createParser(): (
   let position: number; // current read position
   let fieldLength: number; // length of the `field` portion of the line
   let discardTrailingNewline = false;
-  let message = { id: '', event: '', data: '' };
+  let message = { event: '', data: '' };
   let pending: StreamMessage[] = [];
   const decoder = new TextDecoder();
 
@@ -78,17 +78,15 @@ export function createParser(): (
         break;
       } else if (lineStart === lineEnd) {
         // empty line denotes end of incoming message
-        if (!message.id && !message.event && !message.data) return; // server ping ":\n\n"
+        if (!message.event && !message.data) return; // server ping ":\n\n"
         if (!message.event) throw new Error('Missing message event');
-        const id = message.id;
         const event = validateStreamEvent(message.event);
         const data = parseStreamData(event, message.data);
         pending.push({
-          ...(id ? { id } : undefined), // completely omit id field when empty
           event,
           data,
         });
-        message = { id: '', event: '', data: '' };
+        message = { event: '', data: '' };
       } else if (fieldLength > 0) {
         // end of line indicates message
         const line = buffer.subarray(lineStart, lineEnd);
@@ -102,9 +100,6 @@ export function createParser(): (
         const value = decoder.decode(line.subarray(valueOffset));
 
         switch (field) {
-          case 'id':
-            message.id = value;
-            break;
           case 'event':
             message.event = value;
             break;

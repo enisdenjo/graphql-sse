@@ -7,22 +7,22 @@ it('should parse whole message', () => {
 
   // with space
   expect(
-    parse(encoder.encode('id: 1\nevent: next\ndata: { "iAm": "data" }\n\n')),
+    parse(encoder.encode('event: next\ndata: { "iAm": "data" }\n\n')),
   ).toMatchSnapshot();
 
   // no space
   expect(
-    parse(encoder.encode('id:1\nevent:next\ndata:{ "iAm": "data" }\n\n')),
+    parse(encoder.encode('event:next\ndata:{ "iAm": "data" }\n\n')),
   ).toMatchSnapshot();
 
-  // no data or id
+  // no data
   expect(parse(encoder.encode('event: complete\n\n'))).toMatchSnapshot();
 });
 
 it('should parse chunked message', () => {
   const parse = createParser();
 
-  parse(encoder.encode('id: 1\neven'));
+  parse(encoder.encode('even'));
   parse(encoder.encode(''));
   parse(encoder.encode('t: ne'));
   parse(encoder.encode('xt\nda'));
@@ -38,7 +38,7 @@ it('should parse message whose lines are separated by \\r\\n', () => {
   const parse = createParser();
 
   const msg = parse(
-    encoder.encode('id: 1\r\nevent: next\r\ndata: { "iAm": "data" }\r\n\r\n'),
+    encoder.encode('event: next\r\ndata: { "iAm": "data" }\r\n\r\n'),
   );
 
   expect(msg).toMatchSnapshot();
@@ -88,8 +88,7 @@ it('should parse multiple messages from one chunk', () => {
   expect(
     parse(
       encoder.encode(
-        'id: 1\nevent: next\ndata: {}\n\n' +
-          'id: 2\nevent: next\ndata: { "no": "data" }\n\n',
+        'event: next\ndata: {}\n\n' + 'event: next\ndata: { "no": "data" }\n\n',
       ),
     ),
   ).toMatchSnapshot();
@@ -97,8 +96,8 @@ it('should parse multiple messages from one chunk', () => {
   expect(
     parse(
       encoder.encode(
-        'id: 3\nevent: next\ndata: { "almost": "done" }\n\n' +
-          'id: 4\nevent: complete\ndata: {}\n\n',
+        'event: next\ndata: { "almost": "done" }\n\n' +
+          'event: complete\ndata: {}\n\n',
       ),
     ),
   ).toMatchSnapshot();
