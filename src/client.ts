@@ -383,11 +383,13 @@ async function* createStream(
       if (typeof chunk === 'string')
         throw new Error(`Unexpected string chunk "${chunk}"`);
 
-      // read chunk and if message is ready, yield it
-      const msg = parse(chunk);
-      if (!msg) continue;
+      // read chunk and if messages are ready, yield them
+      const msgs = parse(chunk);
+      if (!msgs) continue;
 
-      yield msg;
+      for (const msg of msgs) {
+        yield msg;
+      }
     }
   } catch (err) {
     if (control.signal.aborted) return; // complete on abort
