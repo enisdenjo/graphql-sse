@@ -40,7 +40,7 @@ export interface StreamMessage<
 /**
  * @category Common
  */
-export type StreamEvent = 'next' | 'complete'; // TODO-db-210726 decide if `error` event is necessary
+export type StreamEvent = 'next' | 'complete';
 
 /**
  * @category Common
