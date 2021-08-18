@@ -385,7 +385,9 @@ export function createHandler(options: HandlerOptions): Handler {
 
     // mutations cannot happen over GETs
     if (operation === 'mutation' && req.method === 'GET')
-      return res.writeHead(400, 'Cannot perform mutations over GET').end();
+      return res
+        .writeHead(405, 'Cannot perform mutations over GET', { Allow: 'POST' })
+        .end();
 
     try {
       const args = {
@@ -526,9 +528,11 @@ export function createHandler(options: HandlerOptions): Handler {
       return res.writeHead(200).end();
     } else if (req.method !== 'GET' && req.method !== 'POST')
       // only POSTs and GETs are accepted at this point
-      return res.writeHead(405).end();
+      return res
+        .writeHead(405, undefined, { Allow: 'GET, POST, PUT, DELETE' })
+        .end();
     else if (!stream)
-      // for all other methods, streams must exist to attach the result onto
+      // for all other requests, streams must exist to attach the result onto
       return res.writeHead(404, 'Stream not found').end();
 
     if (
