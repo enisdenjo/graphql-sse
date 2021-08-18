@@ -651,7 +651,21 @@ async function parseReq(req: IncomingMessage): Promise<RequestParams> {
   const params: Partial<RequestParams> = {};
 
   if (req.method === 'GET') {
-    // TODO-db-210618 parse query params
+    await new Promise<void>((resolve, reject) => {
+      try {
+        const url = new URL(req.url ?? '', 'http://localhost/');
+        params.operationName =
+          url.searchParams.get('operationName') ?? undefined;
+        params.query = url.searchParams.get('query') ?? undefined;
+        const variables = url.searchParams.get('variables');
+        if (variables) params.variables = JSON.parse(variables);
+        const extensions = url.searchParams.get('extensions');
+        if (extensions) params.extensions = JSON.parse(extensions);
+        resolve();
+      } catch {
+        reject(new Error('Unparsable URL'));
+      }
+    });
   } else if (req.method === 'POST') {
     await new Promise<void>((resolve, reject) => {
       let body = '';

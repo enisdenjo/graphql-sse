@@ -200,10 +200,28 @@ describe('distinct streams mode', () => {
 
     const control = new AbortController();
 
-    const msgs = await eventStream({
+    // POST
+
+    let msgs = await eventStream({
       signal: control.signal,
       url,
       body: { query: '{ getValue }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
+
+    // GET
+
+    const urlQuery = new URL(url);
+    urlQuery.searchParams.set('query', '{ getValue }');
+
+    msgs = await eventStream({
+      signal: control.signal,
+      url: urlQuery.toString(),
     });
 
     for await (const msg of msgs) {
@@ -218,10 +236,28 @@ describe('distinct streams mode', () => {
 
     const control = new AbortController();
 
-    const msgs = await eventStream({
+    // POST
+
+    let msgs = await eventStream({
       signal: control.signal,
       url,
       body: { query: 'subscription { greetings }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
+
+    // GET
+
+    const urlQuery = new URL(url);
+    urlQuery.searchParams.set('query', 'subscription { greetings }');
+
+    msgs = await eventStream({
+      signal: control.signal,
+      url: urlQuery.toString(),
     });
 
     for await (const msg of msgs) {

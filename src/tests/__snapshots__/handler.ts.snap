@@ -44,6 +44,24 @@ Object {
 }
 `;
 
+exports[`distinct streams mode should stream query operations to connected event stream and then disconnect 3`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "getValue": "value",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream query operations to connected event stream and then disconnect 4`] = `
+Object {
+  "data": null,
+  "event": "complete",
+}
+`;
+
 exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 1`] = `
 Object {
   "data": Object {
@@ -100,6 +118,68 @@ Object {
 `;
 
 exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 6`] = `
+Object {
+  "data": null,
+  "event": "complete",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 7`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "greetings": "Hi",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 8`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "greetings": "Bonjour",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 9`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "greetings": "Hola",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 10`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "greetings": "Ciao",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 11`] = `
+Object {
+  "data": Object {
+    "data": Object {
+      "greetings": "Zdravo",
+    },
+  },
+  "event": "next",
+}
+`;
+
+exports[`distinct streams mode should stream subscription operations to connected event stream and then disconnect 12`] = `
 Object {
   "data": null,
   "event": "complete",
