@@ -23,10 +23,13 @@ export interface RequestParams {
  *
  * @category Common
  */
-export interface StreamMessage<E extends StreamEvent = StreamEvent> {
+export interface StreamMessage<
+  ForID extends boolean = false,
+  E extends StreamEvent = StreamEvent,
+> {
   // id: string; TODO-db-210816 use in future releases when connection recovery is implemented
   event: E;
-  data: StreamData<E> | StreamDataForID<E>;
+  data: ForID extends true ? StreamDataForID<E> : StreamData<E>;
   // retry?: number; TODO-db-210726 decide if necessary for graphql-sse
 }
 
