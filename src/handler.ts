@@ -323,6 +323,7 @@ export function createHandler(options: HandlerOptions): Handler {
   function createStream(token: string | null): Stream {
     let request: IncomingMessage | null = null,
       response: ServerResponse | null = null,
+      pinger: ReturnType<typeof setInterval>,
       disposed = false;
     const pendingMsgs: string[] = [];
     const ops: Record<string, AsyncIterator<unknown> | null> = {};
@@ -370,6 +371,7 @@ export function createHandler(options: HandlerOptions): Handler {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       response!.end(); // response must exist at this point
       response = null;
+      clearInterval(pinger);
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       onDisconnect?.(request!); // request must exist at this point
@@ -397,7 +399,8 @@ export function createHandler(options: HandlerOptions): Handler {
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
 
-        // TODO-db-210629 keep the connection alive by issuing pings (":\n\n")
+        // ping client every 12 seconds to keep the connection alive
+        pinger = setInterval(() => write(':\n\n'), 12_000);
 
         while (pendingMsgs.length) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
