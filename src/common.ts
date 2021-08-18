@@ -7,6 +7,10 @@
 import type { DocumentNode, ExecutionResult } from 'graphql';
 
 /**
+ * Parameters for GraphQL's request for execution.
+ *
+ * Reference: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#request
+ *
  * @category Common
  */
 export interface RequestParams {
