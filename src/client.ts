@@ -66,6 +66,14 @@ export interface ClientOptions {
    */
   fetchFn?: unknown;
   /**
+   * The AbortController implementation to use.
+   *
+   * For NodeJS environments before v15 consider using [`node-abort-controller`](https://github.com/southpolesteve/node-abort-controller).
+   *
+   * @default global.AbortController
+   */
+  abortControllerImpl?: unknown;
+  /**
    * A custom ID generator for identifying subscriptions.
    *
    * The default generates a v4 UUID to be used as the ID using `Math`
@@ -150,6 +158,8 @@ export function createClient(options: ClientOptions): Client {
     },
   } = options;
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
+  const AbortControllerImpl = (options.abortControllerImpl ||
+    AbortController) as typeof AbortController;
 
   // TODO-db-210815 implement
   if (!singleConnection)
@@ -158,7 +168,7 @@ export function createClient(options: ClientOptions): Client {
   // TODO-db-210815 implement
   if (!lazy) throw new Error('Non-lazy mode not implemented');
 
-  let connCtrl = new AbortController(),
+  let connCtrl = new AbortControllerImpl(),
     conn: Promise<Connection & { token: string }> | undefined,
     locks = 0,
     retryingErr = null as unknown,
@@ -178,7 +188,7 @@ export function createClient(options: ClientOptions): Client {
           }
 
           // we must create a new controller here because lazy mode aborts currently active ones
-          connCtrl = new AbortController();
+          connCtrl = new AbortControllerImpl();
           connCtrl.signal.addEventListener('abort', () => (conn = undefined));
 
           const url =
@@ -236,7 +246,7 @@ export function createClient(options: ClientOptions): Client {
       locks++;
       const id = generateID();
 
-      const control = new AbortController();
+      const control = new AbortControllerImpl();
       control.signal.addEventListener('abort', () => {
         // release lock and disconnect if no locks are present
         if (--locks === 0) connCtrl.abort();
