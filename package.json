@@ -24,7 +24,7 @@
     "url": "https://github.com/enisdenjo/graphql-sse.git"
   },
   "engines": {
-    "node": ">=15"
+    "node": ">=12"
   },
   "main": "lib/index.js",
   "files": [
