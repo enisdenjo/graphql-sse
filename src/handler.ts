@@ -402,6 +402,15 @@ export function createHandler(options: HandlerOptions): Handler {
 
       const validationErrs = validate(execArgs.schema, execArgs.document);
       if (validationErrs.length) {
+        if (req.headers.accept === 'text/event-stream') {
+          // accept the request and stream the validation error
+          // for event streams promoting graceful reporting.
+          // Read more: https://www.w3.org/TR/eventsource/#processing-model
+          return function perform() {
+            return { errors: validationErrs };
+          };
+        }
+
         res
           .writeHead(400, {
             'Content-Type':

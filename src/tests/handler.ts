@@ -230,4 +230,22 @@ describe('distinct streams mode', () => {
 
     await waitForDisconnect();
   });
+
+  it('should report operation validation issues by streaming them', async () => {
+    const { url, waitForDisconnect } = await startTServer();
+
+    const control = new AbortController();
+
+    const msgs = await eventStream({
+      signal: control.signal,
+      url,
+      body: { query: '{ notExists }' },
+    });
+
+    for await (const msg of msgs) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    await waitForDisconnect();
+  });
 });

@@ -1,5 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`distinct streams mode should report operation validation issues by streaming them 1`] = `
+Object {
+  "data": Object {
+    "errors": Array [
+      Object {
+        "locations": Array [
+          Object {
+            "column": 3,
+            "line": 1,
+          },
+        ],
+        "message": "Cannot query field \\"notExists\\" on type \\"Query\\".",
+      },
+    ],
+  },
+  "event": "next",
+  "id": "",
+}
+`;
+
+exports[`distinct streams mode should report operation validation issues by streaming them 2`] = `
+Object {
+  "data": null,
+  "event": "complete",
+  "id": "",
+}
+`;
+
 exports[`distinct streams mode should stream query operations to connected event stream and then disconnect 1`] = `
 Object {
   "data": Object {
