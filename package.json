@@ -33,7 +33,10 @@
     "LICENSE.md"
   ],
   "scripts": {
-    "test": "jest"
+    "lint": "eslint 'src'",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "release": "semantic-release"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
