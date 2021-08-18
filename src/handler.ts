@@ -470,9 +470,11 @@ export function createHandler(options: HandlerOptions): Handler {
           );
 
         const result = await perform();
-        if (res.writableEnded)
-          // TODO-db-210816 should the result cleanup be done by the lib here
+        if (res.writableEnded) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
           return; // `onOperation` responded
+        }
 
         if (isAsyncIterable(result)) distinctStream.ops[''] = result;
 
@@ -560,9 +562,12 @@ export function createHandler(options: HandlerOptions): Handler {
     if (!(opId in stream.ops)) return res.writeHead(204).end();
 
     const result = await perform();
-    if (res.writableEnded)
-      // TODO-db-210816 should the result cleanup be done by the lib here
+    if (res.writableEnded) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
+      delete stream.ops[opId];
       return; // `onOperation` responded
+    }
 
     // operation might have completed before performed
     if (!(opId in stream.ops)) {
