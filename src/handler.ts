@@ -258,7 +258,7 @@ export function createHandler(options: HandlerOptions): Handler {
       data: StreamData<E> | StreamDataForID<E>,
     ): Promise<void> {
       let msg = `event: ${event}`;
-      msg += `\ndata: ${data == null ? '' : JSON.stringify(data)}`;
+      if (data) msg += `\ndata: ${JSON.stringify(data)}`;
       msg += '\n\n';
 
       const wrote = await write(msg);
