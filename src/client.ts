@@ -121,7 +121,7 @@ export interface Client {
    * Subscribes to receive through a SSE connection.
    *
    * It uses the `sink` to emit received data or errors. Returns a _dispose_
-   * function used for dropping the subscription and cleaning stuff up.
+   * function used for dropping the subscription and cleaning up.
    */
   subscribe<
     Data = Record<string, unknown>,
