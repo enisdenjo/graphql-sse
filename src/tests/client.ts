@@ -157,3 +157,28 @@ describe('non-lazy', () => {
     await waitForDisconnect();
   });
 });
+
+describe('retries', () => {
+  it('should keep retrying network errors until the retry attempts are exceeded', async (done) => {
+    let tried = 0;
+    const { url } = await startTServer({
+      authenticate: (_, res) => {
+        tried++;
+        res.writeHead(403).end();
+      },
+    });
+
+    createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
+      lazy: false,
+      onNonLazyError: (err) => {
+        expect(err).toMatchSnapshot();
+        expect(tried).toBe(3); // initial + 2 retries
+        done();
+      },
+    });
+  });
+});

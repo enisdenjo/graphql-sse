@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 1`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
 exports[`should complete subscription by disposing 1`] = `
 Object {
   "data": Object {
