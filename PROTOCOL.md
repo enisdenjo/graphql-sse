@@ -4,7 +4,7 @@
 
 Living in a connected world, real-time needs are great. Especially in the world's most connected "world", the internet. When talking about real-time, there are two main players in the game: [WebSockets](https://datatracker.ietf.org/doc/html/rfc6455) and [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html).
 
-Using Server-Sent Events (abbrv. SSE) for your next real-time driven endevour sounds appealing because of many reasons spanning from simplicity to acceptence. However, you're soon to find out that SSE suffers from a limitation to the maximum number of open connections when dealing with HTTP/1 powered servers (more details below).
+Using Server-Sent Events (abbr. SSE) for your next real-time driven endeavour sounds appealing because of many reasons spanning from simplicity to acceptance. However, you're soon to find out that SSE suffers from a limitation to the maximum number of open connections when dealing with HTTP/1 powered servers (more details below).
 
 This documents aims to elevate HTTP/1 limitations through a "single connection mode" and back up HTTP/2+ powered servers using the "distinct connections mode" with a unified GraphQL over SSE transport protocol.
 
@@ -56,15 +56,15 @@ interface CompleteMessage {
 
 Having aforementioned limitations in mind, a "single connection mode" is proposed. In this mode, a single established SSE connection transmits **all** results from the server while separate HTTP requests dictate the behaviour.
 
-Additionally, due to various limitations with the browser's native [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), like the lack of supplying custom headers or vague connection error information, a "reservation" tactic is RECOMMENDED. This means that the client requests an SSE connection reservation from the server through a regular HTTP request which is later fulfilled with the actual SSE connection matching the reservation requirements.
+Additionally, due to various limitations with the browser's native [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), like the lack of supplying custom headers or vague connection error information, a "reservation" tactic is RECOMMENDED. This means that the client requests an SSE connection reservation from the server through a regular HTTP request which is later fulfiled with the actual SSE connection matching the reservation requirements.
 
 ### Making reservations
 
 The client requests a reservation for an incoming SSE connection through a `PUT` HTTP request. Since this is a regular HTTP request, it may transmit authentication details however the implementor sees fit.
 
-The server accepts the reservation request by responding with `201` (Created) and a one-time token in the body of the response. This token is then presented alongside the incoming SSE connection as an "entrence ticket". If using the [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), the token may be encoded in the URL's search parameters.
+The server accepts the reservation request by responding with `201` (Created) and a one-time token in the body of the response. This token is then presented alongside the incoming SSE connection as an "entrance ticket". If using the [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), the token may be encoded in the URL's search parameters.
 
-For security reasons, **only one** SSE connection can fulfill a reservation at a time, there MUST never be multiple SSE connections behind a single reservation.
+For security reasons, **only one** SSE connection can fulfil a reservation at a time, there MUST never be multiple SSE connections behind a single reservation.
 
 ### Executing operations
 
