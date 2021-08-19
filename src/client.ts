@@ -161,6 +161,11 @@ export function createClient(options: ClientOptions): Client {
   const AbortControllerImpl = (options.abortControllerImpl ||
     AbortController) as typeof AbortController;
 
+  if (lazy && !singleConnection)
+    throw new Error(
+      'Lazy mode cannot be used together with single-connection mode',
+    );
+
   // TODO-db-210815 implement
   if (!singleConnection)
     throw new Error('Multi connection mode not implemented');
