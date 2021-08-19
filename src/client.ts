@@ -285,8 +285,11 @@ export function createClient(options: ClientOptions): Client {
           retryingErr = null; // future connects are not retries
           retries = 0; // reset the retries on connect
 
-          // whatever happens, the connection is gone
-          connected.waitForDoneOrThrow.finally(() => (conn = undefined));
+          connected.waitForAbortOrThrow
+            .catch(() => {
+              // connection errors are handled elsewhere
+            })
+            .finally(() => (conn = undefined));
 
           return { ...connected, token };
         })()));
@@ -303,8 +306,9 @@ export function createClient(options: ClientOptions): Client {
       locks++;
       for (;;) {
         try {
-          const { waitForDoneOrThrow } = await getOrConnect();
-          await waitForDoneOrThrow;
+          const { waitForAbortOrThrow } = await getOrConnect();
+          await waitForAbortOrThrow;
+          return;
         } catch (err) {
           if (client.disposed) return;
 
@@ -441,7 +445,7 @@ export class NetworkError extends Error {
 interface Connection {
   url: string;
   headers: Record<string, string> | undefined;
-  waitForDoneOrThrow: Promise<void>;
+  waitForAbortOrThrow: Promise<void>;
   getResultsUntilDone: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
 
@@ -463,12 +467,11 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   } = {};
   const queue: { [id: string]: (ExecutionResult | 'complete')[] } = {};
 
-  let error: unknown = null,
-    complete = false;
+  let error: unknown = null;
   return {
     url,
     headers,
-    waitForDoneOrThrow: (async () => {
+    waitForAbortOrThrow: (async () => {
       try {
         let res;
         try {
@@ -521,14 +524,11 @@ async function connect(options: ConnectOptions): Promise<Connection> {
           }
         }
 
-        if (Object.keys(queue).length > 0)
-          throw new NetworkError(
-            "Connection closed but some subscriptions haven't been completed",
-          );
-
-        complete = true;
+        throw new NetworkError('Connection closed');
       } catch (err) {
+        if (signal.aborted) return;
         error = err;
+        throw error;
       } finally {
         Object.values(waiting).forEach(({ proceed }) => proceed());
       }
@@ -554,7 +554,6 @@ async function connect(options: ConnectOptions): Promise<Connection> {
             yield result;
           }
           if (error) throw error;
-          if (complete) return;
 
           // wait for action or abort
           await new Promise<void>((resolve) => {
