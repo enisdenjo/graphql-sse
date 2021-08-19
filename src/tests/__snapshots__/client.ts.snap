@@ -2,7 +2,11 @@
 
 exports[`distinct connection mode should not allow lazy and distinct connection mode together 1`] = `"Non-lazy mode cannot be used together with distinct connection mode"`;
 
-exports[`single connection mode retries should keep retrying network errors until the retry attempts are exceeded 1`] = `[NetworkError: Server responded with 403: Forbidden]`;
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 1`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 2`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 3`] = `[NetworkError: Server responded with 403: Forbidden]`;
 
 exports[`single connection mode should complete subscription by disposing 1`] = `
 Object {

@@ -208,31 +208,6 @@ describe('single connection mode', () => {
       await waitForDisconnect();
     });
   });
-
-  describe('retries', () => {
-    it('should keep retrying network errors until the retry attempts are exceeded', async (done) => {
-      let tried = 0;
-      const { url } = await startTServer({
-        authenticate: (_, res) => {
-          tried++;
-          res.writeHead(403).end();
-        },
-      });
-
-      createClient({
-        url,
-        fetchFn: fetch,
-        retryAttempts: 2,
-        retry: () => Promise.resolve(),
-        lazy: false,
-        onNonLazyError: (err) => {
-          expect(err).toMatchSnapshot();
-          expect(tried).toBe(3); // initial + 2 retries
-          done();
-        },
-      });
-    });
-  });
 });
 
 describe('distinct connection mode', () => {
@@ -286,5 +261,89 @@ describe('distinct connection mode', () => {
 
     dispose2();
     await waitForDisconnect();
+  });
+});
+
+describe('retries', () => {
+  it('should keep retrying network errors until the retry attempts are exceeded', async () => {
+    let tried = 0;
+    const { url } = await startTServer({
+      authenticate: (_, res) => {
+        tried++;
+        res.writeHead(403).end();
+      },
+    });
+
+    await new Promise<void>((resolve) => {
+      // non-lazy
+
+      createClient({
+        url,
+        fetchFn: fetch,
+        retryAttempts: 2,
+        retry: () => Promise.resolve(),
+        lazy: false,
+        onNonLazyError: (err) => {
+          expect(err).toMatchSnapshot();
+          expect(tried).toBe(3); // initial + 2 retries
+          resolve();
+        },
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      // lazy
+
+      tried = 0;
+      const client = createClient({
+        url,
+        fetchFn: fetch,
+        retryAttempts: 2,
+        retry: () => Promise.resolve(),
+      });
+
+      client.subscribe(
+        {
+          query: '{ getValue }',
+        },
+        {
+          next: noop,
+          error: (err) => {
+            expect(err).toMatchSnapshot();
+            expect(tried).toBe(3); // initial + 2 retries
+            resolve();
+          },
+          complete: noop,
+        },
+      );
+    });
+
+    await new Promise<void>((resolve) => {
+      // distinct connection mode
+
+      tried = 0;
+      const client = createClient({
+        singleConnection: false,
+        url,
+        fetchFn: fetch,
+        retryAttempts: 2,
+        retry: () => Promise.resolve(),
+      });
+
+      client.subscribe(
+        {
+          query: '{ getValue }',
+        },
+        {
+          next: noop,
+          error: (err) => {
+            expect(err).toMatchSnapshot();
+            expect(tried).toBe(3); // initial + 2 retries
+            resolve();
+          },
+          complete: noop,
+        },
+      );
+    });
   });
 });
