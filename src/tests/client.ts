@@ -22,7 +22,7 @@ it('should use the provided headers', async (done) => {
     fetchFn: fetch,
     retryAttempts: 0,
     lazy: false,
-    onNonLazyError: noop,
+    onNonLazyError: fail,
     headers: async () => {
       return { 'x-some': 'header' };
     },
@@ -133,6 +133,7 @@ describe('non-lazy', () => {
       fetchFn: fetch,
       retryAttempts: 0,
       lazy: false,
+      onNonLazyError: fail,
     });
 
     await waitForConnect();
@@ -146,6 +147,7 @@ describe('non-lazy', () => {
       fetchFn: fetch,
       retryAttempts: 0,
       lazy: false,
+      onNonLazyError: fail,
     });
 
     await waitForConnect();
