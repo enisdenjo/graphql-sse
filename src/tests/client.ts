@@ -60,8 +60,8 @@ it('should complete subscription by disposing', async (done) => {
   pong();
 });
 
-it('should connect on operation and disconnect after completion', async (done) => {
-  const { url, waitForConnect } = await startTServer();
+it('should connect on first subscribe and disconnect on last complete', async () => {
+  const { url, waitForOperation, waitForDisconnect } = await startTServer();
 
   const client = createClient({
     url,
@@ -69,20 +69,33 @@ it('should connect on operation and disconnect after completion', async (done) =
     retryAttempts: 0,
   });
 
-  const dispose = client.subscribe(
+  const dispose1 = client.subscribe(
     {
-      query: 'subscription { ping }',
+      query: 'subscription { ping(key: "1") }',
     },
     {
       next: noop,
       error: (err) => fail(err),
-      complete: done,
+      complete: noop,
     },
   );
+  await waitForOperation();
 
-  await waitForConnect((req) => {
-    req.once('close', done);
-  });
+  const dispose2 = client.subscribe(
+    {
+      query: 'subscription { ping(key: "2") }',
+    },
+    {
+      next: noop,
+      error: (err) => fail(err),
+      complete: noop,
+    },
+  );
+  await waitForOperation();
 
-  dispose();
+  dispose1();
+  await waitForDisconnect(() => fail("Shouldn't have disconnected"), 30);
+
+  dispose2();
+  await waitForDisconnect();
 });
