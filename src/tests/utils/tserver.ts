@@ -53,33 +53,38 @@ export async function startTServer(
   let pendingOperations = 0,
     pendingCompletes = 0,
     pendingDisconnects = 0;
-  const server = http.createServer(
-    createHandler({
-      schema,
-      ...options,
-      onConnect: async (...args) => {
-        pendingConnections.push([args[0], args[1]]);
-        await options?.onConnect?.(...args);
-        emitter.emit('conn');
-      },
-      onOperation: async (...args) => {
-        pendingOperations++;
-        const maybeResult = await options?.onOperation?.(...args);
-        emitter.emit('operation');
-        return maybeResult;
-      },
-      onComplete: async (...args) => {
-        pendingCompletes++;
-        await options?.onComplete?.(...args);
-        emitter.emit('complete');
-      },
-      onDisconnect: async (...args) => {
-        pendingDisconnects++;
-        await options?.onDisconnect?.(...args);
-        emitter.emit('disconn');
-      },
-    }),
-  );
+  const handler = createHandler({
+    schema,
+    ...options,
+    onConnect: async (...args) => {
+      pendingConnections.push([args[0], args[1]]);
+      await options?.onConnect?.(...args);
+      emitter.emit('conn');
+    },
+    onOperation: async (...args) => {
+      pendingOperations++;
+      const maybeResult = await options?.onOperation?.(...args);
+      emitter.emit('operation');
+      return maybeResult;
+    },
+    onComplete: async (...args) => {
+      pendingCompletes++;
+      await options?.onComplete?.(...args);
+      emitter.emit('complete');
+    },
+    onDisconnect: async (...args) => {
+      pendingDisconnects++;
+      await options?.onDisconnect?.(...args);
+      emitter.emit('disconn');
+    },
+  });
+  const server = http.createServer(async (req, res) => {
+    try {
+      await handler(req, res);
+    } catch (err) {
+      fail(err);
+    }
+  });
 
   const sockets = new Set<net.Socket>();
   server.on('connection', (socket) => {
