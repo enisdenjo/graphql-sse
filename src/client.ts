@@ -204,7 +204,8 @@ export function createClient(options: ClientOptions): Client {
       },
       onDispose(cb: () => void) {
         if (disposed) {
-          cb();
+          // empty the call stack and then call the cb
+          setTimeout(() => cb(), 0);
           return () => {
             // noop
           };
