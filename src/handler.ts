@@ -118,8 +118,8 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
-   * Called when a new event stream has connected right before the
-   * accepting the stream.
+   * Called when a new event stream has connected right before it is
+   * accepted.
    *
    * If you want to respond to the client with a custom status or body,
    * you should do so using the provided `res` argument which will stop
@@ -597,7 +597,7 @@ export function createHandler(options: HandlerOptions): Handler {
         if (isAsyncIterable(result)) distinctStream.ops[''] = result;
 
         await onConnect?.(req, res);
-        if (res.writableEnded) return; // `onConnect` responded
+        if (res.writableEnded) return;
         await distinctStream.use(req, res);
         await distinctStream.from(req, args, result);
         return;
@@ -607,7 +607,7 @@ export function createHandler(options: HandlerOptions): Handler {
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
       await onConnect?.(req, res);
-      if (res.writableEnded) return; // `onConnect` responded
+      if (res.writableEnded) return;
       await stream.use(req, res);
       return;
     }
