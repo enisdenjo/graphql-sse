@@ -7,6 +7,28 @@ function noop(): void {
   /**/
 }
 
+it('should use the provided headers', async (done) => {
+  const { url } = await startTServer({
+    authenticate: (req) => {
+      client.dispose();
+      expect(req.headers['x-some']).toBe('header');
+      done();
+      return '';
+    },
+  });
+
+  const client = createClient({
+    url,
+    fetchFn: fetch,
+    retryAttempts: 0,
+    lazy: false,
+    onNonLazyError: noop,
+    headers: async () => {
+      return { 'x-some': 'header' };
+    },
+  });
+});
+
 it('should execute a simple query', async (done) => {
   expect.hasAssertions();
 
