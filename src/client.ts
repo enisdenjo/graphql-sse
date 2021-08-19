@@ -141,6 +141,10 @@ export interface Client {
  * Consider using `singleConnection = false` when dealing with HTTP/1
  * only servers which have SSE connection limitations on browsers.
  *
+ * If you have an HTTP/2 server, it is recommended to use the client
+ * in "distinct connections mode" (`singleConnection = true`) which will
+ * create a new SSE connection for each subscribe.
+ *
  * @category Client
  */
 export function createClient(options: ClientOptions): Client {
