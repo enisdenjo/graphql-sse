@@ -330,7 +330,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     function write(msg: unknown) {
       return new Promise<boolean>((resolve, reject) => {
-        if (!response) return resolve(false);
+        if (disposed || !response || !response.writable) return resolve(false);
         response.write(msg, (err) => {
           if (err) return reject(err);
           resolve(true);
@@ -380,7 +380,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     return {
       get open() {
-        return Boolean(response);
+        return disposed || Boolean(response);
       },
       ops,
       async use(req, res) {
