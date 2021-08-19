@@ -212,7 +212,8 @@ export function createClient(options: ClientOptions): Client {
       dispose() {
         if (disposed) return;
         disposed = true;
-        for (const listener of listeners) {
+        // we copy the listeners so that onDispose unlistens dont "pull the rug under our feet"
+        for (const listener of [...listeners]) {
           listener();
         }
       },

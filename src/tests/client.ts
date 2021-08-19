@@ -262,6 +262,45 @@ describe('distinct connection mode', () => {
     dispose2();
     await waitForDisconnect();
   });
+
+  it('should complete all connections when client disposes', async () => {
+    const { url, waitForConnect, waitForDisconnect } = await startTServer();
+
+    const client = createClient({
+      singleConnection: false,
+      url,
+      retryAttempts: 0,
+      fetchFn: fetch,
+    });
+
+    client.subscribe(
+      {
+        query: 'subscription { ping(key: "1") }',
+      },
+      {
+        next: noop,
+        error: (err) => fail(err),
+        complete: noop,
+      },
+    );
+    await waitForConnect();
+
+    client.subscribe(
+      {
+        query: 'subscription { ping(key: "2") }',
+      },
+      {
+        next: noop,
+        error: (err) => fail(err),
+        complete: noop,
+      },
+    );
+    await waitForConnect();
+
+    client.dispose();
+    await waitForDisconnect();
+    await waitForDisconnect();
+  });
 });
 
 describe('retries', () => {
