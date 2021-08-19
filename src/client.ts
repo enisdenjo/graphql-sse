@@ -17,7 +17,7 @@ export interface ClientOptions {
    * Reuses a single SSE connection for all GraphQL operations.
    *
    * When instantiating with `false`, the client will run in
-   * a distinct connection mode. Meaning, a new SSE connection
+   * a s mode. Meaning, a new SSE connection
    * will be established on each subscribe.
    *
    * @default true
@@ -330,7 +330,7 @@ export function createClient(options: ClientOptions): Client {
   return {
     subscribe(request, sink) {
       if (!singleConnection) {
-        // distinct connection mode
+        // distinct connections mode
 
         const control = new AbortControllerImpl();
         const unlistenDispose = client.onDispose(() => control.abort());

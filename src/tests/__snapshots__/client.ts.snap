@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`distinct connection mode should not allow lazy and distinct connection mode together 1`] = `"Non-lazy mode cannot be used together with distinct connection mode"`;
+exports[`distinct connections mode should not allow lazy and distinct connections mode together 1`] = `"Non-lazy mode cannot be used together with distinct connection mode"`;
 
 exports[`retries should keep retrying network errors until the retry attempts are exceeded 1`] = `[NetworkError: Server responded with 403: Forbidden]`;
 

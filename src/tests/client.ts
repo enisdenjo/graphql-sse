@@ -45,7 +45,7 @@ it('should use the provided headers', async (done) => {
     );
   });
 
-  // distinct connection mode
+  // distinct connections mode
 
   const distinctConnServer = await startTServer({
     authenticate: (req) => {
@@ -210,8 +210,8 @@ describe('single connection mode', () => {
   });
 });
 
-describe('distinct connection mode', () => {
-  it('should not allow lazy and distinct connection mode together', () => {
+describe('distinct connections mode', () => {
+  it('should not allow lazy and distinct connections mode together', () => {
     expect(() => {
       createClient({
         singleConnection: false,
@@ -358,7 +358,7 @@ describe('retries', () => {
     });
 
     await new Promise<void>((resolve) => {
-      // distinct connection mode
+      // distinct connections mode
 
       tried = 0;
       const client = createClient({
