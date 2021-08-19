@@ -97,7 +97,7 @@ describe('single connection mode', () => {
       },
       {
         next: (val) => expect(val).toMatchSnapshot(),
-        error: (err) => fail(err),
+        error: fail,
         complete: done,
       },
     );
@@ -123,7 +123,7 @@ describe('single connection mode', () => {
           expect(val).toMatchSnapshot();
           dispose();
         },
-        error: (err) => fail(err),
+        error: fail,
         complete: done,
       },
     );
@@ -149,7 +149,7 @@ describe('single connection mode', () => {
         },
         {
           next: noop,
-          error: (err) => fail(err),
+          error: fail,
           complete: noop,
         },
       );
@@ -161,7 +161,7 @@ describe('single connection mode', () => {
         },
         {
           next: noop,
-          error: (err) => fail(err),
+          error: fail,
           complete: noop,
         },
       );
@@ -238,7 +238,7 @@ describe('distinct connection mode', () => {
       },
       {
         next: noop,
-        error: (err) => fail(err),
+        error: fail,
         complete: noop,
       },
     );
@@ -250,7 +250,7 @@ describe('distinct connection mode', () => {
       },
       {
         next: noop,
-        error: (err) => fail(err),
+        error: fail,
         complete: noop,
       },
     );
@@ -279,7 +279,7 @@ describe('distinct connection mode', () => {
       },
       {
         next: noop,
-        error: (err) => fail(err),
+        error: fail,
         complete: noop,
       },
     );
@@ -291,7 +291,7 @@ describe('distinct connection mode', () => {
       },
       {
         next: noop,
-        error: (err) => fail(err),
+        error: fail,
         complete: noop,
       },
     );
