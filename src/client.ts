@@ -32,6 +32,18 @@ export interface ClientOptions {
    */
   lazy?: boolean;
   /**
+   * Used ONLY when the client is in non-lazy mode (`lazy = false`). When
+   * using this mode, errors might have no sinks to report to; however,
+   * to avoid swallowing errors, `onNonLazyError` will be called when either:
+   * - An unrecoverable error/close event occurs
+   * - Silent retry attempts have been exceeded
+   *
+   * After a client has errored out, it will NOT perform any automatic actions.
+   *
+   * @default console.error
+   */
+  onNonLazyError?: (error: unknown) => void;
+  /**
    * URL of the GraphQL over SSE server to connect.
    *
    * If the option is a function, it will be called on each connection attempt.
@@ -112,6 +124,10 @@ export interface Client {
    * function used for dropping the subscription and cleaning stuff up.
    */
   subscribe<T = unknown>(request: RequestParams, sink: Sink<T>): () => void;
+  /**
+   * Dispose of the client, destroy connections and clean up resources.
+   */
+  dispose: () => void;
 }
 
 /**
@@ -127,6 +143,7 @@ export function createClient(options: ClientOptions): Client {
   const {
     singleConnection = true,
     lazy = true,
+    onNonLazyError = console.error,
     /**
      * Generates a v4 UUID to be used as the ID using `Math`
      * as the random number generator. Supply your own generator
@@ -170,16 +187,46 @@ export function createClient(options: ClientOptions): Client {
   if (!singleConnection)
     throw new Error('Multi connection mode not implemented');
 
-  // TODO-db-210815 implement
-  if (!lazy) throw new Error('Non-lazy mode not implemented');
+  // we dont use yet another AbortController here because of
+  // node's max EventEmitters listeners being only 10
+  const client = (() => {
+    let disposed = false;
+    const listeners: (() => void)[] = [];
+    return {
+      get disposed() {
+        return disposed;
+      },
+      onDispose(cb: () => void) {
+        if (disposed) {
+          cb();
+          return () => {
+            // noop
+          };
+        }
+        listeners.push(cb);
+        return () => {
+          listeners.splice(listeners.indexOf(cb), 1);
+        };
+      },
+      dispose() {
+        if (disposed) return;
+        disposed = true;
+        for (const listener of listeners) {
+          listener();
+        }
+      },
+    };
+  })();
 
-  let connCtrl = new AbortControllerImpl(),
+  let connCtrl: AbortController,
     conn: Promise<Connection & { token: string }> | undefined,
     locks = 0,
     retryingErr = null as unknown,
     retries = 0;
   async function getOrConnect(): Promise<NonNullable<typeof conn>> {
     try {
+      if (client.disposed) throw new Error('Client has been disposed');
+
       return await (conn ??
         (conn = (async () => {
           if (retryingErr) {
@@ -194,7 +241,11 @@ export function createClient(options: ClientOptions): Client {
 
           // we must create a new controller here because lazy mode aborts currently active ones
           connCtrl = new AbortControllerImpl();
-          connCtrl.signal.addEventListener('abort', () => (conn = undefined));
+          const unlistenDispose = client.onDispose(() => connCtrl.abort());
+          connCtrl.signal.addEventListener('abort', () => {
+            unlistenDispose();
+            conn = undefined;
+          });
 
           const url =
             typeof options.url === 'function'
@@ -246,13 +297,40 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
+  // non-lazy mode always holds one lock to persist the connection
+  if (!lazy) {
+    (async () => {
+      locks++;
+      for (;;) {
+        try {
+          const { waitForDoneOrThrow } = await getOrConnect();
+          await waitForDoneOrThrow;
+        } catch (err) {
+          if (client.disposed) return;
+
+          // all non-network errors are worth reporting immediately
+          if (!(err instanceof NetworkError)) return onNonLazyError?.(err);
+
+          // retries are not allowed or we tried to many times, report error
+          if (!retryAttempts || retries >= retryAttempts)
+            return onNonLazyError?.(err);
+
+          // try again
+          retryingErr = err;
+        }
+      }
+    })();
+  }
+
   return {
     subscribe(request, sink) {
       locks++;
       const id = generateID();
 
       const control = new AbortControllerImpl();
+      const unlistenDispose = client.onDispose(() => control.abort());
       control.signal.addEventListener('abort', () => {
+        unlistenDispose();
         // release lock and disconnect if no locks are present
         if (--locks === 0) connCtrl.abort();
       });
@@ -307,9 +385,10 @@ export function createClient(options: ClientOptions): Client {
         .catch((err) => sink.error(err))
         .then(() => sink.complete());
 
-      return () => {
-        if (!control.signal.aborted) control.abort();
-      };
+      return () => control.abort();
+    },
+    dispose() {
+      client.dispose();
     },
   };
 }

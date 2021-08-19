@@ -60,42 +60,76 @@ it('should complete subscription by disposing', async (done) => {
   pong();
 });
 
-it('should connect on first subscribe and disconnect on last complete', async () => {
-  const { url, waitForOperation, waitForDisconnect } = await startTServer();
+describe('lazy', () => {
+  it('should connect on first subscribe and disconnect on last complete', async () => {
+    const { url, waitForOperation, waitForDisconnect } = await startTServer();
 
-  const client = createClient({
-    url,
-    fetchFn: fetch,
-    retryAttempts: 0,
+    const client = createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const dispose1 = client.subscribe(
+      {
+        query: 'subscription { ping(key: "1") }',
+      },
+      {
+        next: noop,
+        error: (err) => fail(err),
+        complete: noop,
+      },
+    );
+    await waitForOperation();
+
+    const dispose2 = client.subscribe(
+      {
+        query: 'subscription { ping(key: "2") }',
+      },
+      {
+        next: noop,
+        error: (err) => fail(err),
+        complete: noop,
+      },
+    );
+    await waitForOperation();
+
+    dispose1();
+    await waitForDisconnect(() => fail("Shouldn't have disconnected"), 30);
+
+    dispose2();
+    await waitForDisconnect();
+  });
+});
+
+describe('non-lazy', () => {
+  it('should connect as soon as the client is created', async () => {
+    const { url, waitForConnect } = await startTServer();
+
+    createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+      lazy: false,
+    });
+
+    await waitForConnect();
   });
 
-  const dispose1 = client.subscribe(
-    {
-      query: 'subscription { ping(key: "1") }',
-    },
-    {
-      next: noop,
-      error: (err) => fail(err),
-      complete: noop,
-    },
-  );
-  await waitForOperation();
+  it('should disconnect when the client gets disposed', async () => {
+    const { url, waitForConnect, waitForDisconnect } = await startTServer();
 
-  const dispose2 = client.subscribe(
-    {
-      query: 'subscription { ping(key: "2") }',
-    },
-    {
-      next: noop,
-      error: (err) => fail(err),
-      complete: noop,
-    },
-  );
-  await waitForOperation();
+    const client = createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+      lazy: false,
+    });
 
-  dispose1();
-  await waitForDisconnect(() => fail("Shouldn't have disconnected"), 30);
+    await waitForConnect();
 
-  dispose2();
-  await waitForDisconnect();
+    client.dispose();
+
+    await waitForDisconnect();
+  });
 });
