@@ -196,7 +196,7 @@ describe('single connection mode', () => {
   });
 });
 
-describe('distinct connection mode', () => {
+describe('distinct connections mode', () => {
   it('should stream query operations to connected event stream and then disconnect', async () => {
     const { url, waitForDisconnect } = await startTServer();
 

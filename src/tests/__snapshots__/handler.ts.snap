@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`distinct connection mode should report operation validation issues by streaming them 1`] = `
+exports[`distinct connections mode should report operation validation issues by streaming them 1`] = `
 Object {
   "data": Object {
     "errors": Array [
@@ -19,14 +19,14 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should report operation validation issues by streaming them 2`] = `
+exports[`distinct connections mode should report operation validation issues by streaming them 2`] = `
 Object {
   "data": null,
   "event": "complete",
 }
 `;
 
-exports[`distinct connection mode should stream query operations to connected event stream and then disconnect 1`] = `
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 1`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -37,14 +37,14 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream query operations to connected event stream and then disconnect 2`] = `
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 2`] = `
 Object {
   "data": null,
   "event": "complete",
 }
 `;
 
-exports[`distinct connection mode should stream query operations to connected event stream and then disconnect 3`] = `
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 3`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -55,14 +55,14 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream query operations to connected event stream and then disconnect 4`] = `
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 4`] = `
 Object {
   "data": null,
   "event": "complete",
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 1`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 1`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -73,7 +73,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 2`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 2`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -84,7 +84,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 3`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 3`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -95,7 +95,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 4`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 4`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -106,7 +106,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 5`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 5`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -117,14 +117,14 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 6`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 6`] = `
 Object {
   "data": null,
   "event": "complete",
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 7`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 7`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -135,7 +135,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 8`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 8`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -146,7 +146,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 9`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 9`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -157,7 +157,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 10`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 10`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -168,7 +168,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 11`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 11`] = `
 Object {
   "data": Object {
     "data": Object {
@@ -179,7 +179,7 @@ Object {
 }
 `;
 
-exports[`distinct connection mode should stream subscription operations to connected event stream and then disconnect 12`] = `
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 12`] = `
 Object {
   "data": null,
   "event": "complete",
