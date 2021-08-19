@@ -347,8 +347,7 @@ export function createClient(options: ClientOptions): Client {
       (async () => {
         for (;;) {
           try {
-            const { url, headers, token, getResultsUntilDone } =
-              await getOrConnect();
+            const { url, headers, token, getResults } = await getOrConnect();
 
             let res;
             try {
@@ -366,7 +365,7 @@ export function createClient(options: ClientOptions): Client {
             }
             if (res.status !== 202) throw new NetworkError(res);
 
-            for await (const result of getResultsUntilDone(id)) {
+            for await (const result of getResults(id)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sink.next(result as any);
             }
@@ -446,7 +445,7 @@ interface Connection {
   url: string;
   headers: Record<string, string> | undefined;
   waitForAbortOrThrow: Promise<void>;
-  getResultsUntilDone: (id?: string) => AsyncIterableIterator<ExecutionResult>;
+  getResults: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
 
 interface ConnectOptions {
@@ -533,7 +532,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
         Object.values(waiting).forEach(({ proceed }) => proceed());
       }
     })(),
-    async *getResultsUntilDone(
+    async *getResults(
       // when id == undefined then StreamData
       // else id != undefined then StreamDataForID
       id = '',
