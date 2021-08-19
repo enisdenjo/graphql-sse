@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import EventSource from 'eventsource';
 import { startTServer } from './utils/tserver';
 import { eventStream } from './utils/eventStream';
-import EventSource from 'eventsource';
 
 it('should only accept valid accept headers', async () => {
   const { request } = await startTServer();
