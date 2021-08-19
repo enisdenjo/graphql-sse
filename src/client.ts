@@ -413,7 +413,10 @@ export class NetworkError extends Error {
     if (NetworkError.isResponse(msgOrErrOrResponse)) {
       response = msgOrErrOrResponse;
       message =
-        msgOrErrOrResponse.status + ': ' + msgOrErrOrResponse.statusText;
+        'Server responded with ' +
+        msgOrErrOrResponse.status +
+        ': ' +
+        msgOrErrOrResponse.statusText;
     } else if (msgOrErrOrResponse instanceof Error)
       message = msgOrErrOrResponse.message;
     else message = String(msgOrErrOrResponse);
