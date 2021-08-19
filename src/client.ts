@@ -499,18 +499,19 @@ async function connect(options: ConnectOptions): Promise<Connection> {
         if (!msgs) continue;
 
         for (const msg of msgs) {
-          if (!msg.data) throw new Error('Message data missing');
-
-          const id = 'id' in msg.data ? msg.data.id : '';
-          if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
+          const id = msg.data && 'id' in msg.data ? msg.data.id : '';
+          if (!(id in queue))
+            throw new Error(
+              id ? `No message queue for ID: "${id}"` : 'No message queue',
+            );
 
           switch (msg.event) {
             case 'next':
-              if ('id' in msg.data)
+              if (id)
                 queue[id].push(
                   (msg as StreamMessage<true, 'next'>).data.payload,
                 );
-              else queue[id].push(msg.data);
+              else queue[id].push((msg as StreamMessage<false, 'next'>).data);
               break;
             case 'complete':
               queue[id].push('complete');
