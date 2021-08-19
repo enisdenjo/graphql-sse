@@ -290,11 +290,7 @@ export function createClient(options: ClientOptions): Client {
           retryingErr = null; // future connects are not retries
           retries = 0; // reset the retries on connect
 
-          connected.waitForAbortOrThrow
-            .catch(() => {
-              // connection errors are handled elsewhere
-            })
-            .finally(() => (conn = undefined));
+          connected.waitForThrow().catch(() => (conn = undefined));
 
           return { ...connected, token };
         })()));
@@ -311,9 +307,8 @@ export function createClient(options: ClientOptions): Client {
       locks++;
       for (;;) {
         try {
-          const { waitForAbortOrThrow } = await getOrConnect();
-          await waitForAbortOrThrow;
-          return;
+          const { waitForThrow } = await getOrConnect();
+          await waitForThrow();
         } catch (err) {
           if (client.disposed) return;
 
@@ -449,7 +444,7 @@ export class NetworkError extends Error {
 interface Connection {
   url: string;
   headers: Record<string, string> | undefined;
-  waitForAbortOrThrow: Promise<void>;
+  waitForThrow: () => Promise<void>;
   getResults: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
 
@@ -471,72 +466,78 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   } = {};
   const queue: { [id: string]: (ExecutionResult | 'complete')[] } = {};
 
+  let res;
+  try {
+    res = await fetchFn(url, {
+      signal,
+      method: 'POST',
+      headers: {
+        ...headers,
+        accept: 'text/event-stream',
+      },
+      body,
+    });
+  } catch (err) {
+    throw new NetworkError(err);
+  }
+  if (!res.ok) throw new NetworkError(res);
+  if (!res.body) throw new Error('Missing response body');
+
   let error: unknown = null;
+  let waitingForThrow: ((error: unknown) => void) | null = null;
+  (async () => {
+    try {
+      const parse = createParser();
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      for await (const chunk of toAsyncIterator(res.body!)) {
+        if (typeof chunk === 'string')
+          throw new Error(`Unexpected string chunk "${chunk}"`);
+
+        // read chunk and if messages are ready, yield them
+        const msgs = parse(chunk);
+        if (!msgs) continue;
+
+        for (const msg of msgs) {
+          if (!msg.data) throw new Error('Message data missing');
+
+          const id = 'id' in msg.data ? msg.data.id : '';
+          if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
+
+          switch (msg.event) {
+            case 'next':
+              if ('id' in msg.data)
+                queue[id].push(
+                  (msg as StreamMessage<true, 'next'>).data.payload,
+                );
+              else queue[id].push(msg.data);
+              break;
+            case 'complete':
+              queue[id].push('complete');
+              break;
+            default:
+              throw new Error(`Unexpected message event "${msg.event}"`);
+          }
+
+          waiting[id]?.proceed();
+        }
+      }
+    } catch (err) {
+      error = err;
+      if (waitingForThrow) waitingForThrow(err);
+    } finally {
+      Object.values(waiting).forEach(({ proceed }) => proceed());
+    }
+  })();
+
   return {
     url,
     headers,
-    waitForAbortOrThrow: (async () => {
-      try {
-        let res;
-        try {
-          res = await fetchFn(url, {
-            signal,
-            method: 'POST',
-            headers: {
-              ...headers,
-              accept: 'text/event-stream',
-            },
-            body,
-          });
-        } catch (err) {
-          throw new NetworkError(err);
-        }
-        if (!res.ok) throw new NetworkError(res);
-        if (!res.body) throw new Error('Missing response body');
-
-        const parse = createParser();
-        for await (const chunk of toAsyncIterator(res.body)) {
-          if (typeof chunk === 'string')
-            throw new Error(`Unexpected string chunk "${chunk}"`);
-
-          // read chunk and if messages are ready, yield them
-          const msgs = parse(chunk);
-          if (!msgs) continue;
-
-          for (const msg of msgs) {
-            if (!msg.data) throw new Error('Message data missing');
-
-            const id = 'id' in msg.data ? msg.data.id : '';
-            if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
-
-            switch (msg.event) {
-              case 'next':
-                if ('id' in msg.data)
-                  queue[id].push(
-                    (msg as StreamMessage<true, 'next'>).data.payload,
-                  );
-                else queue[id].push(msg.data);
-                break;
-              case 'complete':
-                queue[id].push('complete');
-                break;
-              default:
-                throw new Error(`Unexpected message event "${msg.event}"`);
-            }
-
-            waiting[id]?.proceed();
-          }
-        }
-
-        throw new NetworkError('Connection closed');
-      } catch (err) {
-        if (signal.aborted) return;
-        error = err;
-        throw error;
-      } finally {
-        Object.values(waiting).forEach(({ proceed }) => proceed());
-      }
-    })(),
+    waitForThrow: () =>
+      new Promise((_, reject) => {
+        if (error) return reject(error);
+        waitingForThrow = reject;
+      }),
     async *getResults(
       // when id == undefined then StreamData
       // else id != undefined then StreamDataForID
@@ -549,8 +550,6 @@ async function connect(options: ConnectOptions): Promise<Connection> {
 
       try {
         for (;;) {
-          if (signal.aborted) return;
-
           while (queue[id].length) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const result = queue[id].shift()!;
@@ -559,15 +558,10 @@ async function connect(options: ConnectOptions): Promise<Connection> {
           }
           if (error) throw error;
 
-          // wait for action or abort
-          await new Promise<void>((resolve) => {
-            const proceed = () => {
-              signal.removeEventListener('abort', proceed);
-              resolve();
-            };
-            signal.addEventListener('abort', proceed);
-            waiting[id] = { proceed };
-          }).then(() => delete waiting[id]);
+          await new Promise<void>(
+            (resolve) => (waiting[id] = { proceed: () => resolve() }),
+          );
+          delete waiting[id];
         }
       } finally {
         delete queue[id];
