@@ -16,8 +16,9 @@ export interface ClientOptions {
   /**
    * Reuses a single SSE connection for all GraphQL operations.
    *
-   * When instantiating with `false`, a new  SSE connection will
-   * be established on each subscribe.
+   * When instantiating with `false`, the client will run in
+   * a distinct connection mode. Meaning, a new SSE connection
+   * will be established on each subscribe.
    *
    * @default true
    */
@@ -181,9 +182,9 @@ export function createClient(options: ClientOptions): Client {
   const AbortControllerImpl = (options.abortControllerImpl ||
     AbortController) as typeof AbortController;
 
-  if (lazy && !singleConnection)
+  if (!lazy && !singleConnection)
     throw new Error(
-      'Lazy mode cannot be used together with single-connection mode',
+      'Non-lazy mode cannot be used together with distinct connection mode',
     );
 
   // TODO-db-210815 implement
