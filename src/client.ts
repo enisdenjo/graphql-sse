@@ -5,7 +5,7 @@
  */
 
 import { createParser } from './parser';
-import { RequestParams, Sink, StreamMessage } from './common';
+import { isObject, RequestParams, Sink, StreamMessage } from './common';
 import { ExecutionResult } from 'graphql';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -409,19 +409,29 @@ export class NetworkError extends Error {
   public response: Response | undefined;
 
   constructor(msgOrErrOrResponse: string | Error | Response) {
-    let message;
-    if (msgOrErrOrResponse instanceof Response)
+    let message, response: Response | undefined;
+    if (NetworkError.isResponse(msgOrErrOrResponse)) {
+      response = msgOrErrOrResponse;
       message =
         msgOrErrOrResponse.status + ': ' + msgOrErrOrResponse.statusText;
-    else if (msgOrErrOrResponse instanceof Error)
+    } else if (msgOrErrOrResponse instanceof Error)
       message = msgOrErrOrResponse.message;
-    else message = msgOrErrOrResponse;
+    else message = String(msgOrErrOrResponse);
 
     super(message);
 
     this.name = this.constructor.name;
-    if (msgOrErrOrResponse instanceof Response)
-      this.response = msgOrErrOrResponse;
+    this.response = response;
+  }
+
+  static isResponse(
+    msgOrErrOrResponse: string | Error | Response,
+  ): msgOrErrOrResponse is Response {
+    return (
+      isObject(msgOrErrOrResponse) &&
+      'status' in msgOrErrOrResponse &&
+      'statusText' in msgOrErrOrResponse
+    );
   }
 }
 
