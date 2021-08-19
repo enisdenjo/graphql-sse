@@ -123,7 +123,13 @@ export interface Client {
    * It uses the `sink` to emit received data or errors. Returns a _dispose_
    * function used for dropping the subscription and cleaning stuff up.
    */
-  subscribe<T = unknown>(request: RequestParams, sink: Sink<T>): () => void;
+  subscribe<
+    Data = Record<string, unknown>,
+    Extensions = Record<string, unknown>,
+  >(
+    request: RequestParams,
+    sink: Sink<ExecutionResult<Data, Extensions>>,
+  ): () => void;
   /**
    * Dispose of the client, destroy connections and clean up resources.
    */
