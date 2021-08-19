@@ -187,10 +187,6 @@ export function createClient(options: ClientOptions): Client {
       'Non-lazy mode cannot be used together with distinct connection mode',
     );
 
-  // TODO-db-210815 implement
-  if (!singleConnection)
-    throw new Error('Multi connection mode not implemented');
-
   // we dont use yet another AbortController here because of
   // node's max EventEmitters listeners being only 10
   const client = (() => {
@@ -302,7 +298,7 @@ export function createClient(options: ClientOptions): Client {
   }
 
   // non-lazy mode always holds one lock to persist the connection
-  if (!lazy) {
+  if (singleConnection && !lazy) {
     (async () => {
       locks++;
       for (;;) {
@@ -328,8 +324,82 @@ export function createClient(options: ClientOptions): Client {
 
   return {
     subscribe(request, sink) {
+      if (!singleConnection) {
+        // distinct connection mode
+
+        const control = new AbortControllerImpl();
+        const unlistenDispose = client.onDispose(() => control.abort());
+        control.signal.addEventListener('abort', unlistenDispose);
+
+        (async () => {
+          let retryingErr = null as unknown,
+            retries = 0;
+
+          for (;;) {
+            try {
+              if (retryingErr) {
+                await retry(retries);
+
+                // connection might've been aborted while waiting for retry
+                if (control.signal.aborted)
+                  throw new Error('Connection aborted by the client');
+
+                retries++;
+              }
+
+              const url =
+                typeof options.url === 'function'
+                  ? await options.url()
+                  : options.url;
+              if (control.signal.aborted)
+                throw new Error('Connection aborted by the client');
+
+              const headers =
+                typeof options.headers === 'function'
+                  ? await options.headers()
+                  : options.headers ?? {};
+              if (control.signal.aborted)
+                throw new Error('Connection aborted by the client');
+
+              const { getResults } = await connect({
+                signal: control.signal,
+                headers,
+                url,
+                body: JSON.stringify(request),
+                fetchFn,
+              });
+              retryingErr = null; // future connects are not retries
+              retries = 0; // reset the retries on connect
+
+              for await (const result of getResults()) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sink.next(result as any);
+              }
+
+              return control.abort();
+            } catch (err) {
+              if (control.signal.aborted) return;
+
+              // all non-network errors are worth reporting immediately
+              if (!(err instanceof NetworkError)) throw err;
+
+              // retries are not allowed or we tried to many times, report error
+              if (!retryAttempts || retries >= retryAttempts) throw err;
+
+              // try again
+              retryingErr = err;
+            }
+          }
+        })()
+          .catch((err) => sink.error(err))
+          .then(() => sink.complete());
+
+        return () => control.abort();
+      }
+
+      // single connection mode
+
       locks++;
-      const id = generateID();
 
       const control = new AbortControllerImpl();
       const unlistenDispose = client.onDispose(() => control.abort());
@@ -339,12 +409,14 @@ export function createClient(options: ClientOptions): Client {
         if (--locks === 0) connCtrl.abort();
       });
 
-      request = {
-        ...request,
-        extensions: { ...request.extensions, operationId: id },
-      };
-
       (async () => {
+        const id = generateID();
+
+        request = {
+          ...request,
+          extensions: { ...request.extensions, operationId: id },
+        };
+
         for (;;) {
           try {
             const { url, headers, token, getResults } = await getOrConnect();
