@@ -176,8 +176,8 @@ describe('single connection mode', () => {
   });
 
   describe('non-lazy', () => {
-    it('should connect as soon as the client is created', async () => {
-      const { url, waitForConnect } = await startTServer();
+    it.only('should connect as soon as the client is created', async () => {
+      const { url, waitForConnected } = await startTServer();
 
       createClient({
         url,
@@ -187,11 +187,11 @@ describe('single connection mode', () => {
         onNonLazyError: fail,
       });
 
-      await waitForConnect();
+      await waitForConnected();
     });
 
     it('should disconnect when the client gets disposed', async () => {
-      const { url, waitForConnect, waitForDisconnect } = await startTServer();
+      const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
       const client = createClient({
         url,
@@ -201,7 +201,7 @@ describe('single connection mode', () => {
         onNonLazyError: fail,
       });
 
-      await waitForConnect();
+      await waitForConnected();
 
       client.dispose();
 
@@ -223,7 +223,7 @@ describe('distinct connections mode', () => {
   });
 
   it('should establish separate connections for each subscribe', async () => {
-    const { url, waitForConnect, waitForDisconnect } = await startTServer();
+    const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
     const client = createClient({
       singleConnection: false,
@@ -242,7 +242,7 @@ describe('distinct connections mode', () => {
         complete: noop,
       },
     );
-    await waitForConnect();
+    await waitForConnected();
 
     const dispose2 = client.subscribe(
       {
@@ -254,7 +254,7 @@ describe('distinct connections mode', () => {
         complete: noop,
       },
     );
-    await waitForConnect();
+    await waitForConnected();
 
     dispose1();
     await waitForDisconnect();
@@ -264,7 +264,7 @@ describe('distinct connections mode', () => {
   });
 
   it('should complete all connections when client disposes', async () => {
-    const { url, waitForConnect, waitForDisconnect } = await startTServer();
+    const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
     const client = createClient({
       singleConnection: false,
@@ -283,7 +283,7 @@ describe('distinct connections mode', () => {
         complete: noop,
       },
     );
-    await waitForConnect();
+    await waitForConnected();
 
     client.subscribe(
       {
@@ -295,7 +295,7 @@ describe('distinct connections mode', () => {
         complete: noop,
       },
     );
-    await waitForConnect();
+    await waitForConnected();
 
     client.dispose();
     await waitForDisconnect();
