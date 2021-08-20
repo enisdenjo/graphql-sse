@@ -471,7 +471,7 @@ export function createClient(options: ClientOptions): Client {
 
             return control.abort();
           } catch (err) {
-            if (control.signal.aborted) return;
+            if (control.signal.aborted) return await complete?.();
 
             // all non-network errors are worth reporting immediately
             if (!(err instanceof NetworkError)) throw err;
@@ -482,14 +482,8 @@ export function createClient(options: ClientOptions): Client {
             // try again
             retryingErr = err;
           } finally {
-            if (control.signal.aborted) {
-              try {
-                return await complete?.();
-              } finally {
-                // release lock and disconnect if no locks are present
-                if (--locks === 0) connCtrl.abort();
-              }
-            }
+            // release lock if aborted, and disconnect if no more locks
+            if (control.signal.aborted && --locks === 0) connCtrl.abort();
           }
         }
       })()
