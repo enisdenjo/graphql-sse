@@ -27,16 +27,38 @@
     "node": ">=12"
   },
   "main": "lib/index.js",
+  "module": "lib/index.mjs",
+  "browser": "umd/graphql-sse.js",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs",
+      "browser": "./umd/graphql-sse.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "lib/index.d.ts",
   "files": [
     "lib",
+    "umd",
     "README.md",
     "LICENSE.md",
     "PROTOCOL.md"
   ],
+  "sideEffects": [
+    "umd/*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "lint": "eslint 'src'",
     "type-check": "tsc --noEmit",
     "test": "jest",
+    "build:esm": "tsc -b tsconfig.esm.json && node scripts/esm-post-process.js",
+    "build:cjs": "tsc -b tsconfig.cjs.json",
+    "build:umd": "rollup -c && gzip umd/graphql-sse.min.js -c > umd/graphql-sse.min.js.gz",
+    "build": "yarn build:esm && yarn build:cjs && yarn build:umd",
     "release": "semantic-release"
   },
   "peerDependencies": {
@@ -50,6 +72,7 @@
     "@babel/plugin-proposal-optional-chaining": "^7.14.5",
     "@babel/preset-env": "^7.14.5",
     "@babel/preset-typescript": "^7.14.5",
+    "@rollup/plugin-typescript": "^8.2.5",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/git": "^9.0.0",
     "@types/eventsource": "^1.1.5",
@@ -66,6 +89,9 @@
     "jest": "^27.0.4",
     "node-fetch": "^2.6.1",
     "prettier": "^2.3.1",
+    "replacestream": "^4.0.3",
+    "rollup": "^2.56.2",
+    "rollup-plugin-terser": "^7.0.2",
     "semantic-release": "^17.4.3",
     "typescript": "^4.3.2"
   }
