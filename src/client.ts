@@ -578,10 +578,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
 
         for (const msg of msgs) {
           const id = msg.data && 'id' in msg.data ? msg.data.id : '';
-          if (!(id in queue))
-            throw new Error(
-              id ? `No message queue for ID: "${id}"` : 'No message queue',
-            );
+          if (!(id in queue)) queue[id] = [];
 
           switch (msg.event) {
             case 'next':
@@ -622,14 +619,9 @@ async function connect(options: ConnectOptions): Promise<Connection> {
       // else id != undefined then StreamDataForID
       id = '',
     ) {
-      if (id in queue)
-        throw new Error(`Queue already registered for ID: "${id}"`);
-
-      queue[id] = [];
-
       try {
         for (;;) {
-          while (queue[id].length) {
+          while (queue[id]?.length) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const result = queue[id].shift()!;
             if (result === 'complete') return;
