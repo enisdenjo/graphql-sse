@@ -37,14 +37,10 @@ export interface StreamMessage<
   // retry?: number; ignored since graphql-sse implements custom retry strategies
 }
 
-/**
- * @category Common
- */
+/** @category Common */
 export type StreamEvent = 'next' | 'complete';
 
-/**
- * @category Common
- */
+/** @category Common */
 export function validateStreamEvent(e: unknown): StreamEvent {
   e = e as StreamEvent;
   if (e !== 'next' && e !== 'complete')
@@ -52,18 +48,14 @@ export function validateStreamEvent(e: unknown): StreamEvent {
   return e;
 }
 
-/**
- * @category Common
- */
+/** @category Common */
 export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'next'
   ? ExecutionResult
   : E extends 'complete'
   ? null
   : never;
 
-/**
- * @category Common
- */
+/** @category Common */
 export type StreamDataForID<E extends StreamEvent = StreamEvent> =
   E extends 'next'
     ? { id: string; payload: ExecutionResult }
@@ -71,9 +63,7 @@ export type StreamDataForID<E extends StreamEvent = StreamEvent> =
     ? { id: string }
     : never;
 
-/**
- * @category Common
- */
+/** @category Common */
 export function parseStreamData(e: StreamEvent, data: string): StreamData {
   if (data) {
     try {

@@ -47,11 +47,13 @@ export type ExecutionContext =
   | undefined
   | null;
 
+/** @category Server */
 export type OperationResult =
   | Promise<AsyncIterableIterator<ExecutionResult> | ExecutionResult>
   | AsyncIterableIterator<ExecutionResult>
   | ExecutionResult;
 
+/** @category Server */
 export interface HandlerOptions {
   /**
    * The GraphQL schema on which the operations
@@ -253,6 +255,8 @@ export interface HandlerOptions {
  *   }
  * });
  * ```
+ *
+ * @category Server
  */
 export type Handler = (
   req: IncomingMessage,
@@ -286,6 +290,14 @@ interface Stream {
   ): Promise<void>;
 }
 
+/**
+ * Makes a Protocol complient HTTP GraphQL server  handler. The handler can
+ * be used with your favourite server library.
+ *
+ * Read more about the Protocol in the PROTOCOL.md documentation file.
+ *
+ * @category Server
+ */
 export function createHandler(options: HandlerOptions): Handler {
   const {
     schema,
