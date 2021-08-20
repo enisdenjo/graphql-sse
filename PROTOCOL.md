@@ -62,19 +62,28 @@ Additionally, due to various limitations with the browser's native [`EventSource
 
 The client requests a reservation for an incoming SSE connection through a `PUT` HTTP request. Since this is a regular HTTP request, it may transmit authentication details however the implementor sees fit.
 
-The server accepts the reservation request by responding with `201` (Created) and a one-time token in the body of the response. This token is then presented alongside the incoming SSE connection as an "entrance ticket". If using the [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), the token may be encoded in the URL's search parameters.
+The server accepts the reservation request by responding with `201` (Created) and a reservation token in the body of the response. This token is then presented alongside the incoming SSE connection as an entrance ticket. If using the [`EventSource` interface](https://developer.mozilla.org/en-US/docs/Web/API/EventSource), the token may be encoded in the URL's search parameters.
+
+The reservation token MUST accompany future HTTP requests to aid the server with the stream matching process. Token SHOULD be transmitted by the client through either:
+
+- A header value `X-GraphQL-Stream-Token`
+- A search parameter `token`
 
 For security reasons, **only one** SSE connection can fulfil a reservation at a time, there MUST never be multiple SSE connections behind a single reservation.
 
 ### Executing operations
 
-While having a single SSE connection (or reservation), separate HTTP requests solicit GraphQL operations conforming to the [GraphQL over HTTP spec](https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md) with **only one difference**: successful responses (execution results) are streamed through the single SSE connection. Validation issues and other request problems are handled as documented in the [GraphQL over HTTP spec](https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md).
+While having a single SSE connection (or reservation), separate HTTP requests solicit GraphQL operations conforming to the [GraphQL over HTTP spec](https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md) with **only one difference**: successful responses (execution results) get accepted with a `202` (Accepted) and are then streamed through the single SSE connection. Validation issues and other request problems are handled as documented in the [GraphQL over HTTP spec](https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md).
 
 Since the client holds the task of publishing the SSE messages to the relevant listeners through a single connection, an operation ID identifying the messages destinations is necessary. The unique operation ID SHOULD be sent through the `extensions` parameter of the GraphQL reqeust inside the `operationId` field. This operation ID accompanies the SSE messages for destination discovery (more details below).
+
+The HTTP request MUST contain the matching reservation token.
 
 ### Stopping streaming operations
 
 Streaming operations, such as `subscriptions` or directives like `@stream` and `@defer`, must have a termination/completion mechanism. This is done by sending a `DELETE` HTTP request encoding the unique operation ID inside the URL's search parameters behind the `operationId` key (ex. `DELETE: www.example.com/?operationId=<unique-operation-id>`).
+
+The HTTP request MUST contain the matching reservation token.
 
 ### Event stream
 
