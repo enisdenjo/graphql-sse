@@ -20,6 +20,7 @@ import {
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
 } from 'graphql';
+import { isObject } from './utils';
 import {
   RequestParams,
   StreamEvent,
@@ -781,7 +782,7 @@ async function parseReq(
     await new Promise<void>((resolve, reject) => {
       const end = (body: unknown) => {
         try {
-          const data = JSON.parse(String(body));
+          const data = isObject(body) ? body : JSON.parse(String(body));
           params.operationName = data.operationName;
           params.query = data.query;
           params.variables = data.variables;
