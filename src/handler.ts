@@ -419,6 +419,10 @@ export function createHandler(options: HandlerOptions): Handler {
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
 
+        // write an empty message because some browsers (like Firefox and Safari)
+        // dont accept the header flush
+        await write(':\n\n');
+
         // ping client every 12 seconds to keep the connection alive
         pinger = setInterval(() => write(':\n\n'), 12_000);
 
