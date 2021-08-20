@@ -332,8 +332,10 @@ export function createClient(options: ClientOptions): Client {
         // distinct connections mode
 
         const control = new AbortControllerImpl();
-        const unlistenDispose = client.onDispose(() => control.abort());
-        control.signal.addEventListener('abort', unlistenDispose);
+        const unlisten = client.onDispose(() => {
+          unlisten();
+          control.abort();
+        });
 
         (async () => {
           let retryingErr = null as unknown,
@@ -406,22 +408,22 @@ export function createClient(options: ClientOptions): Client {
       locks++;
 
       const control = new AbortControllerImpl();
-      const unlistenDispose = client.onDispose(() => control.abort());
-      control.signal.addEventListener('abort', () => {
-        unlistenDispose();
-        // release lock and disconnect if no locks are present
-        if (--locks === 0) connCtrl.abort();
+      const unlisten = client.onDispose(() => {
+        unlisten();
+        control.abort();
       });
 
       (async () => {
-        const id = generateID();
+        const operationId = generateID();
 
         request = {
           ...request,
-          extensions: { ...request.extensions, operationId: id },
+          extensions: { ...request.extensions, operationId },
         };
 
+        let complete: (() => Promise<void>) | null = null;
         for (;;) {
+          complete = null;
           try {
             const { url, headers, getResults } = await getOrConnect();
 
@@ -438,10 +440,34 @@ export function createClient(options: ClientOptions): Client {
             }
             if (res.status !== 202) throw new NetworkError(res);
 
-            for await (const result of getResults(id)) {
+            complete = async () => {
+              let res;
+              try {
+                const control = new AbortControllerImpl();
+                const unlisten = client.onDispose(() => {
+                  unlisten();
+                  control.abort();
+                });
+                res = await fetchFn(url + '?operationId=' + operationId, {
+                  signal: control.signal,
+                  method: 'DELETE',
+                  headers,
+                });
+              } catch (err) {
+                throw new NetworkError(err);
+              }
+              if (res.status !== 200) throw new NetworkError(res);
+            };
+
+            for await (const result of getResults({
+              signal: control.signal,
+              operationId,
+            })) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sink.next(result as any);
             }
+
+            complete = null; // completed by the server
 
             return control.abort();
           } catch (err) {
@@ -455,6 +481,15 @@ export function createClient(options: ClientOptions): Client {
 
             // try again
             retryingErr = err;
+          } finally {
+            if (control.signal.aborted) {
+              try {
+                return await complete?.();
+              } finally {
+                // release lock and disconnect if no locks are present
+                if (--locks === 0) connCtrl.abort();
+              }
+            }
           }
         }
       })()
@@ -520,7 +555,10 @@ interface Connection {
   url: string;
   headers: Record<string, string> | undefined;
   waitForThrow: () => Promise<void>;
-  getResults: (id?: string) => AsyncIterableIterator<ExecutionResult>;
+  getResults: (options?: {
+    signal: AbortSignal;
+    operationId: string;
+  }) => AsyncIterableIterator<ExecutionResult>;
 }
 
 interface ConnectOptions {
@@ -534,8 +572,6 @@ interface ConnectOptions {
 async function connect(options: ConnectOptions): Promise<Connection> {
   const { signal, url, headers, body, fetchFn } = options;
 
-  // when id == '' then StreamData
-  // else id != '' then StreamDataForID
   const waiting: {
     [id: string]: { proceed: () => void };
   } = {};
@@ -574,25 +610,32 @@ async function connect(options: ConnectOptions): Promise<Connection> {
         if (!msgs) continue;
 
         for (const msg of msgs) {
-          const id = msg.data && 'id' in msg.data ? msg.data.id : '';
-          if (!(id in queue)) queue[id] = [];
+          const operationId =
+            msg.data && 'id' in msg.data
+              ? msg.data.id // StreamDataForID
+              : ''; // StreamData
+
+          if (!(operationId in queue)) queue[operationId] = [];
 
           switch (msg.event) {
             case 'next':
-              if (id)
-                queue[id].push(
+              if (operationId)
+                queue[operationId].push(
                   (msg as StreamMessage<true, 'next'>).data.payload,
                 );
-              else queue[id].push((msg as StreamMessage<false, 'next'>).data);
+              else
+                queue[operationId].push(
+                  (msg as StreamMessage<false, 'next'>).data,
+                );
               break;
             case 'complete':
-              queue[id].push('complete');
+              queue[operationId].push('complete');
               break;
             default:
               throw new Error(`Unexpected message event "${msg.event}"`);
           }
 
-          waiting[id]?.proceed();
+          waiting[operationId]?.proceed();
         }
       }
     } catch (err) {
@@ -611,28 +654,34 @@ async function connect(options: ConnectOptions): Promise<Connection> {
         if (error) return reject(error);
         waitingForThrow = reject;
       }),
-    async *getResults(
-      // when id == undefined then StreamData
-      // else id != undefined then StreamDataForID
-      id = '',
-    ) {
+    async *getResults(options) {
+      const { signal, operationId = '' } = options ?? {};
+      // operationId === '' ? StreamData : StreamDataForID
+
       try {
         for (;;) {
-          while (queue[id]?.length) {
+          while (queue[operationId]?.length) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const result = queue[id].shift()!;
+            const result = queue[operationId].shift()!;
             if (result === 'complete') return;
             yield result;
           }
           if (error) throw error;
+          if (signal?.aborted)
+            throw new Error('Getting results aborted by the client');
 
-          await new Promise<void>(
-            (resolve) => (waiting[id] = { proceed: () => resolve() }),
-          );
-          delete waiting[id];
+          await new Promise<void>((resolve) => {
+            const proceed = () => {
+              signal?.removeEventListener('abort', proceed);
+              delete waiting[operationId];
+              resolve();
+            };
+            signal?.addEventListener('abort', proceed);
+            waiting[operationId] = { proceed };
+          });
         }
       } finally {
-        delete queue[id];
+        delete queue[operationId];
       }
     },
   };

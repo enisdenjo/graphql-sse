@@ -112,6 +112,7 @@ describe('single connection mode', () => {
       url,
       fetchFn: fetch,
       retryAttempts: 0,
+      lazy: false,
     });
 
     const dispose = client.subscribe(
@@ -135,7 +136,8 @@ describe('single connection mode', () => {
 
   describe('lazy', () => {
     it('should connect on first subscribe and disconnect on last complete', async () => {
-      const { url, waitForOperation, waitForDisconnect } = await startTServer();
+      const { url, waitForOperation, waitForDisconnect, waitForComplete } =
+        await startTServer();
 
       const client = createClient({
         url,
@@ -168,9 +170,11 @@ describe('single connection mode', () => {
       await waitForOperation();
 
       dispose1();
+      await waitForComplete();
       await waitForDisconnect(() => fail("Shouldn't have disconnected"), 30);
 
       dispose2();
+      await waitForComplete();
       await waitForDisconnect();
     });
   });
