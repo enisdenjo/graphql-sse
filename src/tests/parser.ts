@@ -19,6 +19,14 @@ it('should parse whole message', () => {
   expect(parse(encoder.encode('event: complete\n\n'))).toMatchSnapshot();
 });
 
+it.only('should parse message with prepended ping', () => {
+  const parse = createParser();
+
+  expect(
+    parse(encoder.encode(':\n\nevent:next\ndata:{ "iAm": "data" }\n\n')),
+  ).toMatchSnapshot();
+});
+
 it('should parse chunked message', () => {
   const parse = createParser();
 

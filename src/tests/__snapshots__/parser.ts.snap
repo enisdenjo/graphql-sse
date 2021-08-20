@@ -37,6 +37,17 @@ Array [
 ]
 `;
 
+exports[`should parse message with prepended ping 1`] = `
+Array [
+  Object {
+    "data": Object {
+      "iAm": "data",
+    },
+    "event": "next",
+  },
+]
+`;
+
 exports[`should parse multiple messages from one chunk 1`] = `
 Array [
   Object {

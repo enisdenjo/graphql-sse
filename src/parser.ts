@@ -78,15 +78,17 @@ export function createParser(): (
         break;
       } else if (lineStart === lineEnd) {
         // empty line denotes end of incoming message
-        if (!message.event && !message.data) return; // server ping ":\n\n"
-        if (!message.event) throw new Error('Missing message event');
-        const event = validateStreamEvent(message.event);
-        const data = parseStreamData(event, message.data);
-        pending.push({
-          event,
-          data,
-        });
-        message = { event: '', data: '' };
+        if (message.event || message.data) {
+          // NOT a server ping (":\n\n")
+          if (!message.event) throw new Error('Missing message event');
+          const event = validateStreamEvent(message.event);
+          const data = parseStreamData(event, message.data);
+          pending.push({
+            event,
+            data,
+          });
+          message = { event: '', data: '' };
+        }
       } else if (fieldLength > 0) {
         // end of line indicates message
         const line = buffer.subarray(lineStart, lineEnd);
