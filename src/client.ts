@@ -224,7 +224,7 @@ export function createClient(options: ClientOptions): Client {
   })();
 
   let connCtrl: AbortController,
-    conn: Promise<Connection & { token: string }> | undefined,
+    conn: Promise<Connection> | undefined,
     locks = 0,
     retryingErr = null as unknown,
     retries = 0;
@@ -292,7 +292,7 @@ export function createClient(options: ClientOptions): Client {
 
           connected.waitForThrow().catch(() => (conn = undefined));
 
-          return { ...connected, token };
+          return connected;
         })()));
     } catch (err) {
       // whatever problem happens during connect means the connection was not established
@@ -423,17 +423,14 @@ export function createClient(options: ClientOptions): Client {
 
         for (;;) {
           try {
-            const { url, headers, token, getResults } = await getOrConnect();
+            const { url, headers, getResults } = await getOrConnect();
 
             let res;
             try {
               res = await fetchFn(url, {
                 signal: control.signal,
                 method: 'POST',
-                headers: {
-                  ...headers,
-                  'x-graphql-stream-token': token,
-                },
+                headers,
                 body: JSON.stringify(request),
               });
             } catch (err) {
