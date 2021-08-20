@@ -275,6 +275,14 @@ export interface HandlerOptions {
 export type Handler = (
   req: IncomingMessage,
   res: ServerResponse,
+  /**
+   * Some libraries, like fastify, parse the body before
+   * reaching the handler. In such cases all request 'data'
+   * events are already consumed. Use this `body` argument
+   * too pass in the read body and avoid listening for the
+   * 'data' events internally.
+   */
+  body?: unknown,
 ) => Promise<void>;
 
 interface Stream {
@@ -590,7 +598,11 @@ export function createHandler(options: HandlerOptions): Handler {
     ];
   }
 
-  return async function handler(req: IncomingMessage, res: ServerResponse) {
+  return async function handler(
+    req: IncomingMessage,
+    res: ServerResponse,
+    body: unknown,
+  ) {
     // authenticate first and acquire unique identification token
     const token = await authenticate(req, res);
     if (res.writableEnded) return;
@@ -607,7 +619,7 @@ export function createHandler(options: HandlerOptions): Handler {
       if (!stream) {
         let params;
         try {
-          params = await parseReq(req);
+          params = await parseReq(req, body);
         } catch (err) {
           return res.writeHead(400, err.message).end();
         }
@@ -696,7 +708,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     let params;
     try {
-      params = await parseReq(req);
+      params = await parseReq(req, body);
     } catch (err) {
       return res.writeHead(400, err.message).end();
     }
@@ -743,7 +755,10 @@ export function createHandler(options: HandlerOptions): Handler {
   };
 }
 
-async function parseReq(req: IncomingMessage): Promise<RequestParams> {
+async function parseReq(
+  req: IncomingMessage,
+  body: unknown,
+): Promise<RequestParams> {
   const params: Partial<RequestParams> = {};
 
   if (req.method === 'GET') {
@@ -764,11 +779,9 @@ async function parseReq(req: IncomingMessage): Promise<RequestParams> {
     });
   } else if (req.method === 'POST') {
     await new Promise<void>((resolve, reject) => {
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
-      req.on('end', () => {
+      const end = (body: unknown) => {
         try {
-          const data = JSON.parse(body);
+          const data = JSON.parse(String(body));
           params.operationName = data.operationName;
           params.query = data.query;
           params.variables = data.variables;
@@ -777,7 +790,13 @@ async function parseReq(req: IncomingMessage): Promise<RequestParams> {
         } catch {
           reject(new Error('Unparsable body'));
         }
-      });
+      };
+      if (body != null) end(body);
+      else {
+        let body = '';
+        req.on('data', (chunk) => (body += chunk));
+        req.on('end', () => end(body));
+      }
     });
   } else throw new Error(`Unsupported method ${req.method}`); // should never happen
 

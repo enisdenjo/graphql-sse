@@ -40,6 +40,8 @@ it('should only accept valid accept headers', async () => {
 
 it.todo('should throw all unexpected errors from the handler');
 
+it.todo('should use the body argument from the handler');
+
 describe('single connection mode', () => {
   it('should respond with 404s when token was not previously registered', async () => {
     const { request } = await startTServer();

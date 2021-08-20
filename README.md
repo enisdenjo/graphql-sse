@@ -110,7 +110,9 @@ const handler = createHandler({ schema });
 
 // Create a fastify instance serving all methods on `/graphql/stream`
 const fastify = Fastify();
-fastify.all('/graphql/stream', (req, res) => handler(req.raw, res.raw));
+fastify.all('/graphql/stream', (req, res) =>
+  handler(req.raw, res.raw, req.body),
+);
 
 fastify.listen(4000);
 console.log('Listening to port 4000');
