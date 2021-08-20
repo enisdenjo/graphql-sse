@@ -20,6 +20,7 @@ it('should use the provided headers', async (done) => {
   });
 
   const singleConnClient = createClient({
+    singleConnection: true,
     url: singleConnServer.url,
     fetchFn: fetch,
     retryAttempts: 0,
@@ -86,6 +87,7 @@ describe('single connection mode', () => {
     const { url } = await startTServer();
 
     const client = createClient({
+      singleConnection: true,
       url,
       fetchFn: fetch,
       retryAttempts: 0,
@@ -109,6 +111,7 @@ describe('single connection mode', () => {
     const { url, waitForOperation, pong } = await startTServer();
 
     const client = createClient({
+      singleConnection: true,
       url,
       fetchFn: fetch,
       retryAttempts: 0,
@@ -140,6 +143,7 @@ describe('single connection mode', () => {
         await startTServer();
 
       const client = createClient({
+        singleConnection: true,
         url,
         fetchFn: fetch,
         retryAttempts: 0,
@@ -184,6 +188,7 @@ describe('single connection mode', () => {
       const { url, waitForConnected } = await startTServer();
 
       createClient({
+        singleConnection: true,
         url,
         fetchFn: fetch,
         retryAttempts: 0,
@@ -198,6 +203,7 @@ describe('single connection mode', () => {
       const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
       const client = createClient({
+        singleConnection: true,
         url,
         fetchFn: fetch,
         retryAttempts: 0,
@@ -321,6 +327,7 @@ describe('retries', () => {
       // non-lazy
 
       createClient({
+        singleConnection: true,
         url,
         fetchFn: fetch,
         retryAttempts: 2,
@@ -339,6 +346,7 @@ describe('retries', () => {
 
       tried = 0;
       const client = createClient({
+        singleConnection: true,
         url,
         fetchFn: fetch,
         retryAttempts: 2,

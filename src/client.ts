@@ -17,11 +17,16 @@ export interface ClientOptions {
   /**
    * Reuses a single SSE connection for all GraphQL operations.
    *
-   * When instantiating with `false`, the client will run in
-   * a s mode. Meaning, a new SSE connection
-   * will be established on each subscribe.
+   * When instantiating with `false` (default), the client will run
+   * in a "distinct connections mode" mode. Meaning, a new SSE
+   * connection will be established on each subscribe.
    *
-   * @default true
+   * On the other hand, when instantiating with `true` (default), the client
+   * will run in a "single connection mode" mode. Meaning, a single SSE
+   * connection will be used to transmit all operation results while
+   * separate HTTP requests will be issued to dictate the behaviour.
+   *
+   * @default false
    */
   singleConnection?: boolean;
   /**
@@ -137,18 +142,19 @@ export interface Client {
  * Creates a disposable GraphQL over SSE client to transmit
  * GraphQL operation results.
  *
- * Consider using `singleConnection = false` when dealing with HTTP/1
- * only servers which have SSE connection limitations on browsers.
- *
  * If you have an HTTP/2 server, it is recommended to use the client
  * in "distinct connections mode" (`singleConnection = true`) which will
- * create a new SSE connection for each subscribe.
+ * create a new SSE connection for each subscribe. This is the default.
+ *
+ * However, when dealing with HTTP/1 servers from a browser, consider using
+ * the "single connection mode" (`singleConnection = false`) which will
+ * use only one SSE connection.
  *
  * @category Client
  */
 export function createClient(options: ClientOptions): Client {
   const {
-    singleConnection = true,
+    singleConnection = false,
     lazy = true,
     onNonLazyError = console.error,
     /**
