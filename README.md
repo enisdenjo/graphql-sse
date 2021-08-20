@@ -111,7 +111,11 @@ const handler = createHandler({ schema });
 // Create a fastify instance serving all methods on `/graphql/stream`
 const fastify = Fastify();
 fastify.all('/graphql/stream', (req, res) =>
-  handler(req.raw, res.raw, req.body),
+  handler(
+    req.raw,
+    res.raw,
+    req.body, // fastify reads the body for you
+  ),
 );
 
 fastify.listen(4000);
