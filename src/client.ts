@@ -6,7 +6,8 @@
 
 import { ExecutionResult } from 'graphql';
 import { createParser } from './parser';
-import { isObject, RequestParams, Sink, StreamMessage } from './common';
+import { isObject } from './utils';
+import { RequestParams, Sink, StreamMessage } from './common';
 
 /** This file is the entry point for browsers, re-export common elements. */
 export * from './common';

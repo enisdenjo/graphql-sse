@@ -92,11 +92,3 @@ export interface Sink<T = unknown> {
   /** The sink has completed. This function "closes" the sink. */
   complete(): void;
 }
-
-/** @private */
-export class FatalError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
