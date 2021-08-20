@@ -87,7 +87,7 @@ export function parseStreamData(e: StreamEvent, data: string): StreamData {
 export interface Sink<T = unknown> {
   /** Next value arriving. */
   next(value: T): void;
-  /** An error that has occured. Calling this function "closes" the sink. */
+  /** An error that has occured. This function "closes" the sink. */
   error(error: unknown): void;
   /** The sink has completed. This function "closes" the sink. */
   complete(): void;
