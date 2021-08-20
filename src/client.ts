@@ -106,10 +106,8 @@ export interface ClientOptions {
    * Control the wait time between retries. You may implement your own strategy
    * by timing the resolution of the returned promise with the retries count.
    *
-   * `retries` argument counts actual connection attempts, so it will begin with
+   * `retries` argument counts actual reconnection attempts, so it will begin with
    * 0 after the first retryable disconnect.
-   *
-   * Throwing an error will error out all subscribers and stop the retries.
    *
    * @default 'Randomised exponential backoff, 5 times'
    */
@@ -478,6 +476,8 @@ export function createClient(options: ClientOptions): Client {
  *
  * Network errors are considered retryable, all others error types will be reported
  * immediately.
+ *
+ * @category Client
  */
 export class NetworkError extends Error {
   /**
