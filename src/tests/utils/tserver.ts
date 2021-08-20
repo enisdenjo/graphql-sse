@@ -31,8 +31,12 @@ export interface TServer {
     data: string;
   }>;
   pong: typeof pong;
-  waitForConnect(
+  waitForConnecting(
     test?: (req: http.IncomingMessage, res: http.ServerResponse) => void,
+    expire?: number,
+  ): Promise<void>;
+  waitForConnected(
+    test?: (req: http.IncomingMessage) => void,
     expire?: number,
   ): Promise<void>;
   waitForOperation(test?: () => void, expire?: number): Promise<void>;
@@ -46,20 +50,26 @@ export async function startTServer(
 ): Promise<TServer> {
   const emitter = new EventEmitter();
 
-  const pendingConnections: [
+  const pendingConnectings: [
     req: http.IncomingMessage,
     res: http.ServerResponse,
   ][] = [];
+  const pendingConnecteds: http.IncomingMessage[] = [];
   let pendingOperations = 0,
     pendingCompletes = 0,
     pendingDisconnects = 0;
   const handler = createHandler({
     schema,
     ...options,
-    onConnect: async (...args) => {
-      pendingConnections.push([args[0], args[1]]);
-      await options?.onConnect?.(...args);
-      emitter.emit('conn');
+    onConnecting: async (...args) => {
+      pendingConnectings.push([args[0], args[1]]);
+      await options?.onConnecting?.(...args);
+      emitter.emit('connecting');
+    },
+    onConnected: async (...args) => {
+      pendingConnecteds.push(args[0]);
+      await options?.onConnected?.(...args);
+      emitter.emit('connected');
     },
     onOperation: async (...args) => {
       pendingOperations++;
@@ -144,20 +154,38 @@ export async function startTServer(
       });
     },
     pong,
-    waitForConnect(test, expire) {
+    waitForConnecting(test, expire) {
       return new Promise((resolve) => {
         function done() {
           // the on connect listener below will be called before our listener, populating the queue
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const args = pendingConnections.shift()!;
+          const args = pendingConnectings.shift()!;
           test?.(...args);
           resolve();
         }
-        if (pendingConnections.length > 0) return done();
-        emitter.once('conn', done);
+        if (pendingConnectings.length > 0) return done();
+        emitter.once('connecting', done);
         if (expire)
           setTimeout(() => {
-            emitter.off('conn', done); // expired
+            emitter.off('connecting', done); // expired
+            resolve();
+          }, expire);
+      });
+    },
+    waitForConnected(test, expire) {
+      return new Promise((resolve) => {
+        function done() {
+          // the on connect listener below will be called before our listener, populating the queue
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const arg = pendingConnecteds.shift()!;
+          test?.(arg);
+          resolve();
+        }
+        if (pendingConnecteds.length > 0) return done();
+        emitter.once('connected', done);
+        if (expire)
+          setTimeout(() => {
+            emitter.off('connected', done); // expired
             resolve();
           }, expire);
       });

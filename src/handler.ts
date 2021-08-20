@@ -128,17 +128,23 @@ export interface HandlerOptions {
     res: ServerResponse,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
-   * Called when a new event stream has connected right before it is
-   * accepted.
+   * Called when a new event stream is connecting BEFORE it is accepted.
+   * By accepted, its meant the server responded with a 200 (OK), alongside
+   * flushing the necessary event stream headers.
    *
    * If you want to respond to the client with a custom status or body,
    * you should do so using the provided `res` argument which will stop
    * further execution.
    */
-  onConnect?: (
+  onConnecting?: (
     req: IncomingMessage,
     res: ServerResponse,
   ) => Promise<void> | void;
+  /**
+   * Called when a new event stream has been succesfully connected and
+   * accepted, and after all pending messages have been flushed.
+   */
+  onConnected?: (req: IncomingMessage) => Promise<void> | void;
   /**
    * The subscribe callback executed right after processing the request
    * before proceeding with the GraphQL operation execution.
@@ -330,7 +336,8 @@ export function createHandler(options: HandlerOptions): Handler {
         return v.toString(16);
       });
     },
-    onConnect,
+    onConnecting,
+    onConnected,
     onSubscribe,
     onOperation,
     onNext,
@@ -353,6 +360,7 @@ export function createHandler(options: HandlerOptions): Handler {
         if (disposed || !response || !response.writable) return resolve(false);
         response.write(msg, (err) => {
           if (err) return reject(err);
+          // if (err) return resolve(false);
           resolve(true);
         });
       });
@@ -432,6 +440,8 @@ export function createHandler(options: HandlerOptions): Handler {
           const wrote = await write(msg);
           if (!wrote) throw new Error('Unable to flush messages');
         }
+
+        await onConnected?.(req);
       },
       async from(operationReq, args, result, opId) {
         if (isAsyncIterable(result)) {
@@ -624,7 +634,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
         if (isAsyncIterable(result)) distinctStream.ops[''] = result;
 
-        await onConnect?.(req, res);
+        await onConnecting?.(req, res);
         if (res.writableEnded) return;
         await distinctStream.use(req, res);
         await distinctStream.from(req, args, result);
@@ -634,7 +644,7 @@ export function createHandler(options: HandlerOptions): Handler {
       // open stream cant exist, only one per token is allowed
       if (stream.open) return res.writeHead(409, 'Stream already open').end();
 
-      await onConnect?.(req, res);
+      await onConnecting?.(req, res);
       if (res.writableEnded) return;
       await stream.use(req, res);
       return;
