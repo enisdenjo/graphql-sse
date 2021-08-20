@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 1`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 2`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
+exports[`retries should keep retrying network errors until the retry attempts are exceeded 3`] = `[NetworkError: Server responded with 403: Forbidden]`;
+
+exports[`single connection mode should complete subscription by disposing 1`] = `
+Object {
+  "data": Object {
+    "ping": "pong",
+  },
+}
+`;
+
+exports[`single connection mode should execute a simple query 1`] = `
+Object {
+  "data": Object {
+    "getValue": "value",
+  },
+}
+`;

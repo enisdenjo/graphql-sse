@@ -122,6 +122,61 @@ fastify.listen(4000);
 console.log('Listening to port 4000');
 ```
 
+#### Use the client
+
+```ts
+import { createClient } from 'graphql-sse';
+
+const client = createClient({
+  url: 'http://welcomer.com:4000/graphql/stream',
+});
+
+// query
+(async () => {
+  const result = await new Promise((resolve, reject) => {
+    let result;
+    client.subscribe(
+      {
+        query: '{ hello }',
+      },
+      {
+        next: (data) => (result = data),
+        error: reject,
+        complete: () => resolve(result),
+      },
+    );
+  });
+
+  expect(result).toEqual({ hello: 'world' });
+})();
+
+// subscription
+(async () => {
+  const onNext = () => {
+    /* handle incoming values */
+  };
+
+  let unsubscribe = () => {
+    /* complete the subscription */
+  };
+
+  await new Promise((resolve, reject) => {
+    unsubscribe = client.subscribe(
+      {
+        query: 'subscription { greetings }',
+      },
+      {
+        next: onNext,
+        error: reject,
+        complete: resolve,
+      },
+    );
+  });
+
+  expect(onNext).toBeCalledTimes(5); // we say "Hi" in 5 languages
+})();
+```
+
 ## [How does it work?](PROTOCOL.md)
 
 Read about the exact transport intricacies used by the library in the [GraphQL over Server-Sent Events Protocol document](PROTOCOL.md).
