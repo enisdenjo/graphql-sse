@@ -5,7 +5,7 @@
  */
 
 import { createParser } from './parser';
-import { RequestParams, Sink, StreamDataForID, FatalError } from './common';
+import { RequestParams, Sink, StreamDataForID } from './common';
 import { ExecutionResult } from 'graphql';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -171,8 +171,7 @@ export function createClient(options: ClientOptions): Client {
             await retry(retries);
 
             // connection might've been aborted while waiting for retry
-            if (connCtrl.signal.aborted)
-              throw new FatalError('Connection aborted');
+            if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
             retries++;
           }
@@ -185,22 +184,26 @@ export function createClient(options: ClientOptions): Client {
             typeof options.url === 'function'
               ? await options.url()
               : options.url;
-          if (connCtrl.signal.aborted)
-            throw new FatalError('Connection aborted');
+          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
           const headers =
             typeof options.headers === 'function'
               ? await options.headers()
               : options.headers ?? {};
-          if (connCtrl.signal.aborted)
-            throw new FatalError('Connection aborted');
+          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
 
-          const res = await fetchFn(url, {
-            signal: connCtrl.signal,
-            method: 'PUT',
-            headers,
-          });
-          if (res.status !== 201) throw res;
+          let res;
+          try {
+            res = await fetchFn(url, {
+              signal: connCtrl.signal,
+              method: 'PUT',
+              headers,
+            });
+          } catch (err) {
+            throw new NetworkError(err);
+          }
+          if (res.status !== 201) throw new NetworkError(res);
+
           const token = await res.text();
           headers['x-graphql-stream-token'] = token;
 
@@ -245,15 +248,21 @@ export function createClient(options: ClientOptions): Client {
         for (;;) {
           try {
             const { url, token, getResultsUntilDone } = await getOrConnect();
-            const res = await fetchFn(url, {
-              signal: control.signal,
-              method: 'POST',
-              headers: {
-                'x-graphql-stream-token': token,
-              },
-              body: JSON.stringify(request),
-            });
-            if (res.status !== 202) throw res;
+
+            let res;
+            try {
+              res = await fetchFn(url, {
+                signal: control.signal,
+                method: 'POST',
+                headers: {
+                  'x-graphql-stream-token': token,
+                },
+                body: JSON.stringify(request),
+              });
+            } catch (err) {
+              throw new NetworkError(err);
+            }
+            if (res.status !== 202) throw new NetworkError(res);
 
             for await (const result of getResultsUntilDone(id)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -263,7 +272,9 @@ export function createClient(options: ClientOptions): Client {
             return control.abort();
           } catch (err) {
             if (control.signal.aborted) return;
-            if (err instanceof FatalError) throw err;
+
+            // all non-network errors are worth reporting immediately
+            if (!(err instanceof NetworkError)) throw err;
 
             // retries are not allowed or we tried to many times, report error
             if (!retryAttempts || retries >= retryAttempts) throw err;
@@ -281,6 +292,38 @@ export function createClient(options: ClientOptions): Client {
       };
     },
   };
+}
+
+/**
+ * A network error caused by the client or an unexpected response from the server.
+ *
+ * Network errors are considered retryable, all others error types will be reported
+ * immediately.
+ */
+export class NetworkError extends Error {
+  /**
+   * The underlyig response thats considered an error.
+   *
+   * Will be undefined when no response is received,
+   * instead an unexpected network error.
+   */
+  public response: Response | undefined;
+
+  constructor(msgOrErrOrResponse: string | Error | Response) {
+    let message;
+    if (msgOrErrOrResponse instanceof Response)
+      message =
+        msgOrErrOrResponse.status + ': ' + msgOrErrOrResponse.statusText;
+    else if (msgOrErrOrResponse instanceof Error)
+      message = msgOrErrOrResponse.message;
+    else message = msgOrErrOrResponse;
+
+    super(message);
+
+    this.name = this.constructor.name;
+    if (msgOrErrOrResponse instanceof Response)
+      this.response = msgOrErrOrResponse;
+  }
 }
 
 interface Connection {
@@ -313,33 +356,37 @@ async function connect(options: ConnectOptions): Promise<Connection> {
     url,
     waitForDoneOrThrow: (async () => {
       try {
-        const res = await fetchFn(url, {
-          signal,
-          method: 'POST',
-          headers: {
-            ...headers,
-            accept: 'text/event-stream',
-          },
-          body,
-        });
-        if (!res.ok) throw res;
-        if (!res.body) throw new FatalError('Missing response body');
+        let res;
+        try {
+          res = await fetchFn(url, {
+            signal,
+            method: 'POST',
+            headers: {
+              ...headers,
+              accept: 'text/event-stream',
+            },
+            body,
+          });
+        } catch (err) {
+          throw new NetworkError(err);
+        }
+        if (!res.ok) throw new NetworkError(res);
+        if (!res.body) throw new Error('Missing response body');
 
         const parse = createParser();
         for await (const chunk of toAsyncIterator(res.body)) {
           if (typeof chunk === 'string')
-            throw new FatalError(`Unexpected string chunk "${chunk}"`);
+            throw new Error(`Unexpected string chunk "${chunk}"`);
 
           // read chunk and if messages are ready, yield them
           const msgs = parse(chunk);
           if (!msgs) continue;
 
           for (const msg of msgs) {
-            if (!msg.data) throw new FatalError('Message data missing');
+            if (!msg.data) throw new Error('Message data missing');
 
             const id = 'id' in msg.data ? msg.data.id : '';
-            if (!(id in queue))
-              throw new FatalError(`No queue for ID: "${id}"`);
+            if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
 
             switch (msg.event) {
               case 'value':
@@ -354,7 +401,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
                 queue[id].push('done');
                 break;
               default:
-                throw new FatalError(`Unexpected message event "${msg.event}"`);
+                throw new Error(`Unexpected message event "${msg.event}"`);
             }
 
             waiting[id]?.proceed();
@@ -362,7 +409,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
         }
 
         if (Object.keys(queue).length > 0)
-          throw new Error(
+          throw new NetworkError(
             "Connection closed but some subscriptions haven't been completed",
           );
 
@@ -379,7 +426,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
       id = '',
     ) {
       if (id in queue)
-        throw new FatalError(`Queue already registered for ID: "${id}"`);
+        throw new Error(`Queue already registered for ID: "${id}"`);
 
       queue[id] = [];
 
@@ -413,9 +460,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   };
 }
 
-/**
- * Isomorphic ReadableStream to AsyncIterator converter.
- */
+/**  Isomorphic ReadableStream to AsyncIterator converter. */
 function toAsyncIterator(
   val: ReadableStream | NodeJS.ReadableStream,
 ): AsyncIterableIterator<string | Buffer | Uint8Array> {
