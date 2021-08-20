@@ -30,10 +30,14 @@ export interface ClientOptions {
    */
   singleConnection?: boolean;
   /**
-   * Controls when should the connection be established.
+   * Controls when should the connection be established while using the
+   * client in "single connection mode" (see `singleConnection ` option).
    *
    * - `false`: Establish a connection immediately.
    * - `true`: Establish a connection on first subscribe and close on last unsubscribe.
+   *
+   * Note that the `lazy` option has NO EFFECT when using the client
+   * in "distinct connection mode" (`singleConnection = false`).
    *
    * @default true
    */
@@ -190,11 +194,6 @@ export function createClient(options: ClientOptions): Client {
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
   const AbortControllerImpl = (options.abortControllerImpl ||
     AbortController) as typeof AbortController;
-
-  if (!lazy && !singleConnection)
-    throw new Error(
-      'Non-lazy mode cannot be used together with distinct connection mode',
-    );
 
   // we dont use yet another AbortController here because of
   // node's max EventEmitters listeners being only 10

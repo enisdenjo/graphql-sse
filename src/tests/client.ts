@@ -221,17 +221,6 @@ describe('single connection mode', () => {
 });
 
 describe('distinct connections mode', () => {
-  it('should not allow lazy and distinct connections mode together', () => {
-    expect(() => {
-      createClient({
-        singleConnection: false,
-        lazy: false,
-        url: '',
-        fetchFn: fetch,
-      });
-    }).toThrowErrorMatchingSnapshot();
-  });
-
   it('should establish separate connections for each subscribe', async () => {
     const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
