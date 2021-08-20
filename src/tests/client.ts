@@ -176,7 +176,7 @@ describe('single connection mode', () => {
   });
 
   describe('non-lazy', () => {
-    it.only('should connect as soon as the client is created', async () => {
+    it('should connect as soon as the client is created', async () => {
       const { url, waitForConnected } = await startTServer();
 
       createClient({
