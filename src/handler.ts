@@ -271,18 +271,15 @@ export interface HandlerOptions {
  * });
  * ```
  *
+ * Note that some libraries, like fastify, parse the body before reaching the handler.
+ * In such cases all request 'data' events are already consumed. Use this `body` argument
+ * too pass in the read body and avoid listening for the 'data' events internally.
+ *
  * @category Server
  */
 export type Handler = (
   req: IncomingMessage,
   res: ServerResponse,
-  /**
-   * Some libraries, like fastify, parse the body before
-   * reaching the handler. In such cases all request 'data'
-   * events are already consumed. Use this `body` argument
-   * too pass in the read body and avoid listening for the
-   * 'data' events internally.
-   */
   body?: unknown,
 ) => Promise<void>;
 

@@ -177,6 +177,10 @@ const client = createClient({
 })();
 ```
 
+## [Documentation](docs/)
+
+Check the [docs folder](docs/) out for [TypeDoc](https://typedoc.org) generated documentation.
+
 ## [How does it work?](PROTOCOL.md)
 
 Read about the exact transport intricacies used by the library in the [GraphQL over Server-Sent Events Protocol document](PROTOCOL.md).
