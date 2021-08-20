@@ -78,8 +78,3 @@ export function parseStreamData(e: StreamEvent, data: string): StreamData {
 
   return (data || null) as StreamData;
 }
-
-/** @private */
-export function isObject(val: unknown): val is Record<PropertyKey, unknown> {
-  return typeof val === 'object' && val !== null;
-}
