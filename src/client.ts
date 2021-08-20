@@ -5,7 +5,7 @@
  */
 
 import { createParser } from './parser';
-import { RequestParams, StreamDataForID } from './common';
+import { RequestParams, Sink, StreamDataForID } from './common';
 import { ExecutionResult } from 'graphql';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -267,6 +267,26 @@ export function createClient(options: ClientOptions): Client {
       }
     },
   };
+}
+
+/**
+ * A utility function that emits iterator values and events
+ * to the passed sink.
+ *
+ * @category Client
+ */
+export async function asyncIteratorToSink<T = unknown>(
+  iterator: AsyncIterableIterator<T>,
+  sink: Sink<T>,
+): Promise<void> {
+  try {
+    for await (const value of iterator) {
+      sink.next(value);
+    }
+    sink.complete();
+  } catch (err) {
+    sink.error(err);
+  }
 }
 
 /** @private */
