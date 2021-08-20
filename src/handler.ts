@@ -56,10 +56,18 @@ export type OperationResult =
 /** @category Server */
 export interface HandlerOptions {
   /**
-   * The GraphQL schema on which the operations
-   * will be executed and validated against.
+   * The GraphQL schema on which the operations will
+   * be executed and validated against.
+   *
+   * If a function is provided, it will be called on every
+   * subscription request allowing you to manipulate schema
+   * dynamically.
+   *
+   * If the schema is left undefined, you're trusted to
+   * provide one in the returned `ExecutionArgs` from the
+   * `onSubscribe` callback.
    */
-  schema:
+  schema?:
     | GraphQLSchema
     | ((
         req: IncomingMessage,
@@ -476,6 +484,10 @@ export function createHandler(options: HandlerOptions): Handler {
     const maybeExecArgs = await onSubscribe?.(req, res, params);
     if (maybeExecArgs) args = maybeExecArgs;
     else {
+      // you either provide a schema dynamically through
+      // `onSubscribe` or you set one up during the server setup
+      if (!schema) throw new Error('The GraphQL schema is not provided');
+
       const { operationName, variables } = params;
       let { query } = params;
 
