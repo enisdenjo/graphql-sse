@@ -405,7 +405,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
         res.once('close', dispose);
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('X-Accel-Buffering', 'no');
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
