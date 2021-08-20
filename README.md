@@ -61,7 +61,7 @@ const schema = new GraphQLSchema({
 
 #### Start the server
 
-#### With [`http`](https://nodejs.org/api/http.html)
+##### With [`http`](https://nodejs.org/api/http.html)
 
 ```ts
 import http from 'http';
@@ -82,7 +82,7 @@ server.listen(4000);
 console.log('Listening to port 4000');
 ```
 
-#### With [`express`](https://expressjs.com/)
+##### With [`express`](https://expressjs.com/)
 
 ```ts
 import express from 'express'; // yarn add express
@@ -99,7 +99,7 @@ app.listen(4000);
 console.log('Listening to port 4000');
 ```
 
-#### With [`fastify`](https://www.fastify.io/)
+##### With [`fastify`](https://www.fastify.io/)
 
 ```ts
 import Fastify from 'fastify'; // yarn add fastify
