@@ -5,7 +5,7 @@
  */
 
 import { createParser } from './parser';
-import { RequestParams, Sink, StreamDataForID } from './common';
+import { RequestParams, Sink, StreamDataForID, FatalError } from './common';
 import { ExecutionResult } from 'graphql';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -167,56 +167,69 @@ export function createClient(options: ClientOptions): Client {
     retryingErr = null as unknown,
     retries = 0;
   async function getOrConnect(): Promise<Connection> {
-    return await (conn ??
-      (conn = (async () => {
-        if (retryingErr) {
-          if (retries > retryAttempts) throw retryingErr;
-          await retry(retries);
+    try {
+      return await (conn ??
+        (conn = (async () => {
+          if (retryingErr) {
+            await retry(retries);
 
-          // connection might've been aborted while waiting for retry
-          if (connCtrl.signal.aborted) throw new Error('Connection aborted');
+            // connection might've been aborted while waiting for retry
+            if (connCtrl.signal.aborted)
+              throw new FatalError('Connection aborted');
+
+            retries++;
+          }
+
+          // we must create a new controller here because lazy mode aborts currently active ones
+          connCtrl = new AbortController();
+          connCtrl.signal.addEventListener('abort', () => (conn = undefined));
+
+          const url =
+            typeof options.url === 'function'
+              ? await options.url()
+              : options.url;
+          if (connCtrl.signal.aborted)
+            throw new FatalError('Connection aborted');
+
+          const headers =
+            typeof options.headers === 'function'
+              ? await options.headers()
+              : options.headers ?? {};
+          if (connCtrl.signal.aborted)
+            throw new FatalError('Connection aborted');
+
+          // TODO-db-210815 allow the user to provide and store the token
+          // PUT/register only when no existing token
+          if (!token) {
+            const res = await fetchFn(url, {
+              signal: connCtrl.signal,
+              method: 'PUT',
+              headers,
+            });
+            if (res.status !== 201) throw res;
+            headers['x-graphql-stream-token'] = token = await res.text();
+          }
 
           // TODO-db-210726 use last-event-id
-          retries++;
-        }
-
-        // we must create a new controller here because lazy mode aborts currently active ones
-        connCtrl = new AbortController();
-        connCtrl.signal.addEventListener('abort', () => (conn = undefined));
-
-        const url =
-          typeof options.url === 'function' ? await options.url() : options.url;
-        if (connCtrl.signal.aborted) throw new Error('Connection aborted');
-
-        const headers =
-          typeof options.headers === 'function'
-            ? await options.headers()
-            : options.headers ?? {};
-        if (connCtrl.signal.aborted) throw new Error('Connection aborted');
-
-        // TODO-db-210815 allow the user to provide and store the token
-        // PUT/register only when no existing token
-        if (!token) {
-          const res = await fetchFn(url, {
+          const connected = await connect({
             signal: connCtrl.signal,
-            method: 'PUT',
             headers,
+            url,
+            fetchFn,
           });
-          if (res.status !== 201) throw res;
-          headers['x-graphql-stream-token'] = token = await res.text();
-        }
+          retryingErr = null; // future connects are not retries
+          retries = 0; // reset the retries on connect
 
-        const connected = await connect({
-          signal: connCtrl.signal,
-          headers,
-          url,
-          fetchFn,
-        });
-        retryingErr = null; // future connects are not retries
-        retries = 0; // reset the retries on connect
+          // whatever happens, the connection is gone
+          connected.waitForDoneOrThrow.finally(() => (conn = undefined));
 
-        return connected;
-      })()));
+          return connected;
+        })()));
+    } catch (err) {
+      // whatever problem happens here means the connection was not established
+      conn = undefined;
+      throw err;
+    }
   }
 
   return {
@@ -260,9 +273,14 @@ export function createClient(options: ClientOptions): Client {
 
           return complete();
         } catch (err) {
-          if (signal.aborted) return; // aborted, shouldnt try again
-          throw err;
-          retryingErr = err; // TODO-db-210810 implement retrying
+          if (signal.aborted) return;
+          if (err instanceof FatalError) throw err;
+
+          // retries are not allowed or we tried to many times, report error
+          if (!retryAttempts || retries >= retryAttempts) throw err;
+
+          // try again
+          retryingErr = err;
         }
       }
     },
@@ -292,6 +310,7 @@ export async function asyncIteratorToSink<T = unknown>(
 /** @private */
 interface Connection {
   url: string; // because it might change when supplying a function
+  waitForDoneOrThrow: Promise<void>;
   getResultsUntilDone: (id?: string) => AsyncIterableIterator<ExecutionResult>;
 }
 
@@ -317,72 +336,77 @@ async function connect(options: ConnectOptions): Promise<Connection> {
 
   let error: unknown = null,
     done = false;
-  (async () => {
-    try {
-      const res = await fetchFn(url, {
-        signal,
-        method: 'POST',
-        headers: {
-          ...headers,
-          accept: 'text/event-stream',
-        },
-        body,
-      });
-      if (!res.ok) throw res;
-      if (!res.body) throw new Error('Missing response body');
-
-      const parse = createParser();
-      for await (const chunk of toAsyncIterator(res.body)) {
-        if (typeof chunk === 'string')
-          throw new Error(`Unexpected string chunk "${chunk}"`);
-
-        // read chunk and if messages are ready, yield them
-        const msgs = parse(chunk);
-        if (!msgs) continue;
-
-        for (const msg of msgs) {
-          if (!msg.data) throw new Error('Message data missing');
-
-          const id = 'id' in msg.data ? msg.data.id : '';
-          if (!(id in queue)) throw new Error(`No queue for ID: "${id}"`);
-
-          switch (msg.event) {
-            case 'value':
-              if ('id' in msg.data)
-                queue[id].push(
-                  // TODO-db-210815 derive instead of assert
-                  (msg.data as StreamDataForID<'value'>).payload,
-                );
-              else queue[id].push(msg.data);
-              break;
-            case 'done':
-              queue[id].push('done');
-              break;
-            default:
-              throw new Error(`Unexpected message event "${msg.event}"`);
-          }
-
-          waiting[id]?.proceed();
-        }
-      }
-
-      done = true;
-    } catch (err) {
-      error = err;
-    } finally {
-      Object.values(waiting).forEach(({ proceed }) => proceed());
-    }
-  })();
-
   return {
     url,
+    waitForDoneOrThrow: (async () => {
+      try {
+        const res = await fetchFn(url, {
+          signal,
+          method: 'POST',
+          headers: {
+            ...headers,
+            accept: 'text/event-stream',
+          },
+          body,
+        });
+        if (!res.ok) throw res;
+        if (!res.body) throw new FatalError('Missing response body');
+
+        const parse = createParser();
+        for await (const chunk of toAsyncIterator(res.body)) {
+          if (typeof chunk === 'string')
+            throw new FatalError(`Unexpected string chunk "${chunk}"`);
+
+          // read chunk and if messages are ready, yield them
+          const msgs = parse(chunk);
+          if (!msgs) continue;
+
+          for (const msg of msgs) {
+            if (!msg.data) throw new FatalError('Message data missing');
+
+            const id = 'id' in msg.data ? msg.data.id : '';
+            if (!(id in queue))
+              throw new FatalError(`No queue for ID: "${id}"`);
+
+            switch (msg.event) {
+              case 'value':
+                if ('id' in msg.data)
+                  queue[id].push(
+                    // TODO-db-210815 derive instead of assert
+                    (msg.data as StreamDataForID<'value'>).payload,
+                  );
+                else queue[id].push(msg.data);
+                break;
+              case 'done':
+                queue[id].push('done');
+                break;
+              default:
+                throw new FatalError(`Unexpected message event "${msg.event}"`);
+            }
+
+            waiting[id]?.proceed();
+          }
+        }
+
+        if (Object.keys(queue).length > 0)
+          throw new Error(
+            "Connection closed but some subscriptions haven't been completed",
+          );
+
+        done = true;
+      } catch (err) {
+        error = err;
+      } finally {
+        Object.values(waiting).forEach(({ proceed }) => proceed());
+      }
+    })(),
     async *getResultsUntilDone(
       // when id == undefined then StreamData
       // else id != undefined then StreamDataForID
       id = '',
     ) {
       if (id in queue)
-        throw new Error(`Queue already registered for ID: "${id}"`);
+        throw new FatalError(`Queue already registered for ID: "${id}"`);
 
       queue[id] = [];
 
