@@ -454,6 +454,26 @@ const link = new SSELink({
 
 </details>
 
+<details id="single-connection-mode">
+<summary><a href="#single-connection-mode">🔗</a> Client usage for HTTP/1 (aka. <a href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode">single connection mode</a>)</summary>
+
+```typescript
+import { createClient } from 'graphql-sse';
+
+const client = createClient({
+  singleConnection: true, // this is literally it 😄
+  url: 'http://use.single:4000/connection/graphql/stream',
+  // lazy: true (default) -> connect on first subscribe and disconnect on last unsubscribe
+  // lazy: false -> connect as soon as the client is created
+});
+
+// The client will now run in a "single connection mode" mode. Meaning,
+// a single SSE connection will be used to transmit all operation results
+// while separate HTTP requests will be issued to dictate the behaviour.
+```
+
+</details>
+
 <details id="retry-strategy">
 <summary><a href="#retry-strategy">🔗</a> Client usage with custom retry timeout strategy</summary>
 
