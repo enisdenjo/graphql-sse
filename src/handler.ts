@@ -612,8 +612,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
     if (accept === 'text/event-stream') {
       // if event stream is not registered, process it directly.
-      // this means that distinct event streams are used for
-      // graphql operations
+      // this means that distinct connections are used for graphql operations
       if (!stream) {
         let params;
         try {
