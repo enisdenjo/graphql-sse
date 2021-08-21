@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Living in a connected world, real-time needs are great. Especially in the world's most connected "world", the internet. When talking about real-time, there are two main players in the game: [WebSockets](https://datatracker.ietf.org/doc/html/rfc6455) and [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html).
+We live in a connected world where real-time needs are ever-growing. Especially in the world's most connected "world", the internet. When talking about real-time, there are two main players in the game: [WebSockets](https://datatracker.ietf.org/doc/html/rfc6455) and [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html).
 
 Using Server-Sent Events (abbr. SSE) for your next real-time driven endeavour sounds appealing because of many reasons spanning from simplicity to acceptance. However, you're soon to find out that SSE suffers from a limitation to the maximum number of open connections when dealing with HTTP/1 powered servers (more details below).
 
