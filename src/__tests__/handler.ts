@@ -128,7 +128,7 @@ describe('single connection mode', () => {
     expect(statusMessage).toBe('Operation ID is missing');
   });
 
-  it('should stream query operations to connected event stream', async (done) => {
+  it('should stream query operations to connected event stream', async () => {
     const { url, request } = await startTServer();
 
     const { data: token } = await request('PUT');
@@ -137,10 +137,6 @@ describe('single connection mode', () => {
     es.addEventListener('next', (event) => {
       expect((event as any).data).toMatchSnapshot();
     });
-    es.addEventListener('complete', () => {
-      es.close();
-      done();
-    });
 
     const { statusCode } = await request(
       'POST',
@@ -148,11 +144,18 @@ describe('single connection mode', () => {
       { query: '{ getValue }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
+
+    await new Promise<void>((resolve) => {
+      es.addEventListener('complete', () => {
+        es.close();
+        resolve();
+      });
+    });
   });
 
   it.todo('should stream query operations even if event stream connects later');
 
-  it('should stream subscription operations to connected event stream', async (done) => {
+  it('should stream subscription operations to connected event stream', async () => {
     const { url, request } = await startTServer();
 
     const { data: token } = await request('PUT');
@@ -162,10 +165,6 @@ describe('single connection mode', () => {
       // called 5 times
       expect((event as any).data).toMatchSnapshot();
     });
-    es.addEventListener('complete', () => {
-      es.close();
-      done();
-    });
 
     const { statusCode } = await request(
       'POST',
@@ -173,6 +172,13 @@ describe('single connection mode', () => {
       { query: 'subscription { greetings }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
+
+    await new Promise<void>((resolve) => {
+      es.addEventListener('complete', () => {
+        es.close();
+        resolve();
+      });
+    });
   });
 
   it('should report operation validation issues to request', async () => {
