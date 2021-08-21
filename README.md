@@ -558,6 +558,74 @@ const client = createClient({
 
 </details>
 
+<details id="auth">
+<summary><a href="#schema">🔗</a> Server handler usage with custom authentication</summary>
+
+```typescript
+import { createHandler } from 'graphql-sse';
+import {
+  schema,
+  getOrCreateTokenFromCookies,
+  customAuthenticationTokenDiscovery,
+  processAuthorizationHeader,
+} from './my-graphql';
+
+const handler = createHandler({
+  schema,
+  authenticate: async (req, res) => {
+    let token = req.headers['x-graphql-stream-token'];
+    if (token) {
+      // When the client is working in a "single connection mode"
+      // all subsequent requests for operations will have the
+      // stream token set in the `X-GraphQL-Stream-Token` header.
+      //
+      // It is considered safe to accept the header token always
+      // because if a stream reservation does not exist, or is already
+      // fulfilled, the handler itself will reject the request.
+      //
+      // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
+      return Array.isArray(token) ? token.join('') : token;
+    }
+
+    // It is necessary to generate a unique token when dealing with
+    // clients that operate in the "single connection mode". The process
+    // of generating the token is completely up to the implementor.
+    token = getOrCreateTokenFromCookies(req);
+    // or
+    token = processAuthorizationHeader(req.headers['authorization']);
+    // or
+    token = await customAuthenticationTokenDiscovery(req);
+
+    // Using the response argument the implementor may respond to
+    // authentication issues however he sees fit.
+    if (!token) return res.writeHead(401, 'Unauthorized').end();
+
+    // Clients that operate in "distinct connections mode" dont
+    // need a unique stream token. It is completely ok to simply
+    // return an empty string for authenticated clients.
+    //
+    // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#distinct-connections-mode
+    if (req.method === 'POST' && req.headers.accept === 'text/event-stream') {
+      // "distinct connections mode" requests an event-stream with a POST
+      // method. These two checks, together with the lack of `X-GraphQL-Stream-Token`
+      // header, are sufficient for accurate detection.
+      return ''; // return token; is OK too
+    }
+
+    // On the other hand, clients operating in "single connection mode"
+    // need a unique stream token which will be provided alongside the
+    // incoming event stream request inside the `X-GraphQL-Stream-Token` header.
+    //
+    // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
+    return token;
+  },
+});
+
+// use `handler` with your favourite http library
+```
+
+</details>
+
 <details id="dynamic-schema">
 <summary><a href="#dynamic-schema">🔗</a> Server handler usage with dynamic schema</summary>
 
