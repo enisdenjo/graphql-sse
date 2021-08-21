@@ -558,6 +558,156 @@ const client = createClient({
 
 </details>
 
+<details id="dynamic-schema">
+<summary><a href="#dynamic-schema">🔗</a> Server handler usage with dynamic schema</summary>
+
+```typescript
+import { createHandler } from 'graphql-sse';
+import { schema, checkIsAdmin, getDebugSchema } from './my-graphql';
+
+const handler = createHandler({
+  schema: async (req, executionArgsWithoutSchema) => {
+    // will be called on every subscribe request
+    // allowing you to dynamically supply the schema
+    // using the depending on the provided arguments
+    const isAdmin = await checkIsAdmin(req);
+    if (isAdmin) return getDebugSchema(req, executionArgsWithoutSchema);
+    return schema;
+  },
+});
+
+// use `handler` with your favourite http library
+```
+
+</details>
+
+<details id="context">
+<summary><a href="#context">🔗</a> Server handler usage with custom context value</summary>
+
+```typescript
+import { createHandler } from 'graphql-sse';
+import { schema, getDynamicContext } from './my-graphql';
+
+const handler = createHandler({
+  schema,
+  // or static context by supplying the value direcly
+  context: async (req, args) => {
+    return getDynamicContext(req, args);
+  },
+});
+
+// use `handler` with your favourite http library
+```
+
+</details>
+
+<details id="custom-exec">
+<summary><a href="#custom-exec">🔗</a> Server handler usage with custom execution arguments</summary>
+
+```typescript
+import { parse } from 'graphql';
+import { createHandler } from 'graphql-sse';
+import { getSchema, myValidationRules } from './my-graphql';
+
+const handler = createHandler({
+  onSubscribe: async (req, _res, params) => {
+    const schema = await getSchema(req);
+
+    const args = {
+      schema,
+      operationName: params.operationName,
+      document: parse(params.query),
+      variableValues: params.variables,
+    };
+
+    return args;
+  },
+});
+
+// use `handler` with your favourite http library
+```
+
+</details>
+
+<details id="persisted">
+<summary><a href="#persisted">🔗</a> Server handler and client usage with persisted queries</summary>
+
+```typescript
+// 🛸 server
+
+import { parse, ExecutionArgs } from 'graphql';
+import { createHandler } from 'graphql-sse';
+import { schema } from './my-graphql-schema';
+
+// a unique GraphQL execution ID used for representing
+// a query in the persisted queries store. when subscribing
+// you should use the `SubscriptionPayload.query` to transmit the id
+type QueryID = string;
+
+const queriesStore: Record<QueryID, ExecutionArgs> = {
+  iWantTheGreetings: {
+    schema, // you may even provide different schemas in the queries store
+    document: parse('subscription Greetings { greetings }'),
+  },
+};
+
+const handler = createHandler(
+  {
+    onSubscribe: (req, res, params) => {
+      const persistedQuery = queriesStore[params.extensions?.persistedQuery];
+      if (persistedQuery) {
+        return {
+          ...persistedQuery,
+          variableValues: params.variables, // use the variables from the client
+        };
+      }
+
+      // for extra security only allow the queries from the store
+      return res.writeHead(404, 'Query Not Found').end();
+    },
+  },
+  wsServer,
+);
+
+// use `handler` with your favourite http library
+```
+
+```typescript
+// 📺 client
+
+import { createClient } from 'graphql-sse';
+
+const client = createClient({
+  url: 'http://persisted.graphql:4000/queries',
+});
+
+(async () => {
+  const onNext = () => {
+    /**/
+  };
+
+  await new Promise((resolve, reject) => {
+    client.subscribe(
+      {
+        query: '', // query field is required, but you can leave it empty for persisted queries
+        extensions: {
+          persistedQuery: 'iWantTheGreetings',
+        },
+      },
+      {
+        next: onNext,
+        error: reject,
+        complete: resolve,
+      },
+    );
+  });
+
+  expect(onNext).toBeCalledTimes(5); // greetings in 5 languages
+})();
+```
+
+</details>
+
 ## [Documentation](docs/)
 
 Check the [docs folder](docs/) out for [TypeDoc](https://typedoc.org) generated documentation.
