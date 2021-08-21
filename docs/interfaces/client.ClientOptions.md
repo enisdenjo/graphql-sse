@@ -101,7 +101,7 @@ When instantiating with `false` (default), the client will run
 in a "distinct connections mode" mode. Meaning, a new SSE
 connection will be established on each subscribe.
 
-On the other hand, when instantiating with `true` (default), the client
+On the other hand, when instantiating with `true`, the client
 will run in a "single connection mode" mode. Meaning, a single SSE
 connection will be used to transmit all operation results while
 separate HTTP requests will be issued to dictate the behaviour.
