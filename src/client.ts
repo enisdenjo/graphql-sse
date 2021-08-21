@@ -580,7 +580,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   try {
     res = await fetchFn(url, {
       signal,
-      method: 'POST',
+      method: body ? 'POST' : 'GET',
       headers: {
         ...headers,
         accept: 'text/event-stream',
