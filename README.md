@@ -128,6 +128,7 @@ console.log('Listening to port 4000');
 import { createClient } from 'graphql-sse';
 
 const client = createClient({
+  // singleConnection: true, use "single connection mode" instead of the default "distinct connection mode"
   url: 'http://welcomer.com:4000/graphql/stream',
 });
 
