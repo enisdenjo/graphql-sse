@@ -129,7 +129,7 @@ import { createClient } from 'graphql-sse';
 
 const client = createClient({
   // singleConnection: true, use "single connection mode" instead of the default "distinct connection mode"
-  url: 'http://welcomer.com:4000/graphql/stream',
+  url: 'http://localhost:4000/graphql/stream',
 });
 
 // query
