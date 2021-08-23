@@ -284,7 +284,7 @@ export function createClient(options: ClientOptions): Client {
           if (res.status !== 201) throw new NetworkError(res);
 
           const token = await res.text();
-          headers['x-graphql-stream-token'] = token;
+          headers['x-graphql-event-stream-token'] = token;
 
           const connected = await connect({
             signal: connCtrl.signal,

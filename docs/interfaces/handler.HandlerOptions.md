@@ -73,7 +73,7 @@ If you want to respond to the client with a custom status or body,
 you should do so using the provided `res` argument which will stop
 further execution.
 
-**`default`** 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
+**`default`** 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
 
 #### Parameters
 

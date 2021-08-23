@@ -122,7 +122,7 @@ export interface HandlerOptions {
    * you should do so using the provided `res` argument which will stop
    * further execution.
    *
-   * @default 'req.headers["x-graphql-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
+   * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
   authenticate?: (
     req: IncomingMessage,
@@ -326,7 +326,9 @@ export function createHandler(options: HandlerOptions): Handler {
     execute = graphqlExecute,
     subscribe = graphqlSubscribe,
     authenticate = function extractOrCreateStreamToken(req) {
-      const headerToken = req.headers['x-graphql-stream-token'];
+      const headerToken =
+        req.headers['x-graphql-event-stream-token'] ||
+        req.headers['x-graphql-stream-token']; // @deprecated >v1.0.0
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 

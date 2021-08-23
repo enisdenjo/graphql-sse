@@ -66,7 +66,7 @@ The server accepts the reservation request by responding with `201` (Created) an
 
 The reservation token MUST accompany future HTTP requests to aid the server with the stream matching process. Token SHOULD be transmitted by the client through either:
 
-- A header value `X-GraphQL-Stream-Token`
+- A header value `X-GraphQL-Event-Stream-Token`
 - A search parameter `token`
 
 For security reasons, **only one** SSE connection can fulfil a reservation at a time, there MUST never be multiple SSE connections behind a single reservation.

@@ -11,20 +11,20 @@ it('should only accept valid accept headers', async () => {
 
   let res = await request('GET', {
     accept: 'gibberish',
-    ['x-graphql-stream-token']: token,
+    ['x-graphql-event-stream-token']: token,
   });
   expect(res.statusCode).toBe(406);
 
   res = await request('GET', {
     accept: 'application/graphql+json',
-    ['x-graphql-stream-token']: token,
+    ['x-graphql-event-stream-token']: token,
   });
   expect(res.statusCode).toBe(400);
   expect(res.statusMessage).toBe('Missing query');
 
   res = await request('GET', {
     accept: 'application/json',
-    ['x-graphql-stream-token']: token,
+    ['x-graphql-event-stream-token']: token,
   });
   expect(res.statusCode).toBe(400);
   expect(res.statusMessage).toBe('Missing query');
@@ -89,7 +89,7 @@ describe('single connection mode', () => {
     // token can be sent through the header
     let res = await request('PUT');
     es = new EventSource(url, {
-      headers: { ['x-graphql-stream-token']: res.data },
+      headers: { ['x-graphql-event-stream-token']: res.data },
     });
     await new Promise<void>((resolve, reject) => {
       es.onopen = () => resolve();
@@ -120,7 +120,7 @@ describe('single connection mode', () => {
 
     const { statusCode, statusMessage } = await request(
       'POST',
-      { 'x-graphql-stream-token': token },
+      { 'x-graphql-event-stream-token': token },
       { query: '{ getValue }' },
     );
 
@@ -144,7 +144,7 @@ describe('single connection mode', () => {
 
     const { statusCode } = await request(
       'POST',
-      { 'x-graphql-stream-token': token },
+      { 'x-graphql-event-stream-token': token },
       { query: '{ getValue }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
@@ -169,7 +169,7 @@ describe('single connection mode', () => {
 
     const { statusCode } = await request(
       'POST',
-      { 'x-graphql-stream-token': token },
+      { 'x-graphql-event-stream-token': token },
       { query: 'subscription { greetings }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
@@ -190,7 +190,7 @@ describe('single connection mode', () => {
 
     const { statusCode, data } = await request(
       'POST',
-      { 'x-graphql-stream-token': token },
+      { 'x-graphql-event-stream-token': token },
       { query: '{ notExists }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(400);

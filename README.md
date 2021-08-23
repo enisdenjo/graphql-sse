@@ -573,11 +573,11 @@ import {
 const handler = createHandler({
   schema,
   authenticate: async (req, res) => {
-    let token = req.headers['x-graphql-stream-token'];
+    let token = req.headers['x-graphql-event-stream-token'];
     if (token) {
       // When the client is working in a "single connection mode"
       // all subsequent requests for operations will have the
-      // stream token set in the `X-GraphQL-Stream-Token` header.
+      // stream token set in the `X-GraphQL-Event-Stream-Token` header.
       //
       // It is considered safe to accept the header token always
       // because if a stream reservation does not exist, or is already
@@ -607,14 +607,14 @@ const handler = createHandler({
     // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#distinct-connections-mode
     if (req.method === 'POST' && req.headers.accept === 'text/event-stream') {
       // "distinct connections mode" requests an event-stream with a POST
-      // method. These two checks, together with the lack of `X-GraphQL-Stream-Token`
+      // method. These two checks, together with the lack of `X-GraphQL-Event-Stream-Token`
       // header, are sufficient for accurate detection.
       return ''; // return token; is OK too
     }
 
     // On the other hand, clients operating in "single connection mode"
     // need a unique stream token which will be provided alongside the
-    // incoming event stream request inside the `X-GraphQL-Stream-Token` header.
+    // incoming event stream request inside the `X-GraphQL-Event-Stream-Token` header.
     //
     // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
     return token;
