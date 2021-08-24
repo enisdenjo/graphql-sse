@@ -93,7 +93,7 @@ const handler = createHandler({ schema });
 
 // Create an express app serving all methods on `/graphql/stream`
 const app = express();
-app.all('/graphql/stream', handler);
+app.use('/graphql/stream', handler);
 
 app.listen(4000);
 console.log('Listening to port 4000');
