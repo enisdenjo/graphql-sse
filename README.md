@@ -82,6 +82,41 @@ server.listen(4000);
 console.log('Listening to port 4000');
 ```
 
+##### With [`http2`](https://nodejs.org/api/http2.html)
+
+_Browsers might complain about self-signed SSL/TLS certificates. [Help can be found on StackOverflow.](https://stackoverflow.com/questions/7580508/getting-chrome-to-accept-self-signed-localhost-certificate)_
+
+```shell
+$ openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
+  -keyout localhost-privkey.pem -out localhost-cert.pem
+```
+
+```ts
+import fs from 'fs';
+import http2 from 'http2';
+import { createHandler } from 'graphql-sse';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({
+  schema, // from the previous step
+});
+
+// Create a HTTP/2 server using the handler on `/graphql/stream`
+const server = http2.createSecureServer(
+  {
+    key: fs.readFileSync('localhost-privkey.pem'),
+    cert: fs.readFileSync('localhost-cert.pem'),
+  },
+  (req, res) => {
+    if (req.url.startsWith('/graphql/stream')) return handler(req, res);
+    return res.writeHead(404).end();
+  },
+);
+
+server.listen(4000);
+console.log('Listening to port 4000');
+```
+
 ##### With [`express`](https://expressjs.com/)
 
 ```ts
