@@ -6,16 +6,12 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import {
-  DocumentNode,
   ExecutionArgs,
   ExecutionResult,
   getOperationAST,
-  GraphQLError,
   GraphQLSchema,
   OperationTypeNode,
   parse,
-  TypeInfo,
-  ValidationRule,
   validate as graphqlValidate,
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
@@ -94,13 +90,7 @@ export interface HandlerOptions {
    * A custom GraphQL validate function allowing you to apply your
    * own validation rules.
    */
-  validate?: (
-    schema: GraphQLSchema,
-    documentAST: DocumentNode,
-    rules?: ReadonlyArray<ValidationRule>,
-    typeInfo?: TypeInfo,
-    options?: { maxErrors?: number },
-  ) => ReadonlyArray<GraphQLError>;
+  validate?: typeof graphqlValidate;
   /**
    * Is the `execute` function from GraphQL which is
    * used to execute the query and mutation operations.

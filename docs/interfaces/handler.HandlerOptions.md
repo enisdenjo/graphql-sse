@@ -10,6 +10,7 @@
 
 - [context](handler.HandlerOptions.md#context)
 - [schema](handler.HandlerOptions.md#schema)
+- [validate](handler.HandlerOptions.md#validate)
 
 ### Methods
 
@@ -23,7 +24,6 @@
 - [onOperation](handler.HandlerOptions.md#onoperation)
 - [onSubscribe](handler.HandlerOptions.md#onsubscribe)
 - [subscribe](handler.HandlerOptions.md#subscribe)
-- [validate](handler.HandlerOptions.md#validate)
 
 ## Properties
 
@@ -56,6 +56,48 @@ dynamically.
 If the schema is left undefined, you're trusted to
 provide one in the returned `ExecutionArgs` from the
 `onSubscribe` callback.
+
+___
+
+### validate
+
+• `Optional` **validate**: (`schema`: `GraphQLSchema`, `documentAST`: `DocumentNode`, `rules?`: `ReadonlyArray`<`ValidationRule`\>, `options?`: {}, `typeInfo?`: `TypeInfo`) => `ReadonlyArray`<`GraphQLError`\>
+
+A custom GraphQL validate function allowing you to apply your
+own validation rules.
+
+#### Type declaration
+
+▸ (`schema`, `documentAST`, `rules?`, `options?`, `typeInfo?`): `ReadonlyArray`<`GraphQLError`\>
+
+Implements the "Validation" section of the spec.
+
+Validation runs synchronously, returning an array of encountered errors, or
+an empty array if no errors were encountered and the document is valid.
+
+A list of specific validation rules may be provided. If not provided, the
+default list of rules defined by the GraphQL specification will be used.
+
+Each validation rules is a function which returns a visitor
+(see the language/visitor API). Visitor methods are expected to return
+GraphQLErrors, or Arrays of GraphQLErrors when invalid.
+
+Optionally a custom TypeInfo instance may be provided. If not provided, one
+will be created from the provided schema.
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `schema` | `GraphQLSchema` |
+| `documentAST` | `DocumentNode` |
+| `rules?` | `ReadonlyArray`<`ValidationRule`\> |
+| `options?` | `Object` |
+| `typeInfo?` | `TypeInfo` |
+
+##### Returns
+
+`ReadonlyArray`<`GraphQLError`\>
 
 ## Methods
 
@@ -199,7 +241,7 @@ ___
 
 ### onNext
 
-▸ `Optional` **onNext**(`req`, `args`, `result`): `void` \| `ExecutionResult`<`Object`, `Object`\> \| `Promise`<`void` \| `ExecutionResult`<`Object`, `Object`\>\>
+▸ `Optional` **onNext**(`req`, `args`, `result`): `void` \| `ExecutionResult`<`ObjMap`<`unknown`\>, `ObjMap`<`unknown`\>\> \| `Promise`<`void` \| `ExecutionResult`<`ObjMap`<`unknown`\>, `ObjMap`<`unknown`\>\>\>
 
 Executed after an operation has emitted a result right before
 that result has been sent to the client.
@@ -219,11 +261,11 @@ request.
 | :------ | :------ |
 | `req` | `IncomingMessage` |
 | `args` | `ExecutionArgs` |
-| `result` | `ExecutionResult`<`Object`, `Object`\> |
+| `result` | `ExecutionResult`<`ObjMap`<`unknown`\>, `ObjMap`<`unknown`\>\> |
 
 #### Returns
 
-`void` \| `ExecutionResult`<`Object`, `Object`\> \| `Promise`<`void` \| `ExecutionResult`<`Object`, `Object`\>\>
+`void` \| `ExecutionResult`<`ObjMap`<`unknown`\>, `ObjMap`<`unknown`\>\> \| `Promise`<`void` \| `ExecutionResult`<`ObjMap`<`unknown`\>, `ObjMap`<`unknown`\>\>\>
 
 ___
 
@@ -317,27 +359,3 @@ used to execute the subscription operation.
 #### Returns
 
 [`OperationResult`](../modules/handler.md#operationresult)
-
-___
-
-### validate
-
-▸ `Optional` **validate**(`schema`, `documentAST`, `rules?`, `typeInfo?`, `options?`): readonly `GraphQLError`[]
-
-A custom GraphQL validate function allowing you to apply your
-own validation rules.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `schema` | `GraphQLSchema` |
-| `documentAST` | `DocumentNode` |
-| `rules?` | readonly `ValidationRule`[] |
-| `typeInfo?` | `TypeInfo` |
-| `options?` | `Object` |
-| `options.maxErrors?` | `number` |
-
-#### Returns
-
-readonly `GraphQLError`[]
