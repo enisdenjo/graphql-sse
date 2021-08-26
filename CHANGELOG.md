@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/enisdenjo/graphql-sse/compare/v1.0.2...v1.0.3) (2021-08-26)
+
+
+### Bug Fixes
+
+* Bump `graphql` version to v16 in package.json ([af219f9](https://github.com/enisdenjo/graphql-sse/commit/af219f90ffcdb7019fe1e086d92a01bd98905869))
+
 ## [1.0.2](https://github.com/enisdenjo/graphql-sse/compare/v1.0.1...v1.0.2) (2021-08-26)
 
 
