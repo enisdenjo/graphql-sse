@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/enisdenjo/graphql-sse/compare/v1.0.1...v1.0.2) (2021-08-26)
+
+
+### Bug Fixes
+
+* Add support for `graphql@v16` ([89367f2](https://github.com/enisdenjo/graphql-sse/commit/89367f23a3f41f0e802cfbf70aa3d24dfa21e302))
+
 ## [1.0.1](https://github.com/enisdenjo/graphql-sse/compare/v1.0.0...v1.0.1) (2021-08-23)
 
 
