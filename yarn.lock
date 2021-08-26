@@ -4532,7 +4532,7 @@ __metadata:
     eslint-config-prettier: ^8.3.0
     eslint-plugin-prettier: ^3.4.1
     eventsource: ^1.1.0
-    graphql: ^15.5.1
+    graphql: ^16.0.0-rc.1
     jest: ^27.0.6
     node-fetch: ^2.6.1
     prettier: ^2.3.2
@@ -4545,14 +4545,14 @@ __metadata:
     typedoc-plugin-markdown: ^3.10.4
     typescript: ^4.3.5
   peerDependencies:
-    graphql: ">=0.11 <=15"
+    graphql: ">=0.11 <=16"
   languageName: unknown
   linkType: soft
 
-"graphql@npm:^15.5.1":
-  version: 15.5.1
-  resolution: "graphql@npm:15.5.1"
-  checksum: 7e45ae27021e5bafd2a3ce557e708606ff28504aae705654764fa6239b0151d014a90cbd4c68300f4f95a9074820aaee9b1f25b560ff089c8db0b49563e34080
+"graphql@npm:^16.0.0-rc.1":
+  version: 16.0.0-rc.1
+  resolution: "graphql@npm:16.0.0-rc.1"
+  checksum: 50780040ada5f4e71d3f485c6c8265dc4ce2ec6d44425f7a36eb2f3ef73ea60a91d89ba956f1b2fee042cc3ebdba387b967c458db736702415d8cfafca384af8
   languageName: node
   linkType: hard
 
