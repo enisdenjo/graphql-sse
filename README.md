@@ -15,7 +15,7 @@
 #### Install
 
 ```shell
-$ yarn add graphql-sse
+yarn add graphql-sse
 ```
 
 #### Create a GraphQL schema
