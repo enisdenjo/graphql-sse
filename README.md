@@ -262,7 +262,7 @@ const client = createClient({
   url: 'http://iterators.ftw:4000/graphql/stream',
 });
 
-function subscribe<T>(payload: SubscribePayload): AsyncIterableIterator<T> {
+function subscribe<T>(payload: SubscribePayload): AsyncGenerator<T> {
   let deferred: {
     resolve: (done: boolean) => void;
     reject: (err: unknown) => void;
@@ -297,6 +297,9 @@ function subscribe<T>(payload: SubscribePayload): AsyncIterableIterator<T> {
       ))
         ? { done: true, value: undefined }
         : { value: pending.shift()! };
+    },
+    async throw(err) {
+      throw err;
     },
     async return() {
       dispose();
