@@ -86,7 +86,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
     "eventsource": "^1.1.0",
-    "graphql": "^16.0.0-rc.1",
+    "graphql": "16.0.0-rc.2.experimental-stream-defer.3",
     "jest": "^27.0.6",
     "node-fetch": "^2.6.1",
     "prettier": "^2.3.2",
