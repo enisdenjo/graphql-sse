@@ -1,3 +1,11 @@
+## [1.0.4](https://github.com/enisdenjo/graphql-sse/compare/v1.0.3...v1.0.4) (2021-09-08)
+
+
+### Bug Fixes
+
+* Define graphql execution results ([89da803](https://github.com/enisdenjo/graphql-sse/commit/89da8038f983719b5cda3635652157e39ed0ee4d))
+* **server:** Operation result can be async generator or iterable ([24b6078](https://github.com/enisdenjo/graphql-sse/commit/24b60780ed21c6d119677049a25189af32759a5a))
+
 ## [1.0.3](https://github.com/enisdenjo/graphql-sse/compare/v1.0.2...v1.0.3) (2021-08-26)
 
 
