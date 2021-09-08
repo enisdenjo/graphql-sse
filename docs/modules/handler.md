@@ -118,7 +118,7 @@ ___
 
 ### OperationResult
 
-Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<`ExecutionResult`\> \| `AsyncIterable`<`ExecutionResult`\> \| `ExecutionResult`\> \| `AsyncGenerator`<`ExecutionResult`\> \| `AsyncIterable`<`ExecutionResult`\> \| `ExecutionResult`
+Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)\> \| `AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)
 
 ___
 

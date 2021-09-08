@@ -4,10 +4,15 @@
  *
  */
 
-import { ExecutionResult } from 'graphql';
 import { createParser } from './parser';
 import { isObject } from './utils';
-import { RequestParams, Sink, StreamMessage } from './common';
+import {
+  RequestParams,
+  Sink,
+  StreamMessage,
+  ExecutionResult,
+  ExecutionPatchResult,
+} from './common';
 
 /** This file is the entry point for browsers, re-export common elements. */
 export * from './common';
@@ -557,7 +562,7 @@ interface Connection {
   getResults: (options?: {
     signal: AbortSignal;
     operationId: string;
-  }) => AsyncIterable<ExecutionResult>;
+  }) => AsyncIterable<ExecutionResult | ExecutionPatchResult>;
 }
 
 interface ConnectOptions {
@@ -574,7 +579,9 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   const waiting: {
     [id: string]: { proceed: () => void };
   } = {};
-  const queue: { [id: string]: (ExecutionResult | 'complete')[] } = {};
+  const queue: {
+    [id: string]: (ExecutionResult | ExecutionPatchResult | 'complete')[];
+  } = {};
 
   let res;
   try {

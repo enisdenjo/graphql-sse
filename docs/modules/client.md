@@ -6,6 +6,8 @@
 
 ### References
 
+- [ExecutionPatchResult](client.md#executionpatchresult)
+- [ExecutionResult](client.md#executionresult)
 - [RequestParams](client.md#requestparams)
 - [Sink](client.md#sink)
 - [StreamData](client.md#streamdata)
@@ -56,6 +58,18 @@ use only one SSE connection.
 [`Client`](../interfaces/client.Client.md)
 
 ## Other
+
+### ExecutionPatchResult
+
+Re-exports: [ExecutionPatchResult](../interfaces/common.ExecutionPatchResult.md)
+
+___
+
+### ExecutionResult
+
+Re-exports: [ExecutionResult](../interfaces/common.ExecutionResult.md)
+
+___
 
 ### RequestParams
 

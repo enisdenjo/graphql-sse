@@ -7,7 +7,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import {
   ExecutionArgs,
-  ExecutionResult,
   getOperationAST,
   GraphQLSchema,
   OperationTypeNode,
@@ -22,6 +21,8 @@ import {
   StreamEvent,
   StreamData,
   StreamDataForID,
+  ExecutionResult,
+  ExecutionPatchResult,
 } from './common';
 
 /**
@@ -47,12 +48,12 @@ export type ExecutionContext =
 /** @category Server */
 export type OperationResult =
   | Promise<
-      | AsyncGenerator<ExecutionResult>
-      | AsyncIterable<ExecutionResult>
+      | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
+      | AsyncIterable<ExecutionResult | ExecutionPatchResult>
       | ExecutionResult
     >
-  | AsyncGenerator<ExecutionResult>
-  | AsyncIterable<ExecutionResult>
+  | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
+  | AsyncIterable<ExecutionResult | ExecutionPatchResult>
   | ExecutionResult;
 
 /** @category Server */
@@ -207,8 +208,12 @@ export interface HandlerOptions {
   onNext?: (
     req: IncomingMessage,
     args: ExecutionArgs,
-    result: ExecutionResult,
-  ) => Promise<ExecutionResult | void> | ExecutionResult | void;
+    result: ExecutionResult | ExecutionPatchResult,
+  ) =>
+    | Promise<ExecutionResult | ExecutionPatchResult | void>
+    | ExecutionResult
+    | ExecutionPatchResult
+    | void;
   /**
    * The complete callback is executed after the operation
    * has completed and the client has been notified.
@@ -301,9 +306,10 @@ interface Stream {
     operationReq: IncomingMessage, // holding the operation request (not necessarily the event stream)
     args: ExecutionArgs,
     result:
-      | AsyncGenerator<ExecutionResult>
-      | AsyncIterable<ExecutionResult>
-      | ExecutionResult,
+      | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
+      | AsyncIterable<ExecutionResult | ExecutionPatchResult>
+      | ExecutionResult
+      | ExecutionPatchResult,
     opId?: string,
   ): Promise<void>;
 }

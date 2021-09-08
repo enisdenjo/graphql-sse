@@ -6,6 +6,8 @@
 
 ### Interfaces
 
+- [ExecutionPatchResult](../interfaces/common.ExecutionPatchResult.md)
+- [ExecutionResult](../interfaces/common.ExecutionResult.md)
 - [RequestParams](../interfaces/common.RequestParams.md)
 - [Sink](../interfaces/common.Sink.md)
 - [StreamMessage](../interfaces/common.StreamMessage.md)
@@ -25,7 +27,7 @@
 
 ### StreamData
 
-Ƭ **StreamData**<`E`\>: `E` extends ``"next"`` ? `ExecutionResult` : `E` extends ``"complete"`` ? ``null`` : `never`
+Ƭ **StreamData**<`E`\>: `E` extends ``"next"`` ? [`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md) : `E` extends ``"complete"`` ? ``null`` : `never`
 
 #### Type parameters
 
@@ -37,7 +39,7 @@ ___
 
 ### StreamDataForID
 
-Ƭ **StreamDataForID**<`E`\>: `E` extends ``"next"`` ? { `id`: `string` ; `payload`: `ExecutionResult`  } : `E` extends ``"complete"`` ? { `id`: `string`  } : `never`
+Ƭ **StreamDataForID**<`E`\>: `E` extends ``"next"`` ? { `id`: `string` ; `payload`: [`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)  } : `E` extends ``"complete"`` ? { `id`: `string`  } : `never`
 
 #### Type parameters
 

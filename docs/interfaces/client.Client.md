@@ -46,7 +46,7 @@ function used for dropping the subscription and cleaning up.
 | Name | Type |
 | :------ | :------ |
 | `request` | [`RequestParams`](common.RequestParams.md) |
-| `sink` | [`Sink`](common.Sink.md)<`ExecutionResult`<`Data`, `Extensions`\>\> |
+| `sink` | [`Sink`](common.Sink.md)<[`ExecutionResult`](common.ExecutionResult.md)<`Data`, `Extensions`\>\> |
 
 #### Returns
 

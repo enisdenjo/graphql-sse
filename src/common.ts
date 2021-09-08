@@ -4,7 +4,7 @@
  *
  */
 
-import type { DocumentNode, ExecutionResult } from 'graphql';
+import type { DocumentNode, GraphQLError } from 'graphql';
 
 /**
  * Parameters for GraphQL's request for execution.
@@ -49,8 +49,32 @@ export function validateStreamEvent(e: unknown): StreamEvent {
 }
 
 /** @category Common */
+export interface ExecutionResult<
+  Data = Record<string, unknown>,
+  Extensions = Record<string, unknown>,
+> {
+  errors?: ReadonlyArray<GraphQLError>;
+  data?: Data | null;
+  hasNext?: boolean;
+  extensions?: Extensions;
+}
+
+/** @category Common */
+export interface ExecutionPatchResult<
+  Data = unknown,
+  Extensions = Record<string, unknown>,
+> {
+  errors?: ReadonlyArray<GraphQLError>;
+  data?: Data | null;
+  path?: ReadonlyArray<string | number>;
+  label?: string;
+  hasNext: boolean;
+  extensions?: Extensions;
+}
+
+/** @category Common */
 export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'next'
-  ? ExecutionResult
+  ? ExecutionResult | ExecutionPatchResult
   : E extends 'complete'
   ? null
   : never;
@@ -58,7 +82,7 @@ export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'next'
 /** @category Common */
 export type StreamDataForID<E extends StreamEvent = StreamEvent> =
   E extends 'next'
-    ? { id: string; payload: ExecutionResult }
+    ? { id: string; payload: ExecutionResult | ExecutionPatchResult }
     : E extends 'complete'
     ? { id: string }
     : never;
