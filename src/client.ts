@@ -557,7 +557,7 @@ interface Connection {
   getResults: (options?: {
     signal: AbortSignal;
     operationId: string;
-  }) => AsyncIterableIterator<ExecutionResult>;
+  }) => AsyncIterable<ExecutionResult>;
 }
 
 interface ConnectOptions {
@@ -689,7 +689,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
 /** Isomorphic ReadableStream to AsyncIterator converter. */
 function toAsyncIterator(
   val: ReadableStream | NodeJS.ReadableStream,
-): AsyncIterableIterator<string | Buffer | Uint8Array> {
+): AsyncIterable<string | Buffer | Uint8Array> {
   // node stream is already async iterable
   if (typeof Object(val)[Symbol.asyncIterator] === 'function') {
     val = val as NodeJS.ReadableStream;

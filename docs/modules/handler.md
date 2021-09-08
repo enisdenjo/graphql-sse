@@ -17,6 +17,29 @@
 ### Functions
 
 - [createHandler](handler.md#createhandler)
+- [isAsyncGenerator](handler.md#isasyncgenerator)
+
+## Other
+
+### isAsyncGenerator
+
+▸ **isAsyncGenerator**<`T`\>(`val`): val is AsyncGenerator<T, any, unknown\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | `unknown` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `val` | `unknown` |
+
+#### Returns
+
+val is AsyncGenerator<T, any, unknown\>
 
 ## Server
 
@@ -95,7 +118,7 @@ ___
 
 ### OperationResult
 
-Ƭ **OperationResult**: `Promise`<`AsyncIterableIterator`<`ExecutionResult`\> \| `ExecutionResult`\> \| `AsyncIterableIterator`<`ExecutionResult`\> \| `ExecutionResult`
+Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<`ExecutionResult`\> \| `AsyncIterable`<`ExecutionResult`\> \| `ExecutionResult`\> \| `AsyncGenerator`<`ExecutionResult`\> \| `AsyncIterable`<`ExecutionResult`\> \| `ExecutionResult`
 
 ___
 

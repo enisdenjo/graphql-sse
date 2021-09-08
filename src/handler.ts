@@ -46,8 +46,13 @@ export type ExecutionContext =
 
 /** @category Server */
 export type OperationResult =
-  | Promise<AsyncIterableIterator<ExecutionResult> | ExecutionResult>
-  | AsyncIterableIterator<ExecutionResult>
+  | Promise<
+      | AsyncGenerator<ExecutionResult>
+      | AsyncIterable<ExecutionResult>
+      | ExecutionResult
+    >
+  | AsyncGenerator<ExecutionResult>
+  | AsyncIterable<ExecutionResult>
   | ExecutionResult;
 
 /** @category Server */
@@ -284,7 +289,7 @@ interface Stream {
    * a reservation, meaning - the operation resolves to a single result or is still
    * pending/being prepared.
    */
-  ops: Record<string, AsyncIterator<unknown> | null>;
+  ops: Record<string, AsyncGenerator<unknown> | AsyncIterable<unknown> | null>;
   /**
    * Use this connection for streaming.
    */
@@ -295,7 +300,10 @@ interface Stream {
   from(
     operationReq: IncomingMessage, // holding the operation request (not necessarily the event stream)
     args: ExecutionArgs,
-    result: AsyncIterableIterator<ExecutionResult> | ExecutionResult,
+    result:
+      | AsyncGenerator<ExecutionResult>
+      | AsyncIterable<ExecutionResult>
+      | ExecutionResult,
     opId?: string,
   ): Promise<void>;
 }
@@ -351,7 +359,10 @@ export function createHandler(options: HandlerOptions): Handler {
       pinger: ReturnType<typeof setInterval>,
       disposed = false;
     const pendingMsgs: string[] = [];
-    const ops: Record<string, AsyncIterator<unknown> | null> = {};
+    const ops: Record<
+      string,
+      AsyncGenerator<unknown> | AsyncIterable<unknown> | null
+    > = {};
 
     function write(msg: unknown) {
       return new Promise<boolean>((resolve, reject) => {
@@ -385,8 +396,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
       // complete all operations and flush messages queue before ending the stream
       for (const op of Object.values(ops)) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        await op?.return!(); // iterator must implement the return method
+        if (isAsyncGenerator(op)) await op.return(undefined);
       }
       while (pendingMsgs.length) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -628,8 +638,7 @@ export function createHandler(options: HandlerOptions): Handler {
 
         const result = await perform();
         if (res.writableEnded) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
+          if (isAsyncGenerator(result)) result.return(undefined);
           return; // `onOperation` responded
         }
 
@@ -676,8 +685,8 @@ export function createHandler(options: HandlerOptions): Handler {
       );
       if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      stream.ops[opId]?.return!(); // iterator must implement the return method
+      const op = stream.ops[opId];
+      if (isAsyncGenerator(op)) op.return(undefined);
       delete stream.ops[opId]; // deleting the operation means no further activity should take place
 
       return res.writeHead(200).end();
@@ -722,16 +731,14 @@ export function createHandler(options: HandlerOptions): Handler {
 
     const result = await perform();
     if (res.writableEnded) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
+      if (isAsyncGenerator(result)) result.return(undefined);
       delete stream.ops[opId];
       return; // `onOperation` responded
     }
 
     // operation might have completed before performed
     if (!(opId in stream.ops)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (isAsyncIterable(result)) result.return!(); // iterator must implement the return method
+      if (isAsyncGenerator(result)) result.return(undefined);
       return res.writeHead(204).end();
     }
 
@@ -798,8 +805,19 @@ async function parseReq(
   return params as RequestParams;
 }
 
-function isAsyncIterable<T = unknown>(
-  val: unknown,
-): val is AsyncIterableIterator<T> {
+function isAsyncIterable<T = unknown>(val: unknown): val is AsyncIterable<T> {
   return typeof Object(val)[Symbol.asyncIterator] === 'function';
+}
+
+export function isAsyncGenerator<T = unknown>(
+  val: unknown,
+): val is AsyncGenerator<T> {
+  return (
+    isObject(val) &&
+    typeof Object(val)[Symbol.asyncIterator] === 'function' &&
+    typeof val.return === 'function'
+    // for lazy ones, we only need the return anyway
+    // typeof val.throw === 'function' &&
+    // typeof val.next === 'function'
+  );
 }
