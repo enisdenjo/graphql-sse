@@ -7,6 +7,8 @@
 
 [![Continuous integration](https://github.com/enisdenjo/graphql-sse/workflows/Continuous%20integration/badge.svg)](https://github.com/enisdenjo/graphql-sse/actions?query=workflow%3A%22Continuous+integration%22) [![graphql-sse](https://img.shields.io/npm/v/graphql-sse.svg?label=graphql-sse&logo=npm)](https://www.npmjs.com/package/graphql-sse)
 
+<i>Use [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) instead? Check out <b>[graphql-ws](https://github.com/enisdenjo/graphql-ws)</b>!</i>
+
   <br />
 </div>
 
