@@ -375,7 +375,6 @@ export function createHandler(options: HandlerOptions): Handler {
         if (disposed || !response || !response.writable) return resolve(false);
         response.write(msg, (err) => {
           if (err) return reject(err);
-          // if (err) return resolve(false);
           resolve(true);
         });
       });
@@ -593,8 +592,8 @@ export function createHandler(options: HandlerOptions): Handler {
     return [
       args,
       async function perform() {
-        let result;
-        result = operation === 'subscription' ? subscribe(args) : execute(args);
+        let result =
+          operation === 'subscription' ? subscribe(args) : execute(args);
 
         const maybeResult = await onOperation?.(req, res, args, result);
         if (maybeResult) result = maybeResult;
