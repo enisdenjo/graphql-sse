@@ -152,11 +152,11 @@ export interface Client {
  * GraphQL operation results.
  *
  * If you have an HTTP/2 server, it is recommended to use the client
- * in "distinct connections mode" (`singleConnection = true`) which will
+ * in "distinct connections mode" (`singleConnection = false`) which will
  * create a new SSE connection for each subscribe. This is the default.
  *
  * However, when dealing with HTTP/1 servers from a browser, consider using
- * the "single connection mode" (`singleConnection = false`) which will
+ * the "single connection mode" (`singleConnection = true`) which will
  * use only one SSE connection.
  *
  * @category Client
