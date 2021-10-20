@@ -1,35 +1,33 @@
-[graphql-sse](../README.md) / [handler](../modules/handler.md) / HandlerOptions
+[graphql-sse](../README.md) / HandlerOptions
 
 # Interface: HandlerOptions
-
-[handler](../modules/handler.md).HandlerOptions
 
 ## Table of contents
 
 ### Properties
 
-- [context](handler.HandlerOptions.md#context)
-- [schema](handler.HandlerOptions.md#schema)
-- [validate](handler.HandlerOptions.md#validate)
+- [context](HandlerOptions.md#context)
+- [schema](HandlerOptions.md#schema)
+- [validate](HandlerOptions.md#validate)
 
 ### Methods
 
-- [authenticate](handler.HandlerOptions.md#authenticate)
-- [execute](handler.HandlerOptions.md#execute)
-- [onComplete](handler.HandlerOptions.md#oncomplete)
-- [onConnected](handler.HandlerOptions.md#onconnected)
-- [onConnecting](handler.HandlerOptions.md#onconnecting)
-- [onDisconnect](handler.HandlerOptions.md#ondisconnect)
-- [onNext](handler.HandlerOptions.md#onnext)
-- [onOperation](handler.HandlerOptions.md#onoperation)
-- [onSubscribe](handler.HandlerOptions.md#onsubscribe)
-- [subscribe](handler.HandlerOptions.md#subscribe)
+- [authenticate](HandlerOptions.md#authenticate)
+- [execute](HandlerOptions.md#execute)
+- [onComplete](HandlerOptions.md#oncomplete)
+- [onConnected](HandlerOptions.md#onconnected)
+- [onConnecting](HandlerOptions.md#onconnecting)
+- [onDisconnect](HandlerOptions.md#ondisconnect)
+- [onNext](HandlerOptions.md#onnext)
+- [onOperation](HandlerOptions.md#onoperation)
+- [onSubscribe](HandlerOptions.md#onsubscribe)
+- [subscribe](HandlerOptions.md#subscribe)
 
 ## Properties
 
 ### context
 
-• `Optional` **context**: [`ExecutionContext`](../modules/handler.md#executioncontext) \| (`req`: `IncomingMessage`, `args`: `ExecutionArgs`) => [`ExecutionContext`](../modules/handler.md#executioncontext) \| `Promise`<[`ExecutionContext`](../modules/handler.md#executioncontext)\>
+• `Optional` **context**: [`ExecutionContext`](../README.md#executioncontext) \| (`req`: `IncomingMessage`, `args`: `ExecutionArgs`) => [`ExecutionContext`](../README.md#executioncontext) \| `Promise`<[`ExecutionContext`](../README.md#executioncontext)\>
 
 A value which is provided to every resolver and holds
 important contextual information like the currently
@@ -61,10 +59,7 @@ ___
 
 ### validate
 
-• `Optional` **validate**: (`schema`: `GraphQLSchema`, `documentAST`: `DocumentNode`, `rules?`: `ReadonlyArray`<`ValidationRule`\>, `options?`: {}, `typeInfo?`: `TypeInfo`) => `ReadonlyArray`<`GraphQLError`\>
-
-A custom GraphQL validate function allowing you to apply your
-own validation rules.
+• `Optional` **validate**: (`schema`: `GraphQLSchema`, `documentAST`: `DocumentNode`, `rules?`: readonly `ValidationRule`[], `options?`: {}, `typeInfo?`: `TypeInfo`) => `ReadonlyArray`<`GraphQLError`\>
 
 #### Type declaration
 
@@ -82,6 +77,10 @@ Each validation rules is a function which returns a visitor
 (see the language/visitor API). Visitor methods are expected to return
 GraphQLErrors, or Arrays of GraphQLErrors when invalid.
 
+Validate will stop validation after a `maxErrors` limit has been reached.
+Attackers can send pathologically invalid queries to induce a DoS attack,
+so by default `maxErrors` set to 100 errors.
+
 Optionally a custom TypeInfo instance may be provided. If not provided, one
 will be created from the provided schema.
 
@@ -91,7 +90,7 @@ will be created from the provided schema.
 | :------ | :------ |
 | `schema` | `GraphQLSchema` |
 | `documentAST` | `DocumentNode` |
-| `rules?` | `ReadonlyArray`<`ValidationRule`\> |
+| `rules?` | readonly `ValidationRule`[] |
 | `options?` | `Object` |
 | `typeInfo?` | `TypeInfo` |
 
@@ -132,7 +131,7 @@ ___
 
 ### execute
 
-▸ `Optional` **execute**(`args`): [`OperationResult`](../modules/handler.md#operationresult)
+▸ `Optional` **execute**(`args`): [`OperationResult`](../README.md#operationresult)
 
 Is the `execute` function from GraphQL which is
 used to execute the query and mutation operations.
@@ -145,7 +144,7 @@ used to execute the query and mutation operations.
 
 #### Returns
 
-[`OperationResult`](../modules/handler.md#operationresult)
+[`OperationResult`](../README.md#operationresult)
 
 ___
 
@@ -241,7 +240,7 @@ ___
 
 ### onNext
 
-▸ `Optional` **onNext**(`req`, `args`, `result`): `void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+▸ `Optional` **onNext**(`req`, `args`, `result`): `void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 Executed after an operation has emitted a result right before
 that result has been sent to the client.
@@ -261,17 +260,17 @@ request.
 | :------ | :------ |
 | `req` | `IncomingMessage` |
 | `args` | `ExecutionArgs` |
-| `result` | [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> |
+| `result` | [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> |
 
 #### Returns
 
-`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 ___
 
 ### onOperation
 
-▸ `Optional` **onOperation**(`req`, `res`, `args`, `result`): `void` \| [`OperationResult`](../modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../modules/handler.md#operationresult)\>
+▸ `Optional` **onOperation**(`req`, `res`, `args`, `result`): `void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
 
 Executed after the operation call resolves. For streaming
 operations, triggering this callback does not necessarely
@@ -299,11 +298,11 @@ request.
 | `req` | `IncomingMessage` |
 | `res` | `ServerResponse` |
 | `args` | `ExecutionArgs` |
-| `result` | [`OperationResult`](../modules/handler.md#operationresult) |
+| `result` | [`OperationResult`](../README.md#operationresult) |
 
 #### Returns
 
-`void` \| [`OperationResult`](../modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../modules/handler.md#operationresult)\>
+`void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
 
 ___
 
@@ -335,7 +334,7 @@ and supply the appropriate GraphQL operation execution arguments.
 | :------ | :------ |
 | `req` | `IncomingMessage` |
 | `res` | `ServerResponse` |
-| `params` | [`RequestParams`](common.RequestParams.md) |
+| `params` | [`RequestParams`](RequestParams.md) |
 
 #### Returns
 
@@ -345,7 +344,7 @@ ___
 
 ### subscribe
 
-▸ `Optional` **subscribe**(`args`): [`OperationResult`](../modules/handler.md#operationresult)
+▸ `Optional` **subscribe**(`args`): [`OperationResult`](../README.md#operationresult)
 
 Is the `subscribe` function from GraphQL which is
 used to execute the subscription operation.
@@ -358,4 +357,4 @@ used to execute the subscription operation.
 
 #### Returns
 
-[`OperationResult`](../modules/handler.md#operationresult)
+[`OperationResult`](../README.md#operationresult)

@@ -1,15 +1,13 @@
-[graphql-sse](../README.md) / [client](../modules/client.md) / Client
+[graphql-sse](../README.md) / Client
 
 # Interface: Client
-
-[client](../modules/client.md).Client
 
 ## Table of contents
 
 ### Methods
 
-- [dispose](client.Client.md#dispose)
-- [subscribe](client.Client.md#subscribe)
+- [dispose](Client.md#dispose)
+- [subscribe](Client.md#subscribe)
 
 ## Methods
 
@@ -45,8 +43,8 @@ function used for dropping the subscription and cleaning up.
 
 | Name | Type |
 | :------ | :------ |
-| `request` | [`RequestParams`](common.RequestParams.md) |
-| `sink` | [`Sink`](common.Sink.md)<[`ExecutionResult`](common.ExecutionResult.md)<`Data`, `Extensions`\>\> |
+| `request` | [`RequestParams`](RequestParams.md) |
+| `sink` | [`Sink`](Sink.md)<[`ExecutionResult`](ExecutionResult.md)<`Data`, `Extensions`\>\> |
 
 #### Returns
 

@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [client](../modules/client.md) / NetworkError
+[graphql-sse](../README.md) / NetworkError
 
 # Class: NetworkError
-
-[client](../modules/client.md).NetworkError
 
 A network error caused by the client or an unexpected response from the server.
 
@@ -19,15 +17,15 @@ immediately.
 
 ### Constructors
 
-- [constructor](client.NetworkError.md#constructor)
+- [constructor](NetworkError.md#constructor)
 
 ### Properties
 
-- [response](client.NetworkError.md#response)
+- [response](NetworkError.md#response)
 
 ### Methods
 
-- [isResponse](client.NetworkError.md#isresponse)
+- [isResponse](NetworkError.md#isresponse)
 
 ## Constructors
 

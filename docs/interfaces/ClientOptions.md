@@ -1,26 +1,24 @@
-[graphql-sse](../README.md) / [client](../modules/client.md) / ClientOptions
+[graphql-sse](../README.md) / ClientOptions
 
 # Interface: ClientOptions
-
-[client](../modules/client.md).ClientOptions
 
 ## Table of contents
 
 ### Properties
 
-- [abortControllerImpl](client.ClientOptions.md#abortcontrollerimpl)
-- [fetchFn](client.ClientOptions.md#fetchfn)
-- [headers](client.ClientOptions.md#headers)
-- [lazy](client.ClientOptions.md#lazy)
-- [retryAttempts](client.ClientOptions.md#retryattempts)
-- [singleConnection](client.ClientOptions.md#singleconnection)
-- [url](client.ClientOptions.md#url)
+- [abortControllerImpl](ClientOptions.md#abortcontrollerimpl)
+- [fetchFn](ClientOptions.md#fetchfn)
+- [headers](ClientOptions.md#headers)
+- [lazy](ClientOptions.md#lazy)
+- [retryAttempts](ClientOptions.md#retryattempts)
+- [singleConnection](ClientOptions.md#singleconnection)
+- [url](ClientOptions.md#url)
 
 ### Methods
 
-- [generateID](client.ClientOptions.md#generateid)
-- [onNonLazyError](client.ClientOptions.md#onnonlazyerror)
-- [retry](client.ClientOptions.md#retry)
+- [generateID](ClientOptions.md#generateid)
+- [onNonLazyError](ClientOptions.md#onnonlazyerror)
+- [retry](ClientOptions.md#retry)
 
 ## Properties
 
