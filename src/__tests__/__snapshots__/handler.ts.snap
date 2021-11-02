@@ -226,6 +226,46 @@ Array [
 ]
 `;
 
+exports[`fastify should work as advertised in the readme 1`] = `
+Array [
+  Array [
+    Object {
+      "data": Object {
+        "greetings": "Hi",
+      },
+    },
+  ],
+  Array [
+    Object {
+      "data": Object {
+        "greetings": "Bonjour",
+      },
+    },
+  ],
+  Array [
+    Object {
+      "data": Object {
+        "greetings": "Hola",
+      },
+    },
+  ],
+  Array [
+    Object {
+      "data": Object {
+        "greetings": "Ciao",
+      },
+    },
+  ],
+  Array [
+    Object {
+      "data": Object {
+        "greetings": "Zdravo",
+      },
+    },
+  ],
+]
+`;
+
 exports[`single connection mode should report operation validation issues to request 1`] = `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}"`;
 
 exports[`single connection mode should stream query operations to connected event stream 1`] = `"{\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}"`;

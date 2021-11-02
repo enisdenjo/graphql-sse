@@ -4,10 +4,11 @@ import EventSource from 'eventsource';
 import { startTServer, startDisposableServer } from './utils/tserver';
 import { eventStream } from './utils/eventStream';
 import { createClient, createHandler } from '../index';
-import express from 'express';
 import http from 'http';
 import { schema } from './fixtures/simple';
 import fetch from 'node-fetch';
+import express from 'express';
+import Fastify from 'fastify';
 
 it('should only accept valid accept headers', async () => {
   const { request } = await startTServer();
@@ -348,5 +349,41 @@ describe('express', () => {
     expect(next.mock.calls).toMatchSnapshot();
 
     await dispose();
+  });
+});
+
+describe('fastify', () => {
+  it('should work as advertised in the readme', async () => {
+    const handler = createHandler({ schema });
+    const fastify = Fastify();
+    fastify.all('/graphql/stream', (req, res) =>
+      handler(req.raw, res.raw, req.body),
+    );
+    const url = await fastify.listen(0);
+
+    const client = createClient({
+      url: url + '/graphql/stream',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const next = jest.fn();
+    await new Promise<void>((resolve, reject) => {
+      client.subscribe(
+        {
+          query: 'subscription { greetings }',
+        },
+        {
+          next: next,
+          error: reject,
+          complete: resolve,
+        },
+      );
+    });
+
+    expect(next).toBeCalledTimes(5);
+    expect(next.mock.calls).toMatchSnapshot();
+
+    await fastify.close();
   });
 });
