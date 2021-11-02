@@ -1,3 +1,11 @@
+## [1.0.5](https://github.com/enisdenjo/graphql-sse/compare/v1.0.4...v1.0.5) (2021-11-02)
+
+
+### Bug Fixes
+
+* **client:** Should not call complete after subscription error ([d8b7634](https://github.com/enisdenjo/graphql-sse/commit/d8b76346832101fa293e55b621ce753f7e1d59e1))
+* **handler:** Use 3rd `body` argument only if is object or string ([2062579](https://github.com/enisdenjo/graphql-sse/commit/20625792644590b5e2c03af7e7615b5aca4a31d1))
+
 ## [1.0.4](https://github.com/enisdenjo/graphql-sse/compare/v1.0.3...v1.0.4) (2021-09-08)
 
 
