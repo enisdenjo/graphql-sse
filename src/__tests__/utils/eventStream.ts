@@ -20,9 +20,9 @@ export async function eventStream<ForID extends boolean = false>(options: {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-  if (!res.body) throw new Error('Missing response body');
 
   return (async function* messages() {
+    if (!res.body) throw new Error('Missing response body');
     const parse = createParser();
     try {
       for await (const chunk of res.body) {
