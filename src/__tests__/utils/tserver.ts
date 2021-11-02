@@ -88,33 +88,16 @@ export async function startTServer(
       emitter.emit('disconn');
     },
   });
-  const server = http.createServer(async (req, res) => {
-    try {
-      await handler(req, res);
-    } catch (err) {
-      fail(err);
-    }
-  });
 
-  const sockets = new Set<net.Socket>();
-  server.on('connection', (socket) => {
-    sockets.add(socket);
-    socket.once('close', () => sockets.delete(socket));
-  });
-
-  const dispose = async () => {
-    for (const socket of sockets) {
-      socket.destroy();
-    }
-    await new Promise<void>((resolve) => server.close(() => resolve()));
-    leftovers.splice(leftovers.indexOf(dispose), 1);
-  };
-  leftovers.push(dispose);
-
-  const port = await getAvailablePort();
-  const url = `http://localhost:${port}/`;
-
-  await new Promise<void>((resolve) => server.listen(port, resolve));
+  const [server, url, dispose] = await startDisposableServer(
+    http.createServer(async (req, res) => {
+      try {
+        await handler(req, res);
+      } catch (err) {
+        fail(err);
+      }
+    }),
+  );
 
   return {
     url,
@@ -242,42 +225,34 @@ export async function startTServer(
   };
 }
 
-async function getAvailablePort() {
-  const httpServer = http.createServer();
+/**
+ * Starts a disposable server thet is really stopped when the dispose func resolves.
+ *
+ * Additionally adds the server kill function to the post tests `leftovers`
+ * to be invoked after each test.
+ */
+export async function startDisposableServer(
+  server: http.Server,
+): Promise<[server: http.Server, url: string, dispose: () => Promise<void>]> {
+  const sockets = new Set<net.Socket>();
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+  });
 
-  let tried = 0;
-  for (;;) {
-    try {
-      await new Promise((resolve, reject) => {
-        httpServer.once('error', reject);
-        httpServer.once('listening', resolve);
-        try {
-          httpServer.listen(0);
-        } catch (err) {
-          reject(err);
-        }
-      });
-      break; // listening
-    } catch (err) {
-      if ('code' in err && err.code === 'EADDRINUSE') {
-        tried++;
-        if (tried > 10)
-          throw new Error(
-            `Cant find open port, stopping search after ${tried} tries`,
-          );
-        continue; // try another one if this port is in use
-      } else {
-        throw err; // throw all other errors immediately
-      }
+  const kill = async () => {
+    for (const socket of sockets) {
+      socket.destroy();
     }
-  }
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    leftovers.splice(leftovers.indexOf(kill), 1);
+  };
+  leftovers.push(kill);
 
-  const addr = httpServer.address();
-  if (!addr || typeof addr !== 'object')
-    throw new Error(`Unexpected http server address ${addr}`);
+  await new Promise<void>((resolve) => server.listen(0, resolve));
 
-  // port found, stop server
-  await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+  const { port } = server.address() as net.AddressInfo;
+  const url = `http://localhost:${port}`;
 
-  return addr.port;
+  return [server, url, kill];
 }
