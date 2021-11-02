@@ -407,8 +407,8 @@ export function createClient(options: ClientOptions): Client {
             }
           }
         })()
-          .catch((err) => sink.error(err))
-          .then(() => sink.complete());
+          .then(() => sink.complete())
+          .catch((err) => sink.error(err));
 
         return () => control.abort();
       }
@@ -497,8 +497,8 @@ export function createClient(options: ClientOptions): Client {
           }
         }
       })()
-        .catch((err) => sink.error(err))
-        .then(() => sink.complete());
+        .then(() => sink.complete())
+        .catch((err) => sink.error(err));
 
       return () => control.abort();
     },

@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { startTServer } from './utils/tserver';
+import { tsubscribe } from './utils/tsubscribe';
 import { createClient } from '../client';
 
 // just does nothing
@@ -81,6 +82,27 @@ it('should use the provided headers', async (done) => {
 });
 
 describe('single connection mode', () => {
+  it('should not call complete after subscription error', async () => {
+    const { url } = await startTServer();
+
+    const client = createClient({
+      singleConnection: true,
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: '}}',
+    });
+
+    await sub.waitForError();
+
+    await sub.waitForComplete(() => {
+      fail("shouldn't have completed");
+    }, 20);
+  });
+
   it('should execute a simple query', async (done) => {
     expect.hasAssertions();
 
@@ -221,6 +243,26 @@ describe('single connection mode', () => {
 });
 
 describe('distinct connections mode', () => {
+  it('should not call complete after subscription error', async () => {
+    const { url } = await startTServer();
+
+    const client = createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: '}}',
+    });
+
+    await sub.waitForError();
+
+    await sub.waitForComplete(() => {
+      fail("shouldn't have completed");
+    }, 20);
+  });
+
   it('should establish separate connections for each subscribe', async () => {
     const { url, waitForConnected, waitForDisconnect } = await startTServer();
 
