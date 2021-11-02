@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import EventSource from 'eventsource';
-import { startTServer } from './utils/tserver';
+import { startTServer, startDisposableServer } from './utils/tserver';
 import { eventStream } from './utils/eventStream';
+import { createClient, createHandler } from '../index';
+import express from 'express';
+import http from 'http';
+import { schema } from './fixtures/simple';
+import fetch from 'node-fetch';
 
 it('should only accept valid accept headers', async () => {
   const { request } = await startTServer();
@@ -307,5 +312,41 @@ describe('distinct connections mode', () => {
     control.abort();
 
     await waitForComplete();
+  });
+});
+
+describe('express', () => {
+  it('should work as advertised in the readme', async () => {
+    const app = express();
+    const handler = createHandler({ schema });
+    app.use('/graphql/stream', handler);
+    const [, url, dispose] = await startDisposableServer(
+      http.createServer(app),
+    );
+
+    const client = createClient({
+      url: url + '/graphql/stream',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const next = jest.fn();
+    await new Promise<void>((resolve, reject) => {
+      client.subscribe(
+        {
+          query: 'subscription { greetings }',
+        },
+        {
+          next: next,
+          error: reject,
+          complete: resolve,
+        },
+      );
+    });
+
+    expect(next).toBeCalledTimes(5);
+    expect(next.mock.calls).toMatchSnapshot();
+
+    await dispose();
   });
 });

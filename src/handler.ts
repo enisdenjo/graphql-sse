@@ -780,9 +780,9 @@ async function parseReq(
     });
   } else if (req.method === 'POST') {
     await new Promise<void>((resolve, reject) => {
-      const end = (body: unknown) => {
+      const end = (body: Record<string, unknown> | string) => {
         try {
-          const data = isObject(body) ? body : JSON.parse(String(body));
+          const data = typeof body === 'string' ? JSON.parse(body) : body;
           params.operationName = data.operationName;
           params.query = data.query;
           params.variables = data.variables;
@@ -792,7 +792,7 @@ async function parseReq(
           reject(new Error('Unparsable body'));
         }
       };
-      if (body != null) end(body);
+      if (typeof body === 'string' || isObject(body)) end(body);
       else {
         let body = '';
         req.on('data', (chunk) => (body += chunk));
