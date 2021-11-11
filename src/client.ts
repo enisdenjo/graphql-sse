@@ -514,9 +514,14 @@ export function createClient(options: ClientOptions): Client {
  * Network errors are considered retryable, all others error types will be reported
  * immediately.
  *
+ * To avoid bundling DOM typings (because the client can run in Node env too),
+ * you should supply the `Response` generic depending on your Fetch implementation.
+ *
  * @category Client
  */
-export class NetworkError extends Error {
+export class NetworkError<
+  Response extends ResponseLike = ResponseLike,
+> extends Error {
   /**
    * The underlyig response thats considered an error.
    *
@@ -527,7 +532,7 @@ export class NetworkError extends Error {
 
   constructor(msgOrErrOrResponse: string | Error | Response) {
     let message, response: Response | undefined;
-    if (NetworkError.isResponse(msgOrErrOrResponse)) {
+    if (isResponseLike(msgOrErrOrResponse)) {
       response = msgOrErrOrResponse;
       message =
         'Server responded with ' +
@@ -543,16 +548,21 @@ export class NetworkError extends Error {
     this.name = this.constructor.name;
     this.response = response;
   }
+}
 
-  static isResponse(
-    msgOrErrOrResponse: string | Error | Response,
-  ): msgOrErrOrResponse is Response {
-    return (
-      isObject(msgOrErrOrResponse) &&
-      'status' in msgOrErrOrResponse &&
-      'statusText' in msgOrErrOrResponse
-    );
-  }
+interface ResponseLike {
+  readonly ok: boolean;
+  readonly status: number;
+  readonly statusText: string;
+}
+
+function isResponseLike(val: unknown): val is ResponseLike {
+  return (
+    isObject(val) &&
+    typeof val['ok'] === 'boolean' &&
+    typeof val['status'] === 'number' &&
+    typeof val['statusText'] === 'string'
+  );
 }
 
 interface Connection {
