@@ -1,6 +1,13 @@
 [graphql-sse](../README.md) / HandlerOptions
 
-# Interface: HandlerOptions
+# Interface: HandlerOptions<Request, Response\>
+
+## Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Request` | extends `IncomingMessage``IncomingMessage` |
+| `Response` | extends `ServerResponse``ServerResponse` |
 
 ## Table of contents
 
@@ -27,7 +34,7 @@
 
 ### context
 
-• `Optional` **context**: [`ExecutionContext`](../README.md#executioncontext) \| (`req`: `IncomingMessage`, `args`: `ExecutionArgs`) => [`ExecutionContext`](../README.md#executioncontext) \| `Promise`<[`ExecutionContext`](../README.md#executioncontext)\>
+• `Optional` **context**: [`ExecutionContext`](../README.md#executioncontext) \| (`req`: `Request`, `args`: `ExecutionArgs`) => [`ExecutionContext`](../README.md#executioncontext) \| `Promise`<[`ExecutionContext`](../README.md#executioncontext)\>
 
 A value which is provided to every resolver and holds
 important contextual information like the currently
@@ -42,7 +49,7 @@ ___
 
 ### schema
 
-• `Optional` **schema**: `GraphQLSchema` \| (`req`: `IncomingMessage`, `args`: `Omit`<`ExecutionArgs`, ``"schema"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
+• `Optional` **schema**: `GraphQLSchema` \| (`req`: `Request`, `args`: `Omit`<`ExecutionArgs`, ``"schema"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
 
 The GraphQL schema on which the operations will
 be executed and validated against.
@@ -120,8 +127,8 @@ further execution.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `req` | `Request` |
+| `res` | `Response` |
 
 #### Returns
 
@@ -166,7 +173,7 @@ request.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
+| `req` | `Request` |
 | `args` | `ExecutionArgs` |
 
 #### Returns
@@ -186,7 +193,7 @@ accepted, and after all pending messages have been flushed.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
+| `req` | `Request` |
 
 #### Returns
 
@@ -210,8 +217,8 @@ further execution.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `req` | `Request` |
+| `res` | `Response` |
 
 #### Returns
 
@@ -230,7 +237,7 @@ accepting the stream.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
+| `req` | `Request` |
 
 #### Returns
 
@@ -258,7 +265,7 @@ request.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
+| `req` | `Request` |
 | `args` | `ExecutionArgs` |
 | `result` | [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> |
 
@@ -295,8 +302,8 @@ request.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `req` | `Request` |
+| `res` | `Response` |
 | `args` | `ExecutionArgs` |
 | `result` | [`OperationResult`](../README.md#operationresult) |
 
@@ -332,8 +339,8 @@ and supply the appropriate GraphQL operation execution arguments.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `req` | `Request` |
+| `res` | `Response` |
 | `params` | [`RequestParams`](RequestParams.md) |
 
 #### Returns

@@ -57,7 +57,10 @@ export type OperationResult =
   | ExecutionResult;
 
 /** @category Server */
-export interface HandlerOptions {
+export interface HandlerOptions<
+  Request extends IncomingMessage = IncomingMessage,
+  Response extends ServerResponse = ServerResponse,
+> {
   /**
    * The GraphQL schema on which the operations will
    * be executed and validated against.
@@ -73,7 +76,7 @@ export interface HandlerOptions {
   schema?:
     | GraphQLSchema
     | ((
-        req: IncomingMessage,
+        req: Request,
         args: Omit<ExecutionArgs, 'schema'>,
       ) => Promise<GraphQLSchema> | GraphQLSchema);
   /**
@@ -89,7 +92,7 @@ export interface HandlerOptions {
   context?:
     | ExecutionContext
     | ((
-        req: IncomingMessage,
+        req: Request,
         args: ExecutionArgs,
       ) => Promise<ExecutionContext> | ExecutionContext);
   /**
@@ -121,8 +124,8 @@ export interface HandlerOptions {
    * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
   authenticate?: (
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: Request,
+    res: Response,
   ) => Promise<string | undefined | void> | string | undefined | void;
   /**
    * Called when a new event stream is connecting BEFORE it is accepted.
@@ -133,15 +136,12 @@ export interface HandlerOptions {
    * you should do so using the provided `res` argument which will stop
    * further execution.
    */
-  onConnecting?: (
-    req: IncomingMessage,
-    res: ServerResponse,
-  ) => Promise<void> | void;
+  onConnecting?: (req: Request, res: Response) => Promise<void> | void;
   /**
    * Called when a new event stream has been succesfully connected and
    * accepted, and after all pending messages have been flushed.
    */
-  onConnected?: (req: IncomingMessage) => Promise<void> | void;
+  onConnected?: (req: Request) => Promise<void> | void;
   /**
    * The subscribe callback executed right after processing the request
    * before proceeding with the GraphQL operation execution.
@@ -162,8 +162,8 @@ export interface HandlerOptions {
    * and supply the appropriate GraphQL operation execution arguments.
    */
   onSubscribe?: (
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: Request,
+    res: Response,
     params: RequestParams,
   ) => Promise<ExecutionArgs | void> | ExecutionArgs | void;
   /**
@@ -187,8 +187,8 @@ export interface HandlerOptions {
    * request.
    */
   onOperation?: (
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: Request,
+    res: Response,
     args: ExecutionArgs,
     result: OperationResult,
   ) => Promise<OperationResult | void> | OperationResult | void;
@@ -206,7 +206,7 @@ export interface HandlerOptions {
    * request.
    */
   onNext?: (
-    req: IncomingMessage,
+    req: Request,
     args: ExecutionArgs,
     result: ExecutionResult | ExecutionPatchResult,
   ) =>
@@ -225,15 +225,12 @@ export interface HandlerOptions {
    * First argument, the request, is always the GraphQL operation
    * request.
    */
-  onComplete?: (
-    req: IncomingMessage,
-    args: ExecutionArgs,
-  ) => Promise<void> | void;
+  onComplete?: (req: Request, args: ExecutionArgs) => Promise<void> | void;
   /**
    * Called when an event stream has disconnected right before the
    * accepting the stream.
    */
-  onDisconnect?: (req: IncomingMessage) => Promise<void> | void;
+  onDisconnect?: (req: Request) => Promise<void> | void;
 }
 
 /**
@@ -273,17 +270,20 @@ export interface HandlerOptions {
  *
  * Note that some libraries, like fastify, parse the body before reaching the handler.
  * In such cases all request 'data' events are already consumed. Use this `body` argument
- * too pass in the read body and avoid listening for the 'data' events internally.
+ * too pass in the read body and avoid listening for the 'data' events internally. Do
+ * beware that the `body` argument will be consumed **only** if it's an object.
  *
  * @category Server
  */
-export type Handler = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  body?: unknown,
-) => Promise<void>;
+export type Handler<
+  Request extends IncomingMessage = IncomingMessage,
+  Response extends ServerResponse = ServerResponse,
+> = (req: Request, res: Response, body?: unknown) => Promise<void>;
 
-interface Stream {
+interface Stream<
+  Request extends IncomingMessage = IncomingMessage,
+  Response extends ServerResponse = ServerResponse,
+> {
   /**
    * Does the stream have an open connection to some client.
    */
@@ -298,12 +298,12 @@ interface Stream {
   /**
    * Use this connection for streaming.
    */
-  use(req: IncomingMessage, res: ServerResponse): Promise<void>;
+  use(req: Request, res: Response): Promise<void>;
   /**
    * Stream from provided execution result to used connection.
    */
   from(
-    operationReq: IncomingMessage, // holding the operation request (not necessarily the event stream)
+    operationReq: Request, // holding the operation request (not necessarily the event stream)
     args: ExecutionArgs,
     result:
       | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
@@ -322,7 +322,10 @@ interface Stream {
  *
  * @category Server
  */
-export function createHandler(options: HandlerOptions): Handler {
+export function createHandler<
+  Request extends IncomingMessage = IncomingMessage,
+  Response extends ServerResponse = ServerResponse,
+>(options: HandlerOptions<Request, Response>): Handler<Request, Response> {
   const {
     schema,
     context,
@@ -359,9 +362,9 @@ export function createHandler(options: HandlerOptions): Handler {
 
   const streams: Record<string, Stream> = {};
 
-  function createStream(token: string | null): Stream {
-    let request: IncomingMessage | null = null,
-      response: ServerResponse | null = null,
+  function createStream(token: string | null): Stream<Request, Response> {
+    let request: Request | null = null,
+      response: Response | null = null,
       pinger: ReturnType<typeof setInterval>,
       disposed = false;
     const pendingMsgs: string[] = [];
@@ -502,8 +505,8 @@ export function createHandler(options: HandlerOptions): Handler {
   }
 
   async function prepare(
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: Request,
+    res: Response,
     params: RequestParams,
   ): Promise<[args: ExecutionArgs, perform: () => OperationResult] | void> {
     let args: ExecutionArgs, operation: OperationTypeNode;
@@ -603,11 +606,7 @@ export function createHandler(options: HandlerOptions): Handler {
     ];
   }
 
-  return async function handler(
-    req: IncomingMessage,
-    res: ServerResponse,
-    body: unknown,
-  ) {
+  return async function handler(req: Request, res: Response, body: unknown) {
     // authenticate first and acquire unique identification token
     const token = await authenticate(req, res);
     if (res.writableEnded) return;
@@ -756,8 +755,8 @@ export function createHandler(options: HandlerOptions): Handler {
   };
 }
 
-async function parseReq(
-  req: IncomingMessage,
+async function parseReq<Request extends IncomingMessage = IncomingMessage>(
+  req: Request,
   body: unknown,
 ): Promise<RequestParams> {
   const params: Partial<RequestParams> = {};

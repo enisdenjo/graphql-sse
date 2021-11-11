@@ -165,7 +165,14 @@ ___
 
 ### Handler
 
-Ƭ **Handler**: (`req`: `IncomingMessage`, `res`: `ServerResponse`, `body?`: `unknown`) => `Promise`<`void`\>
+Ƭ **Handler**<`Request`, `Response`\>: (`req`: `Request`, `res`: `Response`, `body?`: `unknown`) => `Promise`<`void`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Request` | extends `IncomingMessage``IncomingMessage` |
+| `Response` | extends `ServerResponse``ServerResponse` |
 
 #### Type declaration
 
@@ -207,16 +214,15 @@ http.createServer(async (req, res) => {
 
 Note that some libraries, like fastify, parse the body before reaching the handler.
 In such cases all request 'data' events are already consumed. Use this `body` argument
-too pass in the read body and avoid listening for the 'data' events internally.
-
-**`category`** Server
+too pass in the read body and avoid listening for the 'data' events internally. Do
+beware that the `body` argument will be consumed **only** if it's an object.
 
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `req` | `Request` |
+| `res` | `Response` |
 | `body?` | `unknown` |
 
 ##### Returns
@@ -233,19 +239,26 @@ ___
 
 ### createHandler
 
-▸ **createHandler**(`options`): [`Handler`](README.md#handler)
+▸ **createHandler**<`Request`, `Response`\>(`options`): [`Handler`](README.md#handler)<`Request`, `Response`\>
 
 Makes a Protocol complient HTTP GraphQL server  handler. The handler can
 be used with your favourite server library.
 
 Read more about the Protocol in the PROTOCOL.md documentation file.
 
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Request` | extends `IncomingMessage`<`Request`\>`IncomingMessage` |
+| `Response` | extends `ServerResponse`<`Response`\>`ServerResponse` |
+
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](interfaces/HandlerOptions.md) |
+| `options` | [`HandlerOptions`](interfaces/HandlerOptions.md)<`Request`, `Response`\> |
 
 #### Returns
 
-[`Handler`](README.md#handler)
+[`Handler`](README.md#handler)<`Request`, `Response`\>
