@@ -23,6 +23,8 @@ import {
   StreamDataForID,
   ExecutionResult,
   ExecutionPatchResult,
+  TOKEN_HEADER_KEY,
+  TOKEN_QUERY_KEY,
 } from './common';
 
 /**
@@ -334,15 +336,14 @@ export function createHandler<
     subscribe = graphqlSubscribe,
     authenticate = function extractOrCreateStreamToken(req) {
       const headerToken =
-        req.headers['x-graphql-event-stream-token'] ||
-        req.headers['x-graphql-stream-token']; // @deprecated >v1.0.0
+        req.headers[TOKEN_HEADER_KEY] || req.headers['x-graphql-stream-token']; // @deprecated >v1.0.0
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
       const urlToken = new URL(
         req.url ?? '',
         'http://localhost/',
-      ).searchParams.get('token');
+      ).searchParams.get(TOKEN_QUERY_KEY);
       if (urlToken) return urlToken;
 
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

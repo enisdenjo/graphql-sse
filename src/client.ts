@@ -12,6 +12,7 @@ import {
   StreamMessage,
   ExecutionResult,
   ExecutionPatchResult,
+  TOKEN_HEADER_KEY,
 } from './common';
 
 /** This file is the entry point for browsers, re-export common elements. */
@@ -289,7 +290,7 @@ export function createClient(options: ClientOptions): Client {
           if (res.status !== 201) throw new NetworkError(res);
 
           const token = await res.text();
-          headers['x-graphql-event-stream-token'] = token;
+          headers[TOKEN_HEADER_KEY] = token;
 
           const connected = await connect({
             signal: connCtrl.signal,

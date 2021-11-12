@@ -28,6 +28,11 @@ graphql-sse
 - [StreamDataForID](README.md#streamdataforid)
 - [StreamEvent](README.md#streamevent)
 
+### Variables
+
+- [TOKEN\_HEADER\_KEY](README.md#token_header_key)
+- [TOKEN\_QUERY\_KEY](README.md#token_query_key)
+
 ### Functions
 
 - [createClient](README.md#createclient)
@@ -92,6 +97,28 @@ ___
 ### StreamEvent
 
 Ƭ **StreamEvent**: ``"next"`` \| ``"complete"``
+
+___
+
+### TOKEN\_HEADER\_KEY
+
+• **TOKEN\_HEADER\_KEY**: ``"x-graphql-event-stream-token"``
+
+Header key through which the event stream token is transmitted
+when using the client in "single connection mode".
+
+Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
+
+___
+
+### TOKEN\_QUERY\_KEY
+
+• **TOKEN\_QUERY\_KEY**: ``"token"``
+
+URL query parameter key through which the event stream token is transmitted
+when using the client in "single connection mode".
+
+Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
 
 ___
 

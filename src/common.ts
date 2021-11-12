@@ -7,6 +7,26 @@
 import type { DocumentNode, GraphQLError } from 'graphql';
 
 /**
+ * Header key through which the event stream token is transmitted
+ * when using the client in "single connection mode".
+ *
+ * Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
+ *
+ * @category Common
+ */
+export const TOKEN_HEADER_KEY = 'x-graphql-event-stream-token' as const;
+
+/**
+ * URL query parameter key through which the event stream token is transmitted
+ * when using the client in "single connection mode".
+ *
+ * Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode
+ *
+ * @category Common
+ */
+export const TOKEN_QUERY_KEY = 'token' as const;
+
+/**
  * Parameters for GraphQL's request for execution.
  *
  * Reference: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#request

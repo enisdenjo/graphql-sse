@@ -4,6 +4,7 @@ import EventSource from 'eventsource';
 import { startTServer, startDisposableServer } from './utils/tserver';
 import { eventStream } from './utils/eventStream';
 import { createClient, createHandler } from '../index';
+import { TOKEN_HEADER_KEY, TOKEN_QUERY_KEY } from '../common';
 import http from 'http';
 import { schema } from './fixtures/simple';
 import fetch from 'node-fetch';
@@ -17,20 +18,20 @@ it('should only accept valid accept headers', async () => {
 
   let res = await request('GET', {
     accept: 'gibberish',
-    ['x-graphql-event-stream-token']: token,
+    [TOKEN_HEADER_KEY]: token,
   });
   expect(res.statusCode).toBe(406);
 
   res = await request('GET', {
     accept: 'application/graphql+json',
-    ['x-graphql-event-stream-token']: token,
+    [TOKEN_HEADER_KEY]: token,
   });
   expect(res.statusCode).toBe(400);
   expect(res.statusMessage).toBe('Missing query');
 
   res = await request('GET', {
     accept: 'application/json',
-    ['x-graphql-event-stream-token']: token,
+    [TOKEN_HEADER_KEY]: token,
   });
   expect(res.statusCode).toBe(400);
   expect(res.statusMessage).toBe('Missing query');
@@ -95,7 +96,7 @@ describe('single connection mode', () => {
     // token can be sent through the header
     let res = await request('PUT');
     es = new EventSource(url, {
-      headers: { ['x-graphql-event-stream-token']: res.data },
+      headers: { [TOKEN_HEADER_KEY]: res.data },
     });
     await new Promise<void>((resolve, reject) => {
       es.onopen = () => resolve();
@@ -108,7 +109,7 @@ describe('single connection mode', () => {
 
     // token can be sent through the url
     res = await request('PUT');
-    es = new EventSource(url + '?token=' + res.data);
+    es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + res.data);
     await new Promise<void>((resolve, reject) => {
       es.onopen = () => resolve();
       es.onerror = (e) => {
@@ -126,7 +127,7 @@ describe('single connection mode', () => {
 
     const { statusCode, statusMessage } = await request(
       'POST',
-      { 'x-graphql-event-stream-token': token },
+      { [TOKEN_HEADER_KEY]: token },
       { query: '{ getValue }' },
     );
 
@@ -139,7 +140,7 @@ describe('single connection mode', () => {
 
     const { data: token } = await request('PUT');
 
-    const es = new EventSource(url + '?token=' + token);
+    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
     es.addEventListener('next', (event) => {
       expect((event as any).data).toMatchSnapshot();
     });
@@ -150,7 +151,7 @@ describe('single connection mode', () => {
 
     const { statusCode } = await request(
       'POST',
-      { 'x-graphql-event-stream-token': token },
+      { [TOKEN_HEADER_KEY]: token },
       { query: '{ getValue }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
@@ -163,7 +164,7 @@ describe('single connection mode', () => {
 
     const { data: token } = await request('PUT');
 
-    const es = new EventSource(url + '?token=' + token);
+    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
     es.addEventListener('next', (event) => {
       // called 5 times
       expect((event as any).data).toMatchSnapshot();
@@ -175,7 +176,7 @@ describe('single connection mode', () => {
 
     const { statusCode } = await request(
       'POST',
-      { 'x-graphql-event-stream-token': token },
+      { [TOKEN_HEADER_KEY]: token },
       { query: 'subscription { greetings }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(202);
@@ -186,7 +187,7 @@ describe('single connection mode', () => {
 
     const { data: token } = await request('PUT');
 
-    const es = new EventSource(url + '?token=' + token);
+    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
     es.addEventListener('next', () => {
       fail('Shouldnt have omitted');
     });
@@ -196,7 +197,7 @@ describe('single connection mode', () => {
 
     const { statusCode, data } = await request(
       'POST',
-      { 'x-graphql-event-stream-token': token },
+      { [TOKEN_HEADER_KEY]: token },
       { query: '{ notExists }', extensions: { operationId: '1' } },
     );
     expect(statusCode).toBe(400);
