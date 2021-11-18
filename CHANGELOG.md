@@ -1,3 +1,11 @@
+## [1.0.6](https://github.com/enisdenjo/graphql-sse/compare/v1.0.5...v1.0.6) (2021-11-18)
+
+
+### Bug Fixes
+
+* **client:** Avoid bundling DOM types, have the implementor supply his own `Response` type ([98780c0](https://github.com/enisdenjo/graphql-sse/commit/98780c08843e4fdd119726ebab2a8eb3edbdee68))
+* **handler:** Support generics for requests and responses ([9ab10c0](https://github.com/enisdenjo/graphql-sse/commit/9ab10c0ca1db5e58b8b5da514852f917e0c9366b))
+
 ## [1.0.5](https://github.com/enisdenjo/graphql-sse/compare/v1.0.4...v1.0.5) (2021-11-02)
 
 
