@@ -11,6 +11,11 @@ import fetch from 'node-fetch';
 import express from 'express';
 import Fastify from 'fastify';
 
+// just does nothing
+function noop(): void {
+  /**/
+}
+
 it('should only accept valid accept headers', async () => {
   const { request } = await startTServer();
 
@@ -205,6 +210,48 @@ describe('single connection mode', () => {
 
     es.close();
   });
+
+  it('should bubble errors thrown in onNext to the handler', async (done) => {
+    const onNextErr = new Error('Woops!');
+
+    const handler = createHandler({
+      schema,
+      onNext: () => {
+        throw onNextErr;
+      },
+    });
+
+    const [, url, dispose] = await startDisposableServer(
+      http.createServer(async (req, res) => {
+        try {
+          await handler(req, res);
+        } catch (err) {
+          expect(err).toBe(onNextErr);
+
+          await dispose();
+          done();
+        }
+      }),
+    );
+
+    const client = createClient({
+      singleConnection: true,
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    client.subscribe(
+      {
+        query: '{ getValue }',
+      },
+      {
+        next: noop,
+        error: noop,
+        complete: noop,
+      },
+    );
+  });
 });
 
 describe('distinct connections mode', () => {
@@ -314,6 +361,47 @@ describe('distinct connections mode', () => {
     control.abort();
 
     await waitForComplete();
+  });
+
+  it('should bubble errors thrown in onNext to the handler', async (done) => {
+    const onNextErr = new Error('Woops!');
+
+    const handler = createHandler({
+      schema,
+      onNext: () => {
+        throw onNextErr;
+      },
+    });
+
+    const [, url, dispose] = await startDisposableServer(
+      http.createServer(async (req, res) => {
+        try {
+          await handler(req, res);
+        } catch (err) {
+          expect(err).toBe(onNextErr);
+
+          await dispose();
+          done();
+        }
+      }),
+    );
+
+    const client = createClient({
+      url,
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    client.subscribe(
+      {
+        query: '{ getValue }',
+      },
+      {
+        next: noop,
+        error: noop,
+        complete: noop,
+      },
+    );
   });
 });
 
