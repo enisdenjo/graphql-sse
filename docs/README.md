@@ -234,7 +234,9 @@ http.createServer(async (req, res) => {
     // or
     Sentry.captureException(err);
 
-    res.writeHead(500, 'Internal Server Error').end();
+    if (!res.headersSent) {
+      res.writeHead(500, 'Internal Server Error').end();
+    } 
   }
 });
 ```

@@ -264,6 +264,10 @@ export interface HandlerOptions<
  *     console.error(err);
  *     // or
  *     Sentry.captureException(err);
+ * 
+ *     if (!res.headersSent) {
+ *       res.writeHead(500, 'Internal Server Error').end();
+ *     } 
  *   }
  * });
  * ```
