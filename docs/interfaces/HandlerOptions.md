@@ -6,8 +6,8 @@
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage``IncomingMessage` |
-| `Response` | extends `ServerResponse``ServerResponse` |
+| `Request` | extends `IncomingMessage` = `IncomingMessage` |
+| `Response` | extends `ServerResponse` = `ServerResponse` |
 
 ## Table of contents
 

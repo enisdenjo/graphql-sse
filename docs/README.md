@@ -78,7 +78,7 @@ use only one SSE connection.
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends [`StreamEvent`](README.md#streamevent)[`StreamEvent`](README.md#streamevent) |
+| `E` | extends [`StreamEvent`](README.md#streamevent) = [`StreamEvent`](README.md#streamevent) |
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends [`StreamEvent`](README.md#streamevent)[`StreamEvent`](README.md#streamevent) |
+| `E` | extends [`StreamEvent`](README.md#streamevent) = [`StreamEvent`](README.md#streamevent) |
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 ### TOKEN\_HEADER\_KEY
 
-• **TOKEN\_HEADER\_KEY**: ``"x-graphql-event-stream-token"``
+• `Const` **TOKEN\_HEADER\_KEY**: ``"x-graphql-event-stream-token"``
 
 Header key through which the event stream token is transmitted
 when using the client in "single connection mode".
@@ -113,7 +113,7 @@ ___
 
 ### TOKEN\_QUERY\_KEY
 
-• **TOKEN\_QUERY\_KEY**: ``"token"``
+• `Const` **TOKEN\_QUERY\_KEY**: ``"token"``
 
 URL query parameter key through which the event stream token is transmitted
 when using the client in "single connection mode".
@@ -198,8 +198,8 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage``IncomingMessage` |
-| `Response` | extends `ServerResponse``ServerResponse` |
+| `Request` | extends `IncomingMessage` = `IncomingMessage` |
+| `Response` | extends `ServerResponse` = `ServerResponse` |
 
 #### Type declaration
 
@@ -236,7 +236,7 @@ http.createServer(async (req, res) => {
 
     if (!res.headersSent) {
       res.writeHead(500, 'Internal Server Error').end();
-    } 
+    }
   }
 });
 ```
@@ -279,8 +279,8 @@ Read more about the Protocol in the PROTOCOL.md documentation file.
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage`<`Request`\>`IncomingMessage` |
-| `Response` | extends `ServerResponse`<`Response`\>`ServerResponse` |
+| `Request` | extends `IncomingMessage`<`Request`\> = `IncomingMessage` |
+| `Response` | extends `ServerResponse`<`Response`\> = `ServerResponse` |
 
 #### Parameters
 
