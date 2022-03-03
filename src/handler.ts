@@ -528,7 +528,8 @@ export function createHandler<
         try {
           query = parse(query);
         } catch {
-          return res.writeHead(400, 'GraphQL query syntax error').end();
+          res.writeHead(400, 'GraphQL query syntax error').end();
+          return;
         }
       }
 
@@ -551,17 +552,20 @@ export function createHandler<
       if (!ast) throw null;
       operation = ast.operation;
     } catch {
-      return res.writeHead(400, 'Unable to detect operation AST').end();
+      res.writeHead(400, 'Unable to detect operation AST').end();
+      return;
     }
 
     // mutations cannot happen over GETs as per the spec
     // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#get
-    if (operation === 'mutation' && req.method === 'GET')
-      return res
+    if (operation === 'mutation' && req.method === 'GET') {
+      res
         .writeHead(405, 'Cannot perform mutations over GET', {
           Allow: 'POST',
         })
         .end();
+      return;
+    }
 
     if (!('contextValue' in args))
       args.contextValue =
@@ -592,7 +596,8 @@ export function createHandler<
               : 'application/graphql+json; charset=utf-8',
         })
         .write(JSON.stringify({ errors: validationErrs }));
-      return res.end();
+      res.end();
+      return;
     }
 
     return [
@@ -627,7 +632,8 @@ export function createHandler<
         try {
           params = await parseReq(req, body);
         } catch (err) {
-          return res.writeHead(400, err.message).end();
+          res.writeHead(400, err.message).end();
+          return;
         }
 
         const distinctStream = createStream(null);
@@ -659,7 +665,10 @@ export function createHandler<
       }
 
       // open stream cant exist, only one per token is allowed
-      if (stream.open) return res.writeHead(409, 'Stream already open').end();
+      if (stream.open) {
+        res.writeHead(409, 'Stream already open').end();
+        return;
+      }
 
       await onConnecting?.(req, res);
       if (res.writableEnded) return;
@@ -670,58 +679,80 @@ export function createHandler<
     if (req.method === 'PUT') {
       // method PUT prepares a stream for future incoming connections.
 
-      if (!['*/*', 'text/plain'].includes(accept))
-        return res.writeHead(406).end();
+      if (!['*/*', 'text/plain'].includes(accept)) {
+        res.writeHead(406).end();
+        return;
+      }
 
       // streams mustnt exist if putting new one
-      if (stream) return res.writeHead(409, 'Stream already registered').end();
+      if (stream) {
+        res.writeHead(409, 'Stream already registered').end();
+        return;
+      }
 
       streams[token] = createStream(token);
       res
         .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
         .write(token);
-      return res.end();
+      res.end();
+      return;
     } else if (req.method === 'DELETE') {
       // method DELETE completes an existing operation streaming in streams
 
       // streams must exist when completing operations
-      if (!stream) return res.writeHead(404, 'Stream not found').end();
+      if (!stream) {
+        res.writeHead(404, 'Stream not found').end();
+        return;
+      }
 
       const opId = new URL(req.url ?? '', 'http://localhost/').searchParams.get(
         'operationId',
       );
-      if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
+      if (!opId) {
+        res.writeHead(400, 'Operation ID is missing').end();
+        return;
+      }
 
       const op = stream.ops[opId];
       if (isAsyncGenerator(op)) op.return(undefined);
       delete stream.ops[opId]; // deleting the operation means no further activity should take place
 
-      return res.writeHead(200).end();
-    } else if (req.method !== 'GET' && req.method !== 'POST')
+      res.writeHead(200).end();
+      return;
+    } else if (req.method !== 'GET' && req.method !== 'POST') {
       // only POSTs and GETs are accepted at this point
-      return res
-        .writeHead(405, undefined, { Allow: 'GET, POST, PUT, DELETE' })
-        .end();
-    else if (!stream)
+      res.writeHead(405, undefined, { Allow: 'GET, POST, PUT, DELETE' }).end();
+      return;
+    } else if (!stream) {
       // for all other requests, streams must exist to attach the result onto
-      return res.writeHead(404, 'Stream not found').end();
+      res.writeHead(404, 'Stream not found').end();
+      return;
+    }
 
     if (
       !['*/*', 'application/graphql+json', 'application/json'].includes(accept)
-    )
-      return res.writeHead(406).end();
+    ) {
+      res.writeHead(406).end();
+      return;
+    }
 
     let params;
     try {
       params = await parseReq(req, body);
     } catch (err) {
-      return res.writeHead(400, err.message).end();
+      res.writeHead(400, err.message).end();
+      return;
     }
 
     const opId = String(params.extensions?.operationId ?? '');
-    if (!opId) return res.writeHead(400, 'Operation ID is missing').end();
-    if (opId in stream.ops)
-      return res.writeHead(409, 'Operation with ID already exists').end();
+    if (!opId) {
+      res.writeHead(400, 'Operation ID is missing').end();
+      return;
+    }
+    if (opId in stream.ops) {
+      res.writeHead(409, 'Operation with ID already exists').end();
+      return;
+    }
     // reserve space for the operation through ID
     stream.ops[opId] = null;
 
@@ -734,7 +765,10 @@ export function createHandler<
     const [args, perform] = prepared;
 
     // operation might have completed before prepared
-    if (!(opId in stream.ops)) return res.writeHead(204).end();
+    if (!(opId in stream.ops)) {
+      res.writeHead(204).end();
+      return;
+    }
 
     const result = await perform();
     if (res.writableEnded) {
@@ -746,7 +780,8 @@ export function createHandler<
     // operation might have completed before performed
     if (!(opId in stream.ops)) {
       if (isAsyncGenerator(result)) result.return(undefined);
-      return res.writeHead(204).end();
+      res.writeHead(204).end();
+      return;
     }
 
     if (isAsyncIterable(result)) stream.ops[opId] = result;
