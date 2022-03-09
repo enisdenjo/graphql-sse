@@ -73,6 +73,18 @@ export interface ClientOptions {
    */
   url: string | (() => Promise<string> | string);
   /**
+   * Indicates whether the user agent should send cookies from the other domain in the case
+   * of cross-origin requests.
+   *
+   * Possible options are:
+   *   - `omit`: Never send or receive cookies.
+   *   - `same-origin`: Send user credentials (cookies, basic http auth, etc..) if the URL is on the same origin as the calling script.
+   *   - `include`: Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
+   *
+   * @default same-origin
+   */
+  credentials?: 'omit' | 'same-origin' | 'include';
+  /**
    * HTTP headers to pass along the request.
    *
    * If the option is a function, it will be called on each connection attempt.
@@ -196,6 +208,7 @@ export function createClient(options: ClientOptions): Client {
         ),
       );
     },
+    credentials = 'same-origin',
   } = options;
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
   const AbortControllerImpl = (options.abortControllerImpl ||
@@ -282,6 +295,7 @@ export function createClient(options: ClientOptions): Client {
             res = await fetchFn(url, {
               signal: connCtrl.signal,
               method: 'PUT',
+              credentials,
               headers,
             });
           } catch (err) {
@@ -295,6 +309,7 @@ export function createClient(options: ClientOptions): Client {
           const connected = await connect({
             signal: connCtrl.signal,
             headers,
+            credentials,
             url,
             fetchFn,
           });
@@ -381,6 +396,7 @@ export function createClient(options: ClientOptions): Client {
               const { getResults } = await connect({
                 signal: control.signal,
                 headers,
+                credentials,
                 url,
                 body: JSON.stringify(request),
                 fetchFn,
@@ -443,6 +459,7 @@ export function createClient(options: ClientOptions): Client {
               res = await fetchFn(url, {
                 signal: control.signal,
                 method: 'POST',
+                credentials,
                 headers,
                 body: JSON.stringify(request),
               });
@@ -462,6 +479,7 @@ export function createClient(options: ClientOptions): Client {
                 res = await fetchFn(url + '?operationId=' + operationId, {
                   signal: control.signal,
                   method: 'DELETE',
+                  credentials,
                   headers,
                 });
               } catch (err) {
@@ -579,13 +597,14 @@ interface Connection {
 interface ConnectOptions {
   signal: AbortSignal;
   url: string;
+  credentials: 'omit' | 'same-origin' | 'include';
   headers?: Record<string, string> | undefined;
   body?: string;
   fetchFn: typeof fetch;
 }
 
 async function connect(options: ConnectOptions): Promise<Connection> {
-  const { signal, url, headers, body, fetchFn } = options;
+  const { signal, url, credentials, headers, body, fetchFn } = options;
 
   const waiting: {
     [id: string]: { proceed: () => void };
@@ -599,6 +618,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
     res = await fetchFn(url, {
       signal,
       method: body ? 'POST' : 'GET',
+      credentials,
       headers: {
         ...headers,
         accept: 'text/event-stream',

@@ -7,6 +7,7 @@
 ### Properties
 
 - [abortControllerImpl](ClientOptions.md#abortcontrollerimpl)
+- [credentials](ClientOptions.md#credentials)
 - [fetchFn](ClientOptions.md#fetchfn)
 - [headers](ClientOptions.md#headers)
 - [lazy](ClientOptions.md#lazy)
@@ -31,6 +32,22 @@ The AbortController implementation to use.
 For NodeJS environments before v15 consider using [`node-abort-controller`](https://github.com/southpolesteve/node-abort-controller).
 
 **`default`** global.AbortController
+
+___
+
+### credentials
+
+• `Optional` **credentials**: ``"omit"`` \| ``"same-origin"`` \| ``"include"``
+
+Indicates whether the user agent should send cookies from the other domain in the case
+of cross-origin requests.
+
+Possible options are:
+  - `omit`: Never send or receive cookies.
+  - `same-origin`: Send user credentials (cookies, basic http auth, etc..) if the URL is on the same origin as the calling script.
+  - `include`: Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
+
+**`default`** same-origin
 
 ___
 
