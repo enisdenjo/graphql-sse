@@ -11,6 +11,7 @@
 - [fetchFn](ClientOptions.md#fetchfn)
 - [headers](ClientOptions.md#headers)
 - [lazy](ClientOptions.md#lazy)
+- [lazyCloseTimeout](ClientOptions.md#lazyclosetimeout)
 - [retryAttempts](ClientOptions.md#retryattempts)
 - [singleConnection](ClientOptions.md#singleconnection)
 - [url](ClientOptions.md#url)
@@ -93,6 +94,22 @@ Note that the `lazy` option has NO EFFECT when using the client
 in "distinct connection mode" (`singleConnection = false`).
 
 **`default`** true
+
+___
+
+### lazyCloseTimeout
+
+• `Optional` **lazyCloseTimeout**: `number`
+
+How long should the client wait before closing the connection after the last oparation has
+completed. You might want to have a calmdown time before actually closing the connection.
+
+Meant to be used in combination with `lazy`.
+
+Note that the `lazy` option has NO EFFECT when using the client
+in "distinct connection mode" (`singleConnection = false`).
+
+**`default`** 0
 
 ___
 

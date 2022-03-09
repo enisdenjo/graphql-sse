@@ -166,6 +166,7 @@ describe('single connection mode', () => {
 
       const client = createClient({
         singleConnection: true,
+        lazy: true, // default
         url,
         fetchFn: fetch,
         retryAttempts: 0,
@@ -201,6 +202,34 @@ describe('single connection mode', () => {
 
       dispose2();
       await waitForComplete();
+      await waitForDisconnect();
+    });
+
+    it('should disconnect after the lazyCloseTimeout has passed after last unsubscribe', async () => {
+      const { url, waitForOperation, waitForDisconnect } = await startTServer();
+
+      const client = createClient({
+        singleConnection: true,
+        lazy: true, // default
+        lazyCloseTimeout: 20,
+        url,
+        fetchFn: fetch,
+        retryAttempts: 0,
+      });
+
+      const sub = tsubscribe(client, {
+        query: 'subscription { ping }',
+      });
+      await waitForOperation();
+
+      sub.dispose();
+
+      await sub.waitForComplete();
+
+      // still connected due to timeout
+      await waitForDisconnect(() => fail("Shouldn't have disconnected"), 10);
+
+      // but will disconnect after timeout
       await waitForDisconnect();
     });
   });

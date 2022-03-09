@@ -49,6 +49,18 @@ export interface ClientOptions {
    */
   lazy?: boolean;
   /**
+   * How long should the client wait before closing the connection after the last oparation has
+   * completed. You might want to have a calmdown time before actually closing the connection.
+   *
+   * Meant to be used in combination with `lazy`.
+   *
+   * Note that the `lazy` option has NO EFFECT when using the client
+   * in "distinct connection mode" (`singleConnection = false`).
+   *
+   * @default 0
+   */
+  lazyCloseTimeout?: number;
+  /**
    * Used ONLY when the client is in non-lazy mode (`lazy = false`). When
    * using this mode, errors might have no sinks to report to; however,
    * to avoid swallowing errors, `onNonLazyError` will be called when either:
@@ -178,6 +190,7 @@ export function createClient(options: ClientOptions): Client {
   const {
     singleConnection = false,
     lazy = true,
+    lazyCloseTimeout = 0,
     onNonLazyError = console.error,
     /**
      * Generates a v4 UUID to be used as the ID using `Math`
@@ -511,8 +524,20 @@ export function createClient(options: ClientOptions): Client {
             // try again
             retryingErr = err;
           } finally {
-            // release lock if aborted, and disconnect if no more locks
-            if (control.signal.aborted && --locks === 0) connCtrl.abort();
+            // release lock if subscription is aborted
+            if (control.signal.aborted && --locks === 0) {
+              if (isFinite(lazyCloseTimeout) && lazyCloseTimeout > 0) {
+                // allow for the specified calmdown time and then close the
+                // connection, only if no lock got created in the meantime and
+                // if the connection is still open
+                setTimeout(() => {
+                  if (!locks) connCtrl.abort();
+                }, lazyCloseTimeout);
+              } else {
+                // otherwise close immediately
+                connCtrl.abort();
+              }
+            }
           }
         }
       })()
