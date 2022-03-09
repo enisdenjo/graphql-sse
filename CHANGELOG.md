@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/enisdenjo/graphql-sse/compare/v1.0.6...v1.1.0) (2022-03-09)
+
+
+### Features
+
+* **client:** Add `credentials` property for requests ([79d0266](https://github.com/enisdenjo/graphql-sse/commit/79d0266d81e2ec78df917c1e068d04db768b9315))
+* **client:** Add `lazyCloseTimeout` as a close timeout after last operation completes ([16e5e31](https://github.com/enisdenjo/graphql-sse/commit/16e5e3151439a64abe1134c3367c629a66daf989)), closes [#17](https://github.com/enisdenjo/graphql-sse/issues/17)
+
 ## [1.0.6](https://github.com/enisdenjo/graphql-sse/compare/v1.0.5...v1.0.6) (2021-11-18)
 
 
