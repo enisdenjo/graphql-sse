@@ -26,7 +26,6 @@ export function tsubscribe<T = unknown>(
     completed = false;
   const dispose = client.subscribe<T>(payload, {
     next: (value) => {
-      console.log({ value });
       results.push(value);
       emitter.emit('next');
     },
