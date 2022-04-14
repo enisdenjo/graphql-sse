@@ -10,8 +10,8 @@ Read more: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/U
 
 | Name | Type |
 | :------ | :------ |
-| `ForID` | extends `boolean` = ``false`` |
-| `E` | extends [`StreamEvent`](../README.md#streamevent) = [`StreamEvent`](../README.md#streamevent) |
+| `ForID` | extends `boolean` |
+| `E` | extends [`StreamEvent`](../README.md#streamevent) |
 
 ## Table of contents
 

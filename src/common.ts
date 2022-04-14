@@ -47,10 +47,7 @@ export interface RequestParams {
  *
  * @category Common
  */
-export interface StreamMessage<
-  ForID extends boolean = false,
-  E extends StreamEvent = StreamEvent,
-> {
+export interface StreamMessage<ForID extends boolean, E extends StreamEvent> {
   // id?: string; might be used in future releases for connection recovery
   event: E;
   data: ForID extends true ? StreamDataForID<E> : StreamData<E>;
@@ -93,22 +90,24 @@ export interface ExecutionPatchResult<
 }
 
 /** @category Common */
-export type StreamData<E extends StreamEvent = StreamEvent> = E extends 'next'
+export type StreamData<E extends StreamEvent> = E extends 'next'
   ? ExecutionResult | ExecutionPatchResult
   : E extends 'complete'
   ? null
   : never;
 
 /** @category Common */
-export type StreamDataForID<E extends StreamEvent = StreamEvent> =
-  E extends 'next'
-    ? { id: string; payload: ExecutionResult | ExecutionPatchResult }
-    : E extends 'complete'
-    ? { id: string }
-    : never;
+export type StreamDataForID<E extends StreamEvent> = E extends 'next'
+  ? { id: string; payload: ExecutionResult | ExecutionPatchResult }
+  : E extends 'complete'
+  ? { id: string }
+  : never;
 
 /** @category Common */
-export function parseStreamData(e: StreamEvent, data: string): StreamData {
+export function parseStreamData<ForID extends boolean, E extends StreamEvent>(
+  e: E,
+  data: string,
+) {
   if (data) {
     try {
       data = JSON.parse(data);
@@ -120,7 +119,9 @@ export function parseStreamData(e: StreamEvent, data: string): StreamData {
   if (e === 'next' && !data)
     throw new Error('Stream data must be an object for "next" events');
 
-  return (data || null) as StreamData;
+  return (data || null) as ForID extends true
+    ? StreamDataForID<E>
+    : StreamData<E>;
 }
 
 /**

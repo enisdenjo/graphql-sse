@@ -1,13 +1,13 @@
 import fetch from 'node-fetch';
-import { RequestParams, StreamMessage } from '../../common';
+import { RequestParams, StreamEvent, StreamMessage } from '../../common';
 import { createParser } from '../../parser';
 
-export async function eventStream<ForID extends boolean = false>(options: {
+export async function eventStream<ForID extends boolean>(options: {
   signal: AbortSignal;
   url: string;
   headers?: Record<string, string> | undefined;
   body?: RequestParams;
-}): Promise<AsyncIterableIterator<StreamMessage<ForID>>> {
+}): Promise<AsyncIterableIterator<StreamMessage<ForID, StreamEvent>>> {
   const { signal, url, headers, body } = options;
 
   const res = await fetch(url, {
@@ -34,7 +34,7 @@ export async function eventStream<ForID extends boolean = false>(options: {
         if (!msgs) continue;
 
         for (const msg of msgs) {
-          yield msg as StreamMessage<ForID>;
+          yield msg;
         }
       }
     } catch (err) {

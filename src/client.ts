@@ -632,7 +632,9 @@ interface ConnectOptions {
   fetchFn: typeof fetch;
 }
 
-async function connect(options: ConnectOptions): Promise<Connection> {
+async function connect<SingleConnection extends boolean>(
+  options: ConnectOptions,
+): Promise<Connection> {
   const { signal, url, credentials, headers, body, fetchFn } = options;
 
   const waiting: {
@@ -664,7 +666,7 @@ async function connect(options: ConnectOptions): Promise<Connection> {
   let waitingForThrow: ((error: unknown) => void) | null = null;
   (async () => {
     try {
-      const parse = createParser();
+      const parse = createParser<SingleConnection>();
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       for await (const chunk of toAsyncIterator(res.body!)) {

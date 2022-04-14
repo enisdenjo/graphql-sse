@@ -793,7 +793,7 @@ export function createHandler<
   };
 }
 
-async function parseReq<Request extends IncomingMessage = IncomingMessage>(
+async function parseReq<Request extends IncomingMessage>(
   req: Request,
   body: unknown,
 ): Promise<RequestParams> {
@@ -847,13 +847,11 @@ async function parseReq<Request extends IncomingMessage = IncomingMessage>(
   return params as RequestParams;
 }
 
-function isAsyncIterable<T = unknown>(val: unknown): val is AsyncIterable<T> {
+function isAsyncIterable<T>(val: unknown): val is AsyncIterable<T> {
   return typeof Object(val)[Symbol.asyncIterator] === 'function';
 }
 
-export function isAsyncGenerator<T = unknown>(
-  val: unknown,
-): val is AsyncGenerator<T> {
+export function isAsyncGenerator<T>(val: unknown): val is AsyncGenerator<T> {
   return (
     isObject(val) &&
     typeof Object(val)[Symbol.asyncIterator] === 'function' &&

@@ -4,7 +4,12 @@
  *
  */
 
-import { StreamMessage, validateStreamEvent, parseStreamData } from './common';
+import {
+  StreamMessage,
+  validateStreamEvent,
+  parseStreamData,
+  StreamEvent,
+} from './common';
 
 enum ControlChars {
   NewLine = 10,
@@ -20,15 +25,15 @@ enum ControlChars {
  *
  * @private
  */
-export function createParser(): (
+export function createParser<ForID extends boolean>(): (
   chunk: Uint8Array,
-) => (StreamMessage<false> | StreamMessage<true>)[] | void {
+) => StreamMessage<ForID, StreamEvent>[] | void {
   let buffer: Uint8Array | undefined;
   let position: number; // current read position
   let fieldLength: number; // length of the `field` portion of the line
   let discardTrailingNewline = false;
   let message = { event: '', data: '' };
-  let pending: StreamMessage[] = [];
+  let pending: StreamMessage<ForID, StreamEvent>[] = [];
   const decoder = new TextDecoder();
 
   return function parse(chunk) {
@@ -82,7 +87,7 @@ export function createParser(): (
           // NOT a server ping (":\n\n")
           if (!message.event) throw new Error('Missing message event');
           const event = validateStreamEvent(message.event);
-          const data = parseStreamData(event, message.data);
+          const data = parseStreamData<ForID, StreamEvent>(event, message.data);
           pending.push({
             event,
             data,
