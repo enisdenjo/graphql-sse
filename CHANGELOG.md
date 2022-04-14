@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/enisdenjo/graphql-sse/compare/v1.1.0...v1.2.0) (2022-04-14)
+
+
+### Bug Fixes
+
+* **client:** TypeScript generic for ensuring proper arguments when using "single connection mode" ([be2ae7d](https://github.com/enisdenjo/graphql-sse/commit/be2ae7daa789e7c430b147b15c67551311de11b9))
+
+
+### Features
+
+* **client:** Inspect incoming messages through `ClientOptions.onMessage` ([496e74b](https://github.com/enisdenjo/graphql-sse/commit/496e74b0a0b5b3382253f7ffb7edd2b5a2da05d1)), closes [#20](https://github.com/enisdenjo/graphql-sse/issues/20)
+
 # [1.1.0](https://github.com/enisdenjo/graphql-sse/compare/v1.0.6...v1.1.0) (2022-03-09)
 
 
