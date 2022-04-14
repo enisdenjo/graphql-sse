@@ -542,6 +542,20 @@ const client = createClient({
 
 </details>
 
+<details id="client-debug-messages">
+<summary><a href="#client-debug-messages">🔗</a> Client usage with logging of incoming messages (<a href="https://github.com/enisdenjo/graphql-sse/issues/20">browsers don't show them in the DevTools</a>)</summary>
+
+```typescript
+import { createClient } from 'graphql-sse';
+
+const client = createClient({
+  url: 'http://let-me-see.messages:4000/graphql/stream',
+  onMessage: console.log,
+});
+```
+
+</details>
+
 <details id="browser">
 <summary><a href="#browser">🔗</a> Client usage in browser</summary>
 

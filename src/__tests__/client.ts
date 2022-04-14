@@ -81,6 +81,79 @@ it('should use the provided headers', async (done) => {
   );
 });
 
+it('should supply all valid messages received to onMessage', async () => {
+  expect.assertions(4);
+
+  const { url } = await startTServer();
+
+  // single connection mode
+  let i = 0;
+  let client = createClient({
+    singleConnection: true,
+    url,
+    fetchFn: fetch,
+    retryAttempts: 0,
+    generateID: () => 'veryunique',
+    onMessage: (msg) => {
+      switch (++i) {
+        case 1:
+          expect(msg).toEqual({
+            event: 'next',
+            data: {
+              id: 'veryunique',
+              payload: { data: { getValue: 'value' } },
+            },
+          });
+          return;
+        case 2:
+          expect(msg).toEqual({
+            event: 'complete',
+            data: { id: 'veryunique' },
+          });
+          return;
+        default:
+          fail('Unexpected message receieved');
+      }
+    },
+  });
+  let sub = tsubscribe(client, {
+    query: '{ getValue }',
+  });
+  await sub.waitForComplete();
+
+  // distinct connection mode
+  i = 0;
+  client = createClient({
+    singleConnection: false,
+    url,
+    fetchFn: fetch,
+    retryAttempts: 0,
+    generateID: () => 'veryunique',
+    onMessage: (msg) => {
+      switch (++i) {
+        case 1:
+          expect(msg).toEqual({
+            event: 'next',
+            data: { data: { getValue: 'value' } },
+          });
+          return;
+        case 2:
+          expect(msg).toEqual({
+            event: 'complete',
+            data: null,
+          });
+          return;
+        default:
+          fail('Unexpected message receieved');
+      }
+    },
+  });
+  sub = tsubscribe(client, {
+    query: '{ getValue }',
+  });
+  await sub.waitForComplete();
+});
+
 describe('single connection mode', () => {
   it('should not call complete after subscription error', async () => {
     const { url } = await startTServer();

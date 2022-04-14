@@ -26,6 +26,7 @@
 ### Methods
 
 - [generateID](ClientOptions.md#generateid)
+- [onMessage](ClientOptions.md#onmessage)
 - [retry](ClientOptions.md#retry)
 
 ## Properties
@@ -195,6 +196,27 @@ Reference: https://gist.github.com/jed/982883
 #### Returns
 
 `string`
+
+___
+
+### onMessage
+
+▸ `Optional` **onMessage**(`message`): `void`
+
+Browsers show stream messages in the DevTools **only** if they're received through the [native EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource),
+and because `graphql-sse` implements a custom SSE parser - received messages will **not** appear in browser's DevTools.
+
+Use this function if you want to inspect valid messages received through the active SSE connection.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\> |
+
+#### Returns
+
+`void`
 
 ___
 

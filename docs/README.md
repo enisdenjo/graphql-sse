@@ -174,9 +174,9 @@ ___
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `T` | `unknown` |
+| Name |
+| :------ |
+| `T` |
 
 #### Parameters
 
