@@ -1,6 +1,12 @@
 [graphql-sse](../README.md) / ClientOptions
 
-# Interface: ClientOptions
+# Interface: ClientOptions<SingleConnection\>
+
+## Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `SingleConnection` | extends `boolean` = ``false`` |
 
 ## Table of contents
 
@@ -12,6 +18,7 @@
 - [headers](ClientOptions.md#headers)
 - [lazy](ClientOptions.md#lazy)
 - [lazyCloseTimeout](ClientOptions.md#lazyclosetimeout)
+- [onNonLazyError](ClientOptions.md#onnonlazyerror)
 - [retryAttempts](ClientOptions.md#retryattempts)
 - [singleConnection](ClientOptions.md#singleconnection)
 - [url](ClientOptions.md#url)
@@ -19,7 +26,6 @@
 ### Methods
 
 - [generateID](ClientOptions.md#generateid)
-- [onNonLazyError](ClientOptions.md#onnonlazyerror)
 - [retry](ClientOptions.md#retry)
 
 ## Properties
@@ -82,7 +88,7 @@ ___
 
 ### lazy
 
-• `Optional` **lazy**: `boolean`
+• `Optional` **lazy**: `SingleConnection` extends ``true`` ? `boolean` : `never`
 
 Controls when should the connection be established while using the
 client in "single connection mode" (see `singleConnection ` option).
@@ -99,7 +105,7 @@ ___
 
 ### lazyCloseTimeout
 
-• `Optional` **lazyCloseTimeout**: `number`
+• `Optional` **lazyCloseTimeout**: `SingleConnection` extends ``true`` ? `number` : `never`
 
 How long should the client wait before closing the connection after the last oparation has
 completed. You might want to have a calmdown time before actually closing the connection.
@@ -110,6 +116,22 @@ Note that the `lazy` option has NO EFFECT when using the client
 in "distinct connection mode" (`singleConnection = false`).
 
 **`default`** 0
+
+___
+
+### onNonLazyError
+
+• `Optional` **onNonLazyError**: `SingleConnection` extends ``true`` ? (`error`: `unknown`) => `void` : `never`
+
+Used ONLY when the client is in non-lazy mode (`lazy = false`). When
+using this mode, errors might have no sinks to report to; however,
+to avoid swallowing errors, `onNonLazyError` will be called when either:
+- An unrecoverable error/close event occurs
+- Silent retry attempts have been exceeded
+
+After a client has errored out, it will NOT perform any automatic actions.
+
+**`default`** console.error
 
 ___
 
@@ -125,7 +147,7 @@ ___
 
 ### singleConnection
 
-• `Optional` **singleConnection**: `boolean`
+• `Optional` **singleConnection**: `SingleConnection`
 
 Reuses a single SSE connection for all GraphQL operations.
 
@@ -173,32 +195,6 @@ Reference: https://gist.github.com/jed/982883
 #### Returns
 
 `string`
-
-___
-
-### onNonLazyError
-
-▸ `Optional` **onNonLazyError**(`error`): `void`
-
-Used ONLY when the client is in non-lazy mode (`lazy = false`). When
-using this mode, errors might have no sinks to report to; however,
-to avoid swallowing errors, `onNonLazyError` will be called when either:
-- An unrecoverable error/close event occurs
-- Silent retry attempts have been exceeded
-
-After a client has errored out, it will NOT perform any automatic actions.
-
-**`default`** console.error
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `error` | `unknown` |
-
-#### Returns
-
-`void`
 
 ___
 

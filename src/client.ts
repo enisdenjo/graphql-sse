@@ -19,7 +19,7 @@ import {
 export * from './common';
 
 /** @category Client */
-export interface ClientOptions {
+export interface ClientOptions<SingleConnection extends boolean = false> {
   /**
    * Reuses a single SSE connection for all GraphQL operations.
    *
@@ -34,7 +34,7 @@ export interface ClientOptions {
    *
    * @default false
    */
-  singleConnection?: boolean;
+  singleConnection?: SingleConnection;
   /**
    * Controls when should the connection be established while using the
    * client in "single connection mode" (see `singleConnection ` option).
@@ -47,7 +47,7 @@ export interface ClientOptions {
    *
    * @default true
    */
-  lazy?: boolean;
+  lazy?: SingleConnection extends true ? boolean : never;
   /**
    * How long should the client wait before closing the connection after the last oparation has
    * completed. You might want to have a calmdown time before actually closing the connection.
@@ -59,7 +59,7 @@ export interface ClientOptions {
    *
    * @default 0
    */
-  lazyCloseTimeout?: number;
+  lazyCloseTimeout?: SingleConnection extends true ? number : never;
   /**
    * Used ONLY when the client is in non-lazy mode (`lazy = false`). When
    * using this mode, errors might have no sinks to report to; however,
@@ -71,7 +71,9 @@ export interface ClientOptions {
    *
    * @default console.error
    */
-  onNonLazyError?: (error: unknown) => void;
+  onNonLazyError?: SingleConnection extends true
+    ? (error: unknown) => void
+    : never;
   /**
    * URL of the GraphQL over SSE server to connect.
    *
@@ -186,7 +188,9 @@ export interface Client {
  *
  * @category Client
  */
-export function createClient(options: ClientOptions): Client {
+export function createClient<SingleConnection extends boolean = false>(
+  options: ClientOptions<SingleConnection>,
+): Client {
   const {
     singleConnection = false,
     lazy = true,
