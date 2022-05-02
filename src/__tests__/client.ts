@@ -154,6 +154,25 @@ it('should supply all valid messages received to onMessage', async () => {
   await sub.waitForComplete();
 });
 
+it('should report error to sink if server goes away', async () => {
+  const server = await startTServer();
+
+  const client = createClient({
+    url: server.url,
+    fetchFn: fetch,
+    retryAttempts: 0,
+  });
+
+  const sub = tsubscribe(client, {
+    query: 'subscription { ping }',
+  });
+  await server.waitForOperation();
+
+  await server.dispose();
+
+  await sub.waitForError();
+});
+
 describe('single connection mode', () => {
   it('should not call complete after subscription error', async () => {
     const { url } = await startTServer();
