@@ -173,6 +173,26 @@ it('should report error to sink if server goes away', async () => {
   await sub.waitForError();
 });
 
+it('should report error to sink if server goes away during generator emission', async () => {
+  const server = await startTServer();
+
+  const client = createClient({
+    url: server.url,
+    fetchFn: fetch,
+    retryAttempts: 0,
+  });
+
+  const sub = tsubscribe(client, {
+    query: 'subscription { slowGreetings }',
+  });
+  await sub.waitForNext();
+
+  await server.dispose();
+
+  // TODO: should waitForError; but for debugging purposes, we wait for either
+  await Promise.race([sub.waitForError(), sub.waitForComplete()]);
+});
+
 describe('single connection mode', () => {
   it('should not call complete after subscription error', async () => {
     const { url } = await startTServer();
