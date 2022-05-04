@@ -784,12 +784,11 @@ function toAsyncIterator(
 
   // convert web stream to async iterable
   return (async function* () {
-    val = val as ReadableStream;
-    const reader = val.getReader();
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) return value;
-      yield value;
-    }
+    const reader = (val as ReadableStream).getReader();
+    let result;
+    do {
+      result = await reader.read();
+      if (result.value !== undefined) yield result.value;
+    } while (!result.done);
   })();
 }
