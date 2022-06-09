@@ -687,7 +687,7 @@ async function connect<SingleConnection extends boolean>(
   if (!res.body) throw new Error('Missing response body');
 
   let error: unknown = null;
-  let waitingForThrow: ((error: unknown) => void) | null = null;
+  let waitingForThrow: ((error: unknown) => void) | undefined;
   (async () => {
     try {
       const parse = createParser<SingleConnection>();
@@ -735,7 +735,7 @@ async function connect<SingleConnection extends boolean>(
     } catch (err) {
       // non-network errors shouldn't ever have "network" in the message, right?
       error = /network/i.test(err) ? new NetworkError(err) : err;
-      if (waitingForThrow) waitingForThrow(error);
+      waitingForThrow?.(error);
     } finally {
       Object.values(waiting).forEach(({ proceed }) => proceed());
     }

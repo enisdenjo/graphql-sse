@@ -19,7 +19,7 @@ graphql-sse
 - [Sink](interfaces/Sink.md)
 - [StreamMessage](interfaces/StreamMessage.md)
 
-### Type aliases
+### Type Aliases
 
 - [ExecutionContext](README.md#executioncontext)
 - [Handler](README.md#handler)
