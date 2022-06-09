@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/enisdenjo/graphql-sse/compare/v1.2.1...v1.2.2) (2022-06-09)
+
+
+### Bug Fixes
+
+* **client:** Network errors during event emission contain the keyword "stream" in Firefox ([054f16b](https://github.com/enisdenjo/graphql-sse/commit/054f16b7bfb7cc6928dd538de3029719591c9ebe))
+
 ## [1.2.1](https://github.com/enisdenjo/graphql-sse/compare/v1.2.0...v1.2.1) (2022-06-09)
 
 
