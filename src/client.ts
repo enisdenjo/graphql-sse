@@ -733,8 +733,10 @@ async function connect<SingleConnection extends boolean>(
         }
       }
     } catch (err) {
-      // non-network errors shouldn't ever have "network" in the message, right?
-      error = /network/i.test(err) ? new NetworkError(err) : err;
+      // non-network errors shouldn't ever have "network" or "stream" in the message, right?
+      // keyword "network" is for Chrome and keyword "stream" is for Firefox
+      // TODO: Safari actually completes the stream instead of erroring out, handle that too.
+      error = /network|stream/i.test(err) ? new NetworkError(err) : err;
       waitingForThrow?.(error);
     } finally {
       Object.values(waiting).forEach(({ proceed }) => proceed());
