@@ -1,6 +1,6 @@
 {
   "name": "graphql-sse",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Zero-dependency, HTTP/1 safe, simple, GraphQL over Server-Sent Events Protocol server and client",
   "keywords": [
     "graphql",

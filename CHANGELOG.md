@@ -1,3 +1,15 @@
+## [1.2.1](https://github.com/enisdenjo/graphql-sse/compare/v1.2.0...v1.2.1) (2022-06-09)
+
+
+### Bug Fixes
+
+* **client:** Retry network errors even if they occur during event emission ([489b1b0](https://github.com/enisdenjo/graphql-sse/commit/489b1b01d89881724ab8bf4dee3d1e395089101d)), closes [#27](https://github.com/enisdenjo/graphql-sse/issues/27)
+
+
+### Performance Improvements
+
+* **client:** Avoid recreating result variables when reading the response stream ([16f6a6c](https://github.com/enisdenjo/graphql-sse/commit/16f6a6c5ec77f63d19afda1c847e965a12513fc7))
+
 # [1.2.0](https://github.com/enisdenjo/graphql-sse/compare/v1.1.0...v1.2.0) (2022-04-14)
 
 
