@@ -549,4 +549,9 @@ describe('retries', () => {
       );
     });
   });
+
+  // TODO: how to simulate network errors during emission? calling socket.destroy does nothing (see: https://github.com/enisdenjo/graphql-sse/issues/22)
+  it.todo(
+    'should retry network errors even if they occur during event emission',
+  );
 });

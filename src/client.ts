@@ -368,6 +368,9 @@ export function createClient<SingleConnection extends boolean = false>(
           // all non-network errors are worth reporting immediately
           if (!(err instanceof NetworkError)) return onNonLazyError?.(err);
 
+          // was a network error, get rid of the current connection to ensure retries
+          conn = undefined;
+
           // retries are not allowed or we tried to many times, report error
           if (!retryAttempts || retries >= retryAttempts)
             return onNonLazyError?.(err);
@@ -532,6 +535,12 @@ export function createClient<SingleConnection extends boolean = false>(
 
             // all non-network errors are worth reporting immediately
             if (!(err instanceof NetworkError)) throw err;
+
+            // was a network error, get rid of the current connection to ensure retries
+            // but only if the client is running in lazy mode (otherwise the non-lazy lock will get rid of the connection)
+            if (lazy) {
+              conn = undefined;
+            }
 
             // retries are not allowed or we tried to many times, report error
             if (!retryAttempts || retries >= retryAttempts) throw err;
@@ -724,8 +733,9 @@ async function connect<SingleConnection extends boolean>(
         }
       }
     } catch (err) {
-      error = err;
-      if (waitingForThrow) waitingForThrow(err);
+      // non-network errors shouldn't ever have "network" in the message, right?
+      error = /network/i.test(err) ? new NetworkError(err) : err;
+      if (waitingForThrow) waitingForThrow(error);
     } finally {
       Object.values(waiting).forEach(({ proceed }) => proceed());
     }
