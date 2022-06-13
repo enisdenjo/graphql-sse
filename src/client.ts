@@ -732,11 +732,20 @@ async function connect<SingleConnection extends boolean>(
           waiting[operationId]?.proceed();
         }
       }
+
+      // some browsers (like Safari) closes the connection without errors even on abrupt server shutdowns,
+      // we therefore make sure that no stream is active and waiting for results (not completed)
+      if (Object.keys(waiting).length) {
+        throw new NetworkError('Connection closed while having active streams');
+      }
     } catch (err) {
       // non-network errors shouldn't ever have "network" or "stream" in the message, right?
-      // keyword "network" is for Chrome and keyword "stream" is for Firefox
-      // TODO: Safari actually completes the stream instead of erroring out, handle that too.
-      error = /network|stream/i.test(err) ? new NetworkError(err) : err;
+      // keyword "network" is for Chrome and keyword "stream" is for Firefox, Safari closes
+      // the connection and that is handled above by checking for active streams
+      error =
+        !(err instanceof NetworkError) && /network|stream/i.test(err)
+          ? new NetworkError(err)
+          : err;
       waitingForThrow?.(error);
     } finally {
       Object.values(waiting).forEach(({ proceed }) => proceed());
