@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/enisdenjo/graphql-sse/compare/v1.2.2...v1.2.3) (2022-06-13)
+
+
+### Bug Fixes
+
+* **client:** Retry if connection is closed while having active streams ([83a0178](https://github.com/enisdenjo/graphql-sse/commit/83a0178d6964fa0ff889de1db9be062212f4474e)), closes [#28](https://github.com/enisdenjo/graphql-sse/issues/28)
+
 ## [1.2.2](https://github.com/enisdenjo/graphql-sse/compare/v1.2.1...v1.2.2) (2022-06-09)
 
 
