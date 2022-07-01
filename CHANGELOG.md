@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/enisdenjo/graphql-sse/compare/v1.2.3...v1.2.4) (2022-07-01)
+
+
+### Bug Fixes
+
+* Add types path to package.json `exports` ([44f95b6](https://github.com/enisdenjo/graphql-sse/commit/44f95b63c47f1faf06dfa671c6a4507b4ce7768b))
+
 ## [1.2.3](https://github.com/enisdenjo/graphql-sse/compare/v1.2.2...v1.2.3) (2022-06-13)
 
 
