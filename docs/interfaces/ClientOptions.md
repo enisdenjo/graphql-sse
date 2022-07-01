@@ -39,7 +39,9 @@ The AbortController implementation to use.
 
 For NodeJS environments before v15 consider using [`node-abort-controller`](https://github.com/southpolesteve/node-abort-controller).
 
-**`default`** global.AbortController
+**`Default`**
+
+ global.AbortController
 
 ___
 
@@ -55,7 +57,9 @@ Possible options are:
   - `same-origin`: Send user credentials (cookies, basic http auth, etc..) if the URL is on the same origin as the calling script.
   - `include`: Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
 
-**`default`** same-origin
+**`Default`**
+
+ same-origin
 
 ___
 
@@ -67,7 +71,9 @@ The Fetch function to use.
 
 For NodeJS environments consider using [`node-fetch`](https://github.com/node-fetch/node-fetch).
 
-**`default`** global.fetch
+**`Default`**
+
+ global.fetch
 
 ___
 
@@ -100,7 +106,9 @@ client in "single connection mode" (see `singleConnection ` option).
 Note that the `lazy` option has NO EFFECT when using the client
 in "distinct connection mode" (`singleConnection = false`).
 
-**`default`** true
+**`Default`**
+
+ true
 
 ___
 
@@ -116,7 +124,9 @@ Meant to be used in combination with `lazy`.
 Note that the `lazy` option has NO EFFECT when using the client
 in "distinct connection mode" (`singleConnection = false`).
 
-**`default`** 0
+**`Default`**
+
+ 0
 
 ___
 
@@ -132,7 +142,9 @@ to avoid swallowing errors, `onNonLazyError` will be called when either:
 
 After a client has errored out, it will NOT perform any automatic actions.
 
-**`default`** console.error
+**`Default`**
+
+ console.error
 
 ___
 
@@ -142,7 +154,9 @@ ___
 
 How many times should the client try to reconnect before it errors out?
 
-**`default`** 5
+**`Default`**
+
+ 5
 
 ___
 
@@ -161,7 +175,9 @@ will run in a "single connection mode" mode. Meaning, a single SSE
 connection will be used to transmit all operation results while
 separate HTTP requests will be issued to dictate the behaviour.
 
-**`default`** false
+**`Default`**
+
+ false
 
 ___
 
@@ -230,7 +246,9 @@ by timing the resolution of the returned promise with the retries count.
 `retries` argument counts actual reconnection attempts, so it will begin with
 0 after the first retryable disconnect.
 
-**`default`** 'Randomised exponential backoff, 5 times'
+**`Default`**
+
+ 'Randomised exponential backoff, 5 times'
 
 #### Parameters
 
