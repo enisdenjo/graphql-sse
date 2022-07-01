@@ -34,6 +34,7 @@
     ".": {
       "require": "./lib/index.js",
       "import": "./lib/index.mjs",
+      "types": "./lib/index.d.ts",
       "browser": "./umd/graphql-sse.js"
     },
     "./package.json": "./package.json"
