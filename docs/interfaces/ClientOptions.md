@@ -15,19 +15,16 @@
 - [abortControllerImpl](ClientOptions.md#abortcontrollerimpl)
 - [credentials](ClientOptions.md#credentials)
 - [fetchFn](ClientOptions.md#fetchfn)
+- [generateID](ClientOptions.md#generateid)
 - [headers](ClientOptions.md#headers)
 - [lazy](ClientOptions.md#lazy)
 - [lazyCloseTimeout](ClientOptions.md#lazyclosetimeout)
+- [onMessage](ClientOptions.md#onmessage)
 - [onNonLazyError](ClientOptions.md#onnonlazyerror)
+- [retry](ClientOptions.md#retry)
 - [retryAttempts](ClientOptions.md#retryattempts)
 - [singleConnection](ClientOptions.md#singleconnection)
 - [url](ClientOptions.md#url)
-
-### Methods
-
-- [generateID](ClientOptions.md#generateid)
-- [onMessage](ClientOptions.md#onmessage)
-- [retry](ClientOptions.md#retry)
 
 ## Properties
 
@@ -41,7 +38,7 @@ For NodeJS environments before v15 consider using [`node-abort-controller`](http
 
 **`Default`**
 
- global.AbortController
+global.AbortController
 
 ___
 
@@ -59,7 +56,7 @@ Possible options are:
 
 **`Default`**
 
- same-origin
+same-origin
 
 ___
 
@@ -73,7 +70,29 @@ For NodeJS environments consider using [`node-fetch`](https://github.com/node-fe
 
 **`Default`**
 
- global.fetch
+global.fetch
+
+___
+
+### generateID
+
+• `Optional` **generateID**: () => `string`
+
+#### Type declaration
+
+▸ (): `string`
+
+A custom ID generator for identifying subscriptions.
+
+The default generates a v4 UUID to be used as the ID using `Math`
+as the random number generator. Supply your own generator
+in case you need more uniqueness.
+
+Reference: https://gist.github.com/jed/982883
+
+##### Returns
+
+`string`
 
 ___
 
@@ -108,7 +127,7 @@ in "distinct connection mode" (`singleConnection = false`).
 
 **`Default`**
 
- true
+true
 
 ___
 
@@ -126,7 +145,32 @@ in "distinct connection mode" (`singleConnection = false`).
 
 **`Default`**
 
- 0
+0
+
+___
+
+### onMessage
+
+• `Optional` **onMessage**: (`message`: [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\>) => `void`
+
+#### Type declaration
+
+▸ (`message`): `void`
+
+Browsers show stream messages in the DevTools **only** if they're received through the [native EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource),
+and because `graphql-sse` implements a custom SSE parser - received messages will **not** appear in browser's DevTools.
+
+Use this function if you want to inspect valid messages received through the active SSE connection.
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\> |
+
+##### Returns
+
+`void`
 
 ___
 
@@ -144,7 +188,37 @@ After a client has errored out, it will NOT perform any automatic actions.
 
 **`Default`**
 
- console.error
+console.error
+
+___
+
+### retry
+
+• `Optional` **retry**: (`retries`: `number`) => `Promise`<`void`\>
+
+#### Type declaration
+
+▸ (`retries`): `Promise`<`void`\>
+
+Control the wait time between retries. You may implement your own strategy
+by timing the resolution of the returned promise with the retries count.
+
+`retries` argument counts actual reconnection attempts, so it will begin with
+0 after the first retryable disconnect.
+
+**`Default`**
+
+'Randomised exponential backoff, 5 times'
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `retries` | `number` |
+
+##### Returns
+
+`Promise`<`void`\>
 
 ___
 
@@ -156,7 +230,7 @@ How many times should the client try to reconnect before it errors out?
 
 **`Default`**
 
- 5
+5
 
 ___
 
@@ -177,7 +251,7 @@ separate HTTP requests will be issued to dictate the behaviour.
 
 **`Default`**
 
- false
+false
 
 ___
 
@@ -194,68 +268,3 @@ resolves with the URL.
 A good use-case for having a function is when using the URL for authentication,
 where subsequent reconnects (due to auth) may have a refreshed identity token in
 the URL.
-
-## Methods
-
-### generateID
-
-▸ `Optional` **generateID**(): `string`
-
-A custom ID generator for identifying subscriptions.
-
-The default generates a v4 UUID to be used as the ID using `Math`
-as the random number generator. Supply your own generator
-in case you need more uniqueness.
-
-Reference: https://gist.github.com/jed/982883
-
-#### Returns
-
-`string`
-
-___
-
-### onMessage
-
-▸ `Optional` **onMessage**(`message`): `void`
-
-Browsers show stream messages in the DevTools **only** if they're received through the [native EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource),
-and because `graphql-sse` implements a custom SSE parser - received messages will **not** appear in browser's DevTools.
-
-Use this function if you want to inspect valid messages received through the active SSE connection.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `message` | [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\> |
-
-#### Returns
-
-`void`
-
-___
-
-### retry
-
-▸ `Optional` **retry**(`retries`): `Promise`<`void`\>
-
-Control the wait time between retries. You may implement your own strategy
-by timing the resolution of the returned promise with the retries count.
-
-`retries` argument counts actual reconnection attempts, so it will begin with
-0 after the first retryable disconnect.
-
-**`Default`**
-
- 'Randomised exponential backoff, 5 times'
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `retries` | `number` |
-
-#### Returns
-
-`Promise`<`void`\>

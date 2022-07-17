@@ -4,24 +4,31 @@
 
 ## Table of contents
 
-### Methods
+### Properties
 
 - [dispose](Client.md#dispose)
+
+### Methods
+
 - [subscribe](Client.md#subscribe)
 
-## Methods
+## Properties
 
 ### dispose
 
-▸ **dispose**(): `void`
+• **dispose**: () => `void`
+
+#### Type declaration
+
+▸ (): `void`
 
 Dispose of the client, destroy connections and clean up resources.
 
-#### Returns
+##### Returns
 
 `void`
 
-___
+## Methods
 
 ### subscribe
 
