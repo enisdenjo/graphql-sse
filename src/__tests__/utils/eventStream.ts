@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import { AbortSignal as NodeFetchAbortSignal } from 'node-fetch/externals';
 import { RequestParams, StreamEvent, StreamMessage } from '../../common';
 import { createParser } from '../../parser';
 
@@ -12,7 +11,7 @@ export async function eventStream<ForID extends boolean>(options: {
   const { signal, url, headers, body } = options;
 
   const res = await fetch(url, {
-    signal: signal as NodeFetchAbortSignal,
+    signal,
     method: body ? 'POST' : 'GET',
     headers: {
       ...headers,
