@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/enisdenjo/graphql-sse/compare/v1.2.4...v1.2.5) (2022-07-17)
+
+
+### Bug Fixes
+
+* **client:** Leverage active streams for reliable network error retries ([607b468](https://github.com/enisdenjo/graphql-sse/commit/607b4684b99284108ba4cd4d9c79f0a56bd16fbd))
+
 ## [1.2.4](https://github.com/enisdenjo/graphql-sse/compare/v1.2.3...v1.2.4) (2022-07-01)
 
 
