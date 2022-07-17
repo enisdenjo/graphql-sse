@@ -43,7 +43,7 @@ export const schemaConfig: GraphQLSchemaConfig = {
         type: new GraphQLNonNull(GraphQLString),
         subscribe: async function* () {
           for (const hi of ['Hi', 'Bonjour', 'Hola', 'Ciao', 'Zdravo']) {
-            yield { greetings: hi };
+            yield { slowGreetings: hi };
             await new Promise((resolve) => setTimeout(resolve, 10));
           }
         },
