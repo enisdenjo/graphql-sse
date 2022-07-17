@@ -695,14 +695,23 @@ async function connect<SingleConnection extends boolean>(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       for await (const chunk of toAsyncIterator(res.body!)) {
         if (typeof chunk === 'string')
-          throw new Error(`Unexpected string chunk "${chunk}"`);
+          throw (error = new Error(`Unexpected string chunk "${chunk}"`)); // set error as fatal indicator
 
         // read chunk and if messages are ready, yield them
-        const msgs = parse(chunk);
+        let msgs;
+        try {
+          msgs = parse(chunk);
+        } catch (err) {
+          throw (error = err); // set error as fatal indicator
+        }
         if (!msgs) continue;
 
         for (const msg of msgs) {
-          onMessage?.(msg);
+          try {
+            onMessage?.(msg);
+          } catch (err) {
+            throw (error = err); // set error as fatal indicator
+          }
 
           const operationId =
             msg.data && 'id' in msg.data
@@ -726,7 +735,9 @@ async function connect<SingleConnection extends boolean>(
               queue[operationId].push('complete');
               break;
             default:
-              throw new Error(`Unexpected message event "${msg.event}"`);
+              throw (error = new Error(
+                `Unexpected message event "${msg.event}"`,
+              )); // set error as fatal indicator
           }
 
           waiting[operationId]?.proceed();
@@ -736,16 +747,16 @@ async function connect<SingleConnection extends boolean>(
       // some browsers (like Safari) closes the connection without errors even on abrupt server shutdowns,
       // we therefore make sure that no stream is active and waiting for results (not completed)
       if (Object.keys(waiting).length) {
-        throw new NetworkError('Connection closed while having active streams');
+        throw new Error('Connection closed while having active streams');
       }
     } catch (err) {
-      // non-network errors shouldn't ever have "network" or "stream" in the message, right?
-      // keyword "network" is for Chrome and keyword "stream" is for Firefox, Safari closes
-      // the connection and that is handled above by checking for active streams
-      error =
-        !(err instanceof NetworkError) && /network|stream/i.test(err)
-          ? new NetworkError(err)
-          : err;
+      if (!error && Object.keys(waiting).length) {
+        // we assume the error is most likely a NetworkError because there are listeners waiting for events.
+        // additionally, the `error` is another indicator because we set it early if the error is considered fatal
+        error = new NetworkError(err);
+      } else {
+        error = err;
+      }
       waitingForThrow?.(error);
     } finally {
       Object.values(waiting).forEach(({ proceed }) => proceed());

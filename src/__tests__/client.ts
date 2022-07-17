@@ -569,8 +569,59 @@ describe('retries', () => {
     });
   });
 
-  // TODO: how to simulate network errors during emission? calling socket.destroy does nothing (see: https://github.com/enisdenjo/graphql-sse/issues/22)
-  it.todo(
-    'should retry network errors even if they occur during event emission',
-  );
+  it('should retry network errors even if they occur during event emission', async (done) => {
+    const server = await startTServer();
+
+    const client = createClient({
+      url: server.url,
+      fetchFn: fetch,
+      retryAttempts: 1,
+      retry: async () => {
+        client.dispose();
+        done();
+      },
+    });
+
+    const sub = tsubscribe(client, {
+      query: 'subscription { slowGreetings }',
+    });
+
+    await sub.waitForNext();
+
+    await server.dispose();
+  });
+
+  it('should not retry fatal errors occurring during event emission', async (done) => {
+    const server = await startTServer();
+
+    let msgsCount = 0;
+    const fatalErr = new Error('Boom, I am fatal');
+
+    const client = createClient({
+      url: server.url,
+      fetchFn: fetch,
+      retryAttempts: 1,
+      retry: async () => {
+        done(new Error("Shouldnt've retried"));
+      },
+      onMessage: () => {
+        // onMessage is in the middle of stream processing, throwing from it is considered fatal
+        msgsCount++;
+        if (msgsCount > 3) {
+          throw fatalErr;
+        }
+      },
+    });
+
+    const sub = tsubscribe(client, {
+      query: 'subscription { slowGreetings }',
+    });
+
+    await sub.waitForNext();
+
+    await sub.waitForError((err) => {
+      expect(err).toBe(fatalErr);
+      done();
+    });
+  });
 });
