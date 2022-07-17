@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { jest } from '@jest/globals';
 import EventSource from 'eventsource';
 import { startTServer, startDisposableServer } from './utils/tserver';
 import { eventStream } from './utils/eventStream';

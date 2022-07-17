@@ -8,7 +8,7 @@ type Dispose = () => Promise<void>;
 
 // distinct server for each test; if you forget to dispose, the fixture wont
 const leftovers: Dispose[] = [];
-afterEach(async () => {
+afterAll(async () => {
   while (leftovers.length > 0) {
     // if not disposed by test, cleanup
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -245,7 +245,6 @@ export async function startDisposableServer(
       socket.destroy();
     }
     await new Promise<void>((resolve) => server.close(() => resolve()));
-    leftovers.splice(leftovers.indexOf(kill), 1);
   };
   leftovers.push(kill);
 

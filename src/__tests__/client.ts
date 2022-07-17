@@ -219,7 +219,7 @@ describe('single connection mode', () => {
     );
   });
 
-  it('should complete subscription by disposing', async (done) => {
+  it('should complete subscriptions when disposing them', async (done) => {
     expect.hasAssertions();
 
     const { url, waitForOperation, pong } = await startTServer();
@@ -229,7 +229,7 @@ describe('single connection mode', () => {
       url,
       fetchFn: fetch,
       retryAttempts: 0,
-      lazy: false,
+      lazy: true,
     });
 
     const dispose = client.subscribe(
@@ -336,7 +336,7 @@ describe('single connection mode', () => {
         fetchFn: fetch,
         retryAttempts: 0,
         lazy: false,
-        onNonLazyError: fail,
+        onNonLazyError: noop, // avoiding premature close errors
       });
 
       await waitForConnected();

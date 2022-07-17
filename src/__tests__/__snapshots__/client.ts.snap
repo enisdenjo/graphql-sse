@@ -6,7 +6,7 @@ exports[`retries should keep retrying network errors until the retry attempts ar
 
 exports[`retries should keep retrying network errors until the retry attempts are exceeded 3`] = `[NetworkError: Server responded with 403: Forbidden]`;
 
-exports[`single connection mode should complete subscription by disposing 1`] = `
+exports[`single connection mode should complete subscriptions when disposing them 1`] = `
 Object {
   "data": Object {
     "ping": "pong",
