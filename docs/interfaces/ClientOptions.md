@@ -21,6 +21,8 @@
 - [lazyCloseTimeout](ClientOptions.md#lazyclosetimeout)
 - [onMessage](ClientOptions.md#onmessage)
 - [onNonLazyError](ClientOptions.md#onnonlazyerror)
+- [referrer](ClientOptions.md#referrer)
+- [referrerPolicy](ClientOptions.md#referrerpolicy)
 - [retry](ClientOptions.md#retry)
 - [retryAttempts](ClientOptions.md#retryattempts)
 - [singleConnection](ClientOptions.md#singleconnection)
@@ -189,6 +191,40 @@ After a client has errored out, it will NOT perform any automatic actions.
 **`Default`**
 
 console.error
+
+___
+
+### referrer
+
+• `Optional` **referrer**: `string`
+
+A string specifying the referrer of the request. This can be a same-origin URL, about:client, or an empty string.
+
+**`Default`**
+
+undefined
+
+___
+
+### referrerPolicy
+
+• `Optional` **referrerPolicy**: ``"same-origin"`` \| ``"no-referrer"`` \| ``"no-referrer-when-downgrade"`` \| ``"origin"`` \| ``"strict-origin"`` \| ``"origin-when-cross-origin"`` \| ``"strict-origin-when-cross-origin"`` \| ``"unsafe-url"``
+
+Specifies the referrer policy to use for the request.
+
+Possible options are:
+  - `no-referrer`: Does not send referrer information along with requests to any origin.
+  - `no-referrer-when-downgrade`: Sends full referrerURL for requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL.
+  - `same-origin`: Sends full referrerURL as referrer information when making same-origin-referrer requests.
+  - `origin`: Sends only the ASCII serialization of the request’s referrerURL when making both same-origin-referrer requests and cross-origin-referrer requests.
+  - `strict-origin`: Sends the ASCII serialization of the origin of the referrerURL for requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL
+  - `origin-when-cross-origin`: Sends full referrerURL when making same-origin-referrer requests, and only the ASCII serialization of the origin of the request’s referrerURL is sent when making cross-origin-referrer requests
+  - `strict-origin-when-cross-origin`: Sends full referrerURL when making same-origin-referrer requests, and only the ASCII serialization of the origin of the request’s referrerURL when making cross-origin-referrer requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL.
+  - `unsafe-url`: Sends full referrerURL along for both same-origin-referrer requests and cross-origin-referrer requests.
+
+**`Default`**
+
+undefined
 
 ___
 
