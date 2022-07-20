@@ -101,7 +101,7 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
   credentials?: 'omit' | 'same-origin' | 'include';
   /**
    * A string specifying the referrer of the request. This can be a same-origin URL, about:client, or an empty string.
-   * 
+   *
    * @default undefined
    */
   referrer?: string;
@@ -120,7 +120,15 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    *
    * @default undefined
    */
-   referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'same-origin' | 'origin' | 'strict-origin' | 'origin-when-cross-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
+  referrerPolicy?:
+    | 'no-referrer'
+    | 'no-referrer-when-downgrade'
+    | 'same-origin'
+    | 'origin'
+    | 'strict-origin'
+    | 'origin-when-cross-origin'
+    | 'strict-origin-when-cross-origin'
+    | 'unsafe-url';
   /**
    * HTTP headers to pass along the request.
    *
@@ -682,7 +690,15 @@ interface ConnectOptions<SingleConnection extends boolean> {
   url: string;
   credentials: 'omit' | 'same-origin' | 'include';
   referrer?: string;
-  referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'same-origin' | 'origin' | 'strict-origin' | 'origin-when-cross-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
+  referrerPolicy?:
+    | 'no-referrer'
+    | 'no-referrer-when-downgrade'
+    | 'same-origin'
+    | 'origin'
+    | 'strict-origin'
+    | 'origin-when-cross-origin'
+    | 'strict-origin-when-cross-origin'
+    | 'unsafe-url';
   headers?: Record<string, string> | undefined;
   body?: string;
   fetchFn: typeof fetch;
@@ -694,8 +710,17 @@ interface ConnectOptions<SingleConnection extends boolean> {
 async function connect<SingleConnection extends boolean>(
   options: ConnectOptions<SingleConnection>,
 ): Promise<Connection> {
-  const { signal, url, credentials, headers, body, referrer, referrerPolicy, fetchFn, onMessage } =
-    options;
+  const {
+    signal,
+    url,
+    credentials,
+    headers,
+    body,
+    referrer,
+    referrerPolicy,
+    fetchFn,
+    onMessage,
+  } = options;
 
   const waiting: {
     [id: string]: { proceed: () => void };
