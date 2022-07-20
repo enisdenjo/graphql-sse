@@ -100,6 +100,28 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    */
   credentials?: 'omit' | 'same-origin' | 'include';
   /**
+   * A string specifying the referrer of the request. This can be a same-origin URL, about:client, or an empty string.
+   * 
+   * @default undefined
+   */
+  referrer?: string;
+  /**
+   * Specifies the referrer policy to use for the request.
+   *
+   * Possible options are:
+   *   - `no-referrer`: Does not send referrer information along with requests to any origin.
+   *   - `no-referrer-when-downgrade`: Sends full referrerURL for requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL.
+   *   - `same-origin`: Sends full referrerURL as referrer information when making same-origin-referrer requests.
+   *   - `origin`: Sends only the ASCII serialization of the request’s referrerURL when making both same-origin-referrer requests and cross-origin-referrer requests.
+   *   - `strict-origin`: Sends the ASCII serialization of the origin of the referrerURL for requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL
+   *   - `origin-when-cross-origin`: Sends full referrerURL when making same-origin-referrer requests, and only the ASCII serialization of the origin of the request’s referrerURL is sent when making cross-origin-referrer requests
+   *   - `strict-origin-when-cross-origin`: Sends full referrerURL when making same-origin-referrer requests, and only the ASCII serialization of the origin of the request’s referrerURL when making cross-origin-referrer requests: whose referrerURL and current URL are both potentially trustworthy URLs, or whose referrerURL is a non-potentially trustworthy URL.
+   *   - `unsafe-url`: Sends full referrerURL along for both same-origin-referrer requests and cross-origin-referrer requests.
+   *
+   * @default undefined
+   */
+   referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'same-origin' | 'origin' | 'strict-origin' | 'origin-when-cross-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
+  /**
    * HTTP headers to pass along the request.
    *
    * If the option is a function, it will be called on each connection attempt.
@@ -234,6 +256,8 @@ export function createClient<SingleConnection extends boolean = false>(
       );
     },
     credentials = 'same-origin',
+    referrer,
+    referrerPolicy,
     onMessage,
   } = options;
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
@@ -322,6 +346,8 @@ export function createClient<SingleConnection extends boolean = false>(
               signal: connCtrl.signal,
               method: 'PUT',
               credentials,
+              referrer,
+              referrerPolicy,
               headers,
             });
           } catch (err) {
@@ -336,6 +362,8 @@ export function createClient<SingleConnection extends boolean = false>(
             signal: connCtrl.signal,
             headers,
             credentials,
+            referrer,
+            referrerPolicy,
             url,
             fetchFn,
             onMessage,
@@ -427,6 +455,8 @@ export function createClient<SingleConnection extends boolean = false>(
                 signal: control.signal,
                 headers,
                 credentials,
+                referrer,
+                referrerPolicy,
                 url,
                 body: JSON.stringify(request),
                 fetchFn,
@@ -491,6 +521,8 @@ export function createClient<SingleConnection extends boolean = false>(
                 signal: control.signal,
                 method: 'POST',
                 credentials,
+                referrer,
+                referrerPolicy,
                 headers,
                 body: JSON.stringify(request),
               });
@@ -511,6 +543,8 @@ export function createClient<SingleConnection extends boolean = false>(
                   signal: control.signal,
                   method: 'DELETE',
                   credentials,
+                  referrer,
+                  referrerPolicy,
                   headers,
                 });
               } catch (err) {
@@ -647,6 +681,8 @@ interface ConnectOptions<SingleConnection extends boolean> {
   signal: AbortSignal;
   url: string;
   credentials: 'omit' | 'same-origin' | 'include';
+  referrer?: string;
+  referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'same-origin' | 'origin' | 'strict-origin' | 'origin-when-cross-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
   headers?: Record<string, string> | undefined;
   body?: string;
   fetchFn: typeof fetch;
@@ -658,7 +694,7 @@ interface ConnectOptions<SingleConnection extends boolean> {
 async function connect<SingleConnection extends boolean>(
   options: ConnectOptions<SingleConnection>,
 ): Promise<Connection> {
-  const { signal, url, credentials, headers, body, fetchFn, onMessage } =
+  const { signal, url, credentials, headers, body, referrer, referrerPolicy, fetchFn, onMessage } =
     options;
 
   const waiting: {
@@ -674,6 +710,8 @@ async function connect<SingleConnection extends boolean>(
       signal,
       method: body ? 'POST' : 'GET',
       credentials,
+      referrer,
+      referrerPolicy,
       headers: {
         ...headers,
         accept: 'text/event-stream',
