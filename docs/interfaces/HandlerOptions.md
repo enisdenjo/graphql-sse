@@ -393,13 +393,13 @@ will be created from the provided schema.
 
 ##### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `schema` | `GraphQLSchema` |
-| `documentAST` | `DocumentNode` |
-| `rules?` | readonly `ValidationRule`[] |
-| `options?` | `Object` |
-| `typeInfo?` | `TypeInfo` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `schema` | `GraphQLSchema` | - |
+| `documentAST` | `DocumentNode` | - |
+| `rules?` | readonly `ValidationRule`[] | - |
+| `options?` | `Object` | - |
+| `typeInfo?` | `TypeInfo` | **`Deprecated`**  will be removed in 17.0.0 |
 
 ##### Returns
 

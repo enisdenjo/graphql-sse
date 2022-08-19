@@ -449,7 +449,7 @@ describe('fastify', () => {
     fastify.all('/graphql/stream', (req, res) =>
       handler(req.raw, res.raw, req.body),
     );
-    const url = await fastify.listen(0);
+    const url = await fastify.listen({ port: 0 });
 
     const client = createClient({
       url: url + '/graphql/stream',
