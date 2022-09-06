@@ -14,8 +14,8 @@ Operation requests need to conform to the [GraphQL over HTTP spec](https://githu
 
 1. The `Content-Type` MUST always be `text/event-stream` as per the [Server-Sent Events spec](https://www.w3.org/TR/eventsource/#text-event-stream).
 1. Validation steps that run before execution of the GraphQL operation MUST report errors through an accepted SSE connection by emitting `next` events that contain the errors in the data field.
-   <br>One reason being, responding with a `400` (Bad Request) will cause the user agent to fail the connection. In some cases, like with the browser's native `EventSource`, the error event will hold no meaningful information helping to understand the validation issue(s).
-   <br>On the other hand, there is no other way to transmit the exact validation details since the server should agree with the client's `Accept` header when responding and setting the `Content-Type`. In essence, server should not reply with a `Content-Type: graphql-response+json` to client's `Accept: text/event-stream`.
+   <br>One reason being, the server should agree with the client's `Accept` header when deciding about the response's `Content-Type`.
+   <br>Additionally, responding with a `400` (Bad Request) will cause the user agent to fail the connection. In some cases, like with the browser's native `EventSource`, the error event will hold no meaningful information helping to understand the validation issue(s).
 
 Streaming operations, such as `subscriptions` or directives like `@stream` and `@defer`, are terminated/completed by having the client simply close the SSE connection.
 
