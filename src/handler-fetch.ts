@@ -63,13 +63,13 @@ export interface Request<RequestContext, Raw> {
    */
   readonly body:
     | string
-    | Record<string, unknown>
+    | Record<PropertyKey, unknown>
     | null
     | (() =>
         | string
-        | Record<string, unknown>
+        | Record<PropertyKey, unknown>
         | null
-        | Promise<string | Record<string, unknown> | null>);
+        | Promise<string | Record<PropertyKey, unknown> | null>);
   /**
    * The raw request itself from the implementing server.
    */
@@ -101,7 +101,7 @@ export type ResponseHeaders = {
  *
  * @category Server
  */
-export type ResponseBody = string | AsyncGenerator<string>;
+export type ResponseBody = AsyncGenerator<string>;
 
 /**
  * Server agnostic response options (ex. status and headers) returned from
@@ -564,7 +564,7 @@ export function createHandler<
           query = parse(query);
         } catch (err) {
           return [
-            JSON.stringify({ errors: [err] }),
+            yielded(JSON.stringify({ errors: [err] })),
             {
               status: 400,
               statusText: 'Bad Request',
@@ -596,9 +596,11 @@ export function createHandler<
       operation = ast.operation;
     } catch {
       return [
-        JSON.stringify({
-          errors: [{ message: 'Unable to detect operation AST' }],
-        }),
+        yielded(
+          JSON.stringify({
+            errors: [{ message: 'Unable to detect operation AST' }],
+          }),
+        ),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -611,9 +613,11 @@ export function createHandler<
     // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#get
     if (operation === 'mutation' && req.method === 'GET') {
       return [
-        JSON.stringify({
-          errors: [{ message: 'Cannot perform mutations over GET' }],
-        }),
+        yielded(
+          JSON.stringify({
+            errors: [{ message: 'Cannot perform mutations over GET' }],
+          }),
+        ),
         {
           status: 405,
           statusText: 'Method Not Allowed',
@@ -643,7 +647,7 @@ export function createHandler<
       }
 
       return [
-        JSON.stringify({ errors: validationErrs }),
+        yielded(JSON.stringify({ errors: validationErrs })),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -704,7 +708,9 @@ export function createHandler<
       // open stream cant exist, only one per token is allowed
       if (stream.open) {
         return [
-          JSON.stringify({ errors: [{ message: 'Stream already open' }] }),
+          yielded(
+            JSON.stringify({ errors: [{ message: 'Stream already open' }] }),
+          ),
           {
             status: 409,
             statusText: 'Conflict',
@@ -736,9 +742,11 @@ export function createHandler<
       // streams mustnt exist if putting new one
       if (stream) {
         return [
-          JSON.stringify({
-            errors: [{ message: 'Stream already registered' }],
-          }),
+          yielded(
+            JSON.stringify({
+              errors: [{ message: 'Stream already registered' }],
+            }),
+          ),
           {
             status: 409,
             statusText: 'Conflict',
@@ -752,7 +760,7 @@ export function createHandler<
       streams[token] = createStream(token);
 
       return [
-        token,
+        yielded(token),
         {
           status: 201,
           statusText: 'Created',
@@ -767,9 +775,11 @@ export function createHandler<
       // streams must exist when completing operations
       if (!stream) {
         return [
-          JSON.stringify({
-            errors: [{ message: 'Stream not found' }],
-          }),
+          yielded(
+            JSON.stringify({
+              errors: [{ message: 'Stream not found' }],
+            }),
+          ),
           {
             status: 404,
             statusText: 'Not Found',
@@ -785,9 +795,11 @@ export function createHandler<
       );
       if (!opId) {
         return [
-          JSON.stringify({
-            errors: [{ message: 'Operation ID is missing' }],
-          }),
+          yielded(
+            JSON.stringify({
+              errors: [{ message: 'Operation ID is missing' }],
+            }),
+          ),
           {
             status: 400,
             statusText: 'Bad Request',
@@ -824,9 +836,11 @@ export function createHandler<
     } else if (!stream) {
       // for all other requests, streams must exist to attach the result onto
       return [
-        JSON.stringify({
-          errors: [{ message: 'Stream not found' }],
-        }),
+        yielded(
+          JSON.stringify({
+            errors: [{ message: 'Stream not found' }],
+          }),
+        ),
         {
           status: 404,
           statusText: 'Not Found',
@@ -856,9 +870,11 @@ export function createHandler<
     const opId = String(params.extensions?.operationId ?? '');
     if (!opId) {
       return [
-        JSON.stringify({
-          errors: [{ message: 'Operation ID is missing' }],
-        }),
+        yielded(
+          JSON.stringify({
+            errors: [{ message: 'Operation ID is missing' }],
+          }),
+        ),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -870,9 +886,11 @@ export function createHandler<
     }
     if (opId in stream.ops) {
       return [
-        JSON.stringify({
-          errors: [{ message: 'Operation with ID already exists' }],
-        }),
+        yielded(
+          JSON.stringify({
+            errors: [{ message: 'Operation with ID already exists' }],
+          }),
+        ),
         {
           status: 409,
           statusText: 'Conflict',
@@ -999,7 +1017,7 @@ async function parseReq(
     return params as RequestParams;
   } catch (err) {
     return [
-      JSON.stringify({ errors: [err] }),
+      yielded(JSON.stringify({ errors: [err] })),
       {
         status: 400,
         statusText: 'Bad Request',
@@ -1017,4 +1035,8 @@ function isResponse(val: unknown): val is Response {
 function isExecutionResult(val: unknown): val is ExecutionResult {
   // TODO: comprehensive check
   return isObject(val);
+}
+
+async function* yielded<T>(val: T): AsyncGenerator<T> {
+  yield val;
 }
