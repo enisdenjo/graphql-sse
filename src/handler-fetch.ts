@@ -240,8 +240,11 @@ export interface HandlerOptions<
    * Meaning, for subscriptions, only at the point of initialising the subscription;
    * not on every subscription event emission. Read more about the context lifecycle
    * in subscriptions here: https://github.com/graphql/graphql-js/issues/894.
+   *
+   * If you don't provide the context context field, but have a context - you're trusted to
+   * provide one in `onSubscribe`.
    */
-  context:
+  context?:
     | Context
     | ((
         req: Request<RequestContext, RequestRaw>,
@@ -267,7 +270,6 @@ export interface HandlerOptions<
    * and supply the appropriate GraphQL operation execution arguments.
    */
   onSubscribe?: (
-    ctx: Context,
     req: Request<RequestContext, RequestRaw>,
     params: RequestParams,
   ) =>
@@ -557,17 +559,17 @@ export function createHandler<
     params: RequestParams,
   ): Promise<Response | { ctx: Context; perform: () => OperationResult }> {
     let args: OperationArgs<Context>;
-    const ctx =
-      typeof context === 'function' ? await context(req, params) : context;
 
-    const onSubscribeResult = await onSubscribe?.(ctx, req, params);
+    const onSubscribeResult = await onSubscribe?.(req, params);
     if (isResponse(onSubscribeResult)) return onSubscribeResult;
     else if (
       isExecutionResult(onSubscribeResult) ||
       isAsyncIterable(onSubscribeResult)
     )
       return {
-        ctx,
+        ctx: (typeof context === 'function'
+          ? await context(req, params)
+          : context)!,
         perform() {
           return onSubscribeResult;
         },
@@ -597,10 +599,12 @@ export function createHandler<
       }
 
       const argsWithoutSchema = {
-        contextValue: ctx,
         operationName,
         document: query,
         variableValues: variables,
+        contextValue: (typeof context === 'function'
+          ? await context(req, params)
+          : context)!,
       };
       args = {
         ...argsWithoutSchema,
@@ -661,7 +665,7 @@ export function createHandler<
         // Read more: https://www.w3.org/TR/eventsource/#processing-model
         // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#document-validation
         return {
-          ctx,
+          ctx: args.contextValue,
           perform() {
             return { errors: validationErrs };
           },
@@ -679,7 +683,7 @@ export function createHandler<
     }
 
     return {
-      ctx,
+      ctx: args.contextValue,
       async perform() {
         return operation === 'subscription' ? subscribe(args) : execute(args);
       },
