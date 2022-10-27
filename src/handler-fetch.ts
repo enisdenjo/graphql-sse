@@ -212,7 +212,25 @@ export interface HandlerOptions<
    */
   authenticate?: (
     req: Request<RequestContext, RequestRaw>,
-  ) => Promise<Response | string | null> | Response | string | null;
+  ) =>
+    | Promise<Response | string | undefined | null>
+    | Response
+    | string
+    | undefined
+    | null;
+  /**
+   * Called when a new event stream is connecting BEFORE it is accepted.
+   * By accepted, its meant the server processed the request and responded
+   * with a 200 (OK), alongside flushing the necessary event stream headers.
+   */
+  onConnect?: (
+    req: Request<RequestContext, RequestRaw>,
+  ) =>
+    | Promise<Response | null | undefined | void>
+    | Response
+    | null
+    | undefined
+    | void;
   /**
    * A value which is provided to every resolver and holds
    * important contextual information like the currently
@@ -347,8 +365,9 @@ export function createHandler<
         return v.toString(16);
       });
     },
-    onSubscribe,
+    onConnect,
     context,
+    onSubscribe,
     onNext,
     onComplete,
   } = options;
@@ -677,6 +696,9 @@ export function createHandler<
     const stream = typeof token === 'string' ? streams[token] : null;
 
     if (accept === 'text/event-stream') {
+      const maybeResponse = await onConnect?.(req);
+      if (isResponse(maybeResponse)) return maybeResponse;
+
       // if event stream is not registered, process it directly.
       // this means that distinct connections are used for graphql operations
       if (!stream) {
