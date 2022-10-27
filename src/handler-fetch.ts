@@ -435,8 +435,11 @@ export function createHandler<
         },
         iterator: (async function* createGenerator() {
           for (;;) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            yield pending.shift()!;
+            while (pending.length) {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              yield pending.shift()!;
+            }
+            if (throwMe) throw throwMe;
             const done =
               complete ||
               (await new Promise(
