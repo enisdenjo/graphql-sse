@@ -203,19 +203,16 @@ export interface HandlerOptions<
    * Authenticate the client. Returning a string indicates that the client
    * is authenticated and the request is ready to be processed.
    *
-   * A token of type string MUST be supplied; if there is no token, you may
-   * return an empty string (`''`);
+   * A distinct token of type string must be supplied to enable the "single connection mode".
+   *
+   * Providing `null` as the token will completely disable the "single connection mode"
+   * and all incoming requests will always use the "distinct connection mode".
    *
    * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
   authenticate?: (
     req: Request<RequestContext, RequestRaw>,
-  ) =>
-    | Promise<Response | string | undefined | void>
-    | Response
-    | string
-    | undefined
-    | void;
+  ) => Promise<Response | string | null> | Response | string | null;
   /**
    * A value which is provided to every resolver and holds
    * important contextual information like the currently
@@ -666,12 +663,12 @@ export function createHandler<
 
   return async function handler(req) {
     const token = await authenticate(req);
-    if (typeof token !== 'string') throw new Error('Token was not supplied');
+    if (isResponse(token)) return token;
 
     // TODO: make accept detection more resilient
     const accept = req.headers.accept ?? '*/*';
 
-    const stream = streams[token];
+    const stream = typeof token === 'string' ? streams[token] : null;
 
     if (accept === 'text/event-stream') {
       // if event stream is not registered, process it directly.
@@ -731,6 +728,11 @@ export function createHandler<
           },
         },
       ];
+    }
+
+    // if there us no token supplied, exclusively use the "distinct connection mode"
+    if (typeof token !== 'string') {
+      return [null, { status: 404, statusText: 'Not Found' }];
     }
 
     // method PUT prepares a stream for future incoming connections
