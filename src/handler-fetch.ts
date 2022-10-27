@@ -410,6 +410,9 @@ export function createHandler<
         panic: (err: Error) => {
           throwMe = err;
           clearInterval(pinger);
+
+          // TODO: cleanup?
+
           deferred?.reject(throwMe);
         },
         complete: async () => {
