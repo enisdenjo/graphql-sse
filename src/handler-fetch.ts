@@ -1006,14 +1006,9 @@ async function parseReq(
         if (!req.body) {
           throw new Error('Missing body');
         }
-        let data;
-        try {
-          const body =
-            typeof req.body === 'function' ? await req.body() : req.body;
-          data = typeof body === 'string' ? JSON.parse(body) : body;
-        } catch (err) {
-          throw new Error('Unparsable JSON body');
-        }
+        const body =
+          typeof req.body === 'function' ? await req.body() : req.body;
+        const data = typeof body === 'string' ? JSON.parse(body) : body;
         if (!isObject(data)) {
           throw new Error('JSON body must be an object');
         }
