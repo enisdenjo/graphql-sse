@@ -32,18 +32,22 @@ import {
  *
  * @category Server
  */
-export interface RequestHeaders {
-  accept?: string | undefined;
-  allow?: string | undefined;
-  'content-type'?: string | undefined;
-  /**
-   * Always an array in Node. Duplicates are added to it.
-   * Not necessarily true for other environments, make sure
-   * to check the type during runtime.
-   */
-  'set-cookie'?: string | string[] | undefined;
-  [key: string]: string | string[] | undefined;
-}
+export type RequestHeaders =
+  | {
+      accept?: string | undefined;
+      allow?: string | undefined;
+      'content-type'?: string | undefined;
+      /**
+       * Always an array in Node. Duplicates are added to it.
+       * Not necessarily true for other environments, make sure
+       * to check the type during runtime.
+       */
+      'set-cookie'?: string | string[] | undefined;
+      [key: string]: string | string[] | undefined;
+    }
+  | {
+      get: (key: string) => string | null;
+    };
 
 /**
  * Server agnostic request interface containing the raw request
@@ -350,8 +354,7 @@ export function createHandler<
     subscribe = graphqlSubscribe,
     schema,
     authenticate = function extractOrCreateStreamToken(req) {
-      const headerToken =
-        req.headers[TOKEN_HEADER_KEY] || req.headers['x-graphql-stream-token']; // @deprecated >v1.0.0
+      const headerToken = getHeader(req, TOKEN_HEADER_KEY);
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
@@ -659,7 +662,7 @@ export function createHandler<
     // reporting the validation errors might need the supplied context value
     const validationErrs = validate(args.schema, args.document);
     if (validationErrs.length) {
-      if (req.headers.accept === 'text/event-stream') {
+      if (getHeader(req, 'accept') === 'text/event-stream') {
         // accept the request and emit the validation error in event streams,
         // promoting graceful GraphQL error reporting
         // Read more: https://www.w3.org/TR/eventsource/#processing-model
@@ -695,7 +698,7 @@ export function createHandler<
     if (isResponse(token)) return token;
 
     // TODO: make accept detection more resilient
-    const accept = req.headers.accept ?? '*/*';
+    const accept = getHeader(req, 'accept') || '*/*';
 
     const stream = typeof token === 'string' ? streams[token] : null;
 
@@ -998,8 +1001,8 @@ async function parseReq(
         }
         break;
       }
-      case req.method === 'POST' &&
-        req.headers['content-type']?.includes('application/json'): {
+      case req.method ===
+        'POST' /* && getHeader(req, 'content-type')?.includes('application/json') */: {
         if (!req.body) {
           throw new Error('Missing body');
         }
@@ -1073,4 +1076,22 @@ function isExecutionResult(val: unknown): val is ExecutionResult {
 
 async function* yielded<T>(val: T): AsyncGenerator<T> {
   yield val;
+}
+
+function getHeader(
+  req: Request<unknown, unknown>,
+  key: 'set-cookie',
+): string[] | null;
+function getHeader(
+  req: Request<unknown, unknown>,
+  key: 'accept' | 'allow' | 'content-type' | string,
+): string | null;
+function getHeader(
+  req: Request<unknown, unknown>,
+  key: string,
+): string | string[] | null {
+  if (typeof req.headers.get === 'function') {
+    return req.headers.get(key);
+  }
+  return Object(req.headers)[key];
 }
