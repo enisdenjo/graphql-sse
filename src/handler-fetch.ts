@@ -14,7 +14,7 @@ import {
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
 } from 'graphql';
-import { isObject } from 'utils';
+import { isObject } from './utils';
 
 import {
   ExecutionResult,

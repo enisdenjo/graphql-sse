@@ -5,7 +5,7 @@
  */
 
 import type { DocumentNode, GraphQLError } from 'graphql';
-import { isObject } from 'utils';
+import { isObject } from './utils';
 
 /**
  * Header key through which the event stream token is transmitted
