@@ -596,7 +596,6 @@ export function createHandler<
                 errors: [
                   err instanceof Error
                     ? {
-                        name: err.name,
                         message: err.message,
                         stack: err.stack,
                       }
@@ -1066,7 +1065,6 @@ async function parseReq(
           errors: [
             err instanceof Error
               ? {
-                  name: err.name,
                   message: err.message,
                   stack: err.stack,
                 }
