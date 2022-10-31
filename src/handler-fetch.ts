@@ -591,7 +591,11 @@ export function createHandler<
           query = parse(query);
         } catch (err) {
           return [
-            yielded(JSON.stringify({ errors: [err] })),
+            yielded(
+              JSON.stringify({
+                errors: [err instanceof Error ? { message: err.message } : err],
+              }),
+            ),
             {
               status: 400,
               statusText: 'Bad Request',
@@ -1049,7 +1053,11 @@ async function parseReq(
     return params as RequestParams;
   } catch (err) {
     return [
-      yielded(JSON.stringify({ errors: [err] })),
+      yielded(
+        JSON.stringify({
+          errors: [err instanceof Error ? { message: err.message } : err],
+        }),
+      ),
       {
         status: 400,
         statusText: 'Bad Request',
