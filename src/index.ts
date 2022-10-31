@@ -1,3 +1,3 @@
 export * from './common';
-export * from './handler';
+export * from './handler-fetch';
 export * from './client';
