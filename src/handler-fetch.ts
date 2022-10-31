@@ -593,7 +593,15 @@ export function createHandler<
           return [
             yielded(
               JSON.stringify({
-                errors: [err instanceof Error ? { message: err.message } : err],
+                errors: [
+                  err instanceof Error
+                    ? {
+                        name: err.name,
+                        message: err.message,
+                        stack: err.stack,
+                      }
+                    : err,
+                ],
               }),
             ),
             {
@@ -1055,7 +1063,15 @@ async function parseReq(
     return [
       yielded(
         JSON.stringify({
-          errors: [err instanceof Error ? { message: err.message } : err],
+          errors: [
+            err instanceof Error
+              ? {
+                  name: err.name,
+                  message: err.message,
+                  stack: err.stack,
+                }
+              : err,
+          ],
         }),
       ),
       {
