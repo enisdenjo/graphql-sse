@@ -451,21 +451,22 @@ export function createHandler<
           deferred?.resolve(true);
         },
         iterator: (async function* createGenerator() {
-          for (;;) {
-            // cant happen that there are pending messages this early
-            // generator is immediately initialised
-            const done =
-              complete ||
-              (await new Promise(
-                (resolve, reject) => (deferred = { resolve, reject }),
-              ));
+          // drain any pending messages before the generator started
+          while (pending.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            yield pending.shift()!;
+          }
 
+          let done = false;
+          while (!done) {
+            done = await new Promise(
+              (resolve, reject) => (deferred = { resolve, reject }),
+            );
             while (pending.length) {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               yield pending.shift()!;
             }
             if (throwMe) throw throwMe;
-            if (done) return;
           }
         })(),
       };
