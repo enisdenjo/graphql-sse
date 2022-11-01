@@ -37,6 +37,11 @@
       "types": "./lib/index.d.ts",
       "browser": "./umd/graphql-sse.js"
     },
+    "./lib/use/fetch": {
+      "types": "./lib/use/fetch.d.ts",
+      "require": "./lib/use/fetch.js",
+      "import": "./lib/use/fetch.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
