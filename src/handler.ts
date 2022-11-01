@@ -419,8 +419,7 @@ export function createHandler<
         reject: (err: unknown) => void;
       } | null = null;
       const pending: string[] = [];
-      let throwMe: unknown = null,
-        complete = false;
+      let throwMe: unknown = null;
       return {
         send: (msg: string) => {
           pending.push(msg);
@@ -435,7 +434,6 @@ export function createHandler<
           deferred?.reject(throwMe);
         },
         complete: async () => {
-          complete = true;
           clearInterval(pinger);
 
           // make room for another potential stream while this one is being disposed
