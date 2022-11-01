@@ -34,13 +34,9 @@ import {
  */
 export type RequestHeaders =
   | {
-      accept?: string | undefined;
-      allow?: string | undefined;
-      'content-type'?: string | undefined;
       /**
        * Always an array in Node. Duplicates are added to it.
-       * Not necessarily true for other environments, make sure
-       * to check the type during runtime.
+       * Not necessarily true for other environments.
        */
       'set-cookie'?: string | string[] | undefined;
       [key: string]: string | string[] | undefined;
@@ -292,7 +288,7 @@ export interface HandlerOptions<
    * Use this callback if you want to format the execution result
    * before it reaches the client.
    *
-   * @param req - Always the GraphQL operation request.
+   * @param req - Always the request that contains the GraphQL operation.
    */
   onNext?: (
     ctx: Context,
@@ -311,7 +307,7 @@ export interface HandlerOptions<
    * operations even after an abrupt closure, this callback
    * will always be called.
    *
-   * @param req - Always the GraphQL operation request.
+   * @param req - Always the request that contains the GraphQL operation.
    */
   onComplete?: (
     ctx: Context,
@@ -427,7 +423,7 @@ export function createHandler<
       let throwMe: unknown = null,
         complete = false;
       return {
-        next: (msg: string) => {
+        send: (msg: string) => {
           pending.push(msg);
           deferred?.resolve(false);
         },
@@ -452,29 +448,25 @@ export function createHandler<
               await op.return(undefined);
             }
           }
-          while (pending.length) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            pending.push(pending.shift()!);
-            deferred?.resolve(false);
-          }
 
           deferred?.resolve(true);
         },
         iterator: (async function* createGenerator() {
           for (;;) {
-            while (pending.length) {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              yield pending.shift()!;
-            }
-            if (throwMe) throw throwMe;
+            // cant happen that there are pending messages this early
+            // generator is immediately initialised
             const done =
               complete ||
               (await new Promise(
                 (resolve, reject) => (deferred = { resolve, reject }),
               ));
-            if (done) {
-              return;
+
+            while (pending.length) {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              yield pending.shift()!;
             }
+            if (throwMe) throw throwMe;
+            if (done) return;
           }
         })(),
       };
@@ -491,10 +483,10 @@ export function createHandler<
 
         // write an empty message because some browsers (like Firefox and Safari)
         // dont accept the header flush
-        msgs.next(':\n\n');
+        msgs.send(':\n\n');
 
         // ping client every 12 seconds to keep the connection alive
-        pinger = setInterval(() => msgs.next(':\n\n'), 12_000);
+        pinger = setInterval(() => msgs.send(':\n\n'), 12_000);
 
         return msgs.iterator;
       },
@@ -505,7 +497,7 @@ export function createHandler<
             for await (let part of result) {
               const maybeResult = await onNext?.(ctx, req, part);
               if (maybeResult) part = maybeResult;
-              msgs.next(
+              msgs.send(
                 print({
                   event: 'next',
                   data: opId
@@ -521,7 +513,7 @@ export function createHandler<
             /** single emitted result */
             const maybeResult = await onNext?.(ctx, req, result);
             if (maybeResult) result = maybeResult;
-            msgs.next(
+            msgs.send(
               print({
                 event: 'next',
                 data: opId
@@ -534,7 +526,7 @@ export function createHandler<
             );
           }
 
-          msgs.next(
+          msgs.send(
             print({
               event: 'complete',
               data: opId ? { id: opId } : null,
