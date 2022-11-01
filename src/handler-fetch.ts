@@ -491,7 +491,7 @@ export function createHandler<
 
         // write an empty message because some browsers (like Firefox and Safari)
         // dont accept the header flush
-        msgs.next('ping');
+        msgs.next(':\n\n');
 
         // ping client every 12 seconds to keep the connection alive
         pinger = setInterval(() => msgs.next(':\n\n'), 12_000);
