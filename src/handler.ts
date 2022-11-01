@@ -414,16 +414,20 @@ export function createHandler<
 
     let pinger: ReturnType<typeof setInterval>;
     const msgs = (() => {
-      let deferred: {
-        resolve: (done: boolean) => void;
-        reject: (err: unknown) => void;
-      } | null = null;
+      const deferred = {
+        resolve: (_done: boolean) => {
+          // noop
+        },
+        reject: (_err: unknown) => {
+          // noop
+        },
+      };
       const pending: string[] = [];
       let throwMe: unknown = null;
       return {
         send: (msg: string) => {
           pending.push(msg);
-          deferred?.resolve(false);
+          deferred.resolve(false);
         },
         panic: (err: Error) => {
           throwMe = err;
@@ -431,7 +435,7 @@ export function createHandler<
 
           // TODO: cleanup?
 
-          deferred?.reject(throwMe);
+          deferred.reject(throwMe);
         },
         complete: async () => {
           clearInterval(pinger);
@@ -446,7 +450,7 @@ export function createHandler<
             }
           }
 
-          deferred?.resolve(true);
+          deferred.resolve(true);
         },
         iterator: (async function* createGenerator() {
           // drain any pending messages before the generator started
@@ -457,9 +461,10 @@ export function createHandler<
 
           let done = false;
           while (!done) {
-            done = await new Promise(
-              (resolve, reject) => (deferred = { resolve, reject }),
-            );
+            done = await new Promise((resolve, reject) => {
+              deferred.resolve = resolve;
+              deferred.reject = reject;
+            });
             while (pending.length) {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               yield pending.shift()!;
