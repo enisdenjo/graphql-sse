@@ -50,7 +50,7 @@ export type RequestHeaders =
  *
  * @category Server
  */
-export interface Request<RequestContext, Raw> {
+export interface Request<Raw, Context> {
   readonly method: string;
   readonly url: string;
   readonly headers: RequestHeaders;
@@ -78,7 +78,7 @@ export interface Request<RequestContext, Raw> {
    *
    * Intentionally not readonly because you're free to mutate it whenever you want.
    */
-  context: RequestContext;
+  context: Context;
 }
 
 /**
@@ -158,9 +158,9 @@ export type OperationResult =
 
 /** @category Server */
 export interface HandlerOptions<
-  Context extends OperationContext = undefined,
-  RequestContext = unknown,
   RequestRaw = unknown,
+  RequestContext = unknown,
+  Context extends OperationContext = undefined,
 > {
   /**
    * A custom GraphQL validate function allowing you to apply your
@@ -192,7 +192,7 @@ export interface HandlerOptions<
   schema?:
     | GraphQLSchema
     | ((
-        req: Request<RequestContext, RequestRaw>,
+        req: Request<RequestRaw, RequestContext>,
         args: Pick<
           OperationArgs<Context>,
           'contextValue' | 'operationName' | 'document' | 'variableValues'
@@ -210,7 +210,7 @@ export interface HandlerOptions<
    * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
    */
   authenticate?: (
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
   ) =>
     | Promise<Response | string | undefined | null>
     | Response
@@ -223,7 +223,7 @@ export interface HandlerOptions<
    * with a 200 (OK), alongside flushing the necessary event stream headers.
    */
   onConnect?: (
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
   ) =>
     | Promise<Response | null | undefined | void>
     | Response
@@ -246,7 +246,7 @@ export interface HandlerOptions<
   context?:
     | Context
     | ((
-        req: Request<RequestContext, RequestRaw>,
+        req: Request<RequestRaw, RequestContext>,
         params: RequestParams,
       ) => Promise<Context> | Context);
   /**
@@ -269,7 +269,7 @@ export interface HandlerOptions<
    * and supply the appropriate GraphQL operation execution arguments.
    */
   onSubscribe?: (
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
     params: RequestParams,
   ) =>
     | Promise<Response | OperationResult | OperationArgs<Context> | void>
@@ -291,7 +291,7 @@ export interface HandlerOptions<
    */
   onNext?: (
     ctx: Context,
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
     result: ExecutionResult | ExecutionPatchResult,
   ) =>
     | Promise<ExecutionResult | ExecutionPatchResult | void>
@@ -310,7 +310,7 @@ export interface HandlerOptions<
    */
   onComplete?: (
     ctx: Context,
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
   ) => Promise<void> | void;
 }
 
@@ -324,8 +324,8 @@ export interface HandlerOptions<
  *
  * @category Server
  */
-export type Handler<RequestContext = unknown, RequestRaw = unknown> = (
-  req: Request<RequestContext, RequestRaw>,
+export type Handler<RequestRaw = unknown, RequestContext = unknown> = (
+  req: Request<RequestRaw, RequestContext>,
 ) => Promise<Response>;
 
 /**
@@ -337,12 +337,12 @@ export type Handler<RequestContext = unknown, RequestRaw = unknown> = (
  * @category Server
  */
 export function createHandler<
-  Context extends OperationContext = undefined,
-  RequestContext = unknown,
   RequestRaw = unknown,
+  RequestContext = unknown,
+  Context extends OperationContext = undefined,
 >(
-  options: HandlerOptions<Context, RequestContext, RequestRaw>,
-): Handler<RequestContext, RequestRaw> {
+  options: HandlerOptions<RequestRaw, RequestContext, Context>,
+): Handler<RequestRaw, RequestContext> {
   const {
     validate = graphqlValidate,
     execute = graphqlExecute,
@@ -396,7 +396,7 @@ export function createHandler<
      */
     from(
       ctx: Context,
-      req: Request<RequestContext, RequestRaw>,
+      req: Request<RequestRaw, RequestContext>,
       result:
         | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
         | AsyncIterable<ExecutionResult | ExecutionPatchResult>
@@ -553,7 +553,7 @@ export function createHandler<
   }
 
   async function prepare(
-    req: Request<RequestContext, RequestRaw>,
+    req: Request<RequestRaw, RequestContext>,
     params: RequestParams,
   ): Promise<Response | { ctx: Context; perform: () => OperationResult }> {
     let args: OperationArgs<Context>;

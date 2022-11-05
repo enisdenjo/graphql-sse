@@ -11,7 +11,7 @@ export interface FetchAPI {
 }
 
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Context, FetchAPI, Request>,
+  options: HandlerOptions<Request, FetchAPI, Context>,
   fetchApi: Partial<FetchAPI> = {},
 ): (req: Request) => Promise<Response> {
   const api: FetchAPI = {
