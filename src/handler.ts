@@ -438,6 +438,9 @@ export function createHandler<
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           yield pending.shift()!;
         }
+        if (deferred.error) {
+          throw deferred.error;
+        }
 
         while (!deferred.done) {
           deferred.done = await new Promise(

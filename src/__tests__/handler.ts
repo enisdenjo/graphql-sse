@@ -170,4 +170,84 @@ describe('distinct connections mode', () => {
       // noop
     }
   });
+
+  it.each(['authenticate', 'onConnect', 'onSubscribe', 'context'])(
+    'should bubble %s errors to the handler',
+    async (hook) => {
+      const err = new Error('hang hang');
+      const { handler } = createTHandler({
+        [hook]() {
+          throw err;
+        },
+      });
+
+      await expect(
+        handler('POST', {
+          headers: {
+            accept: 'text/event-stream',
+          },
+          body: { query: '{ getValue }' },
+        }),
+      ).rejects.toBe(err);
+    },
+  );
+
+  it.each(['onNext', 'onComplete'])(
+    'should bubble %s errors to the response body iterator',
+    async (hook) => {
+      const err = new Error('hang hang');
+      const { handler } = createTHandler({
+        [hook]() {
+          throw err;
+        },
+      });
+
+      const [body, init] = await handler('POST', {
+        headers: {
+          accept: 'text/event-stream',
+        },
+        body: { query: '{ getValue }' },
+      });
+      expect(init.status).toBe(200);
+      assertAsyncGenerator(body);
+
+      await expect(
+        (async () => {
+          for await (const _ of body) {
+            // wait
+          }
+        })(),
+      ).rejects.toBe(err);
+    },
+  );
+
+  it('should bubble onNext errors to the response body iterator even if late', async () => {
+    const err = new Error('hang hang');
+    let i = 0;
+    const { handler } = createTHandler({
+      onNext() {
+        i++;
+        if (i > 3) {
+          throw err;
+        }
+      },
+    });
+
+    const [body, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: 'subscription { greetings }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(body);
+
+    await expect(
+      (async () => {
+        for await (const _ of body) {
+          // wait
+        }
+      })(),
+    ).rejects.toBe(err);
+  });
 });
