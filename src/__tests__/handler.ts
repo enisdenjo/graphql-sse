@@ -150,4 +150,24 @@ describe('distinct connections mode', () => {
       }
     `);
   });
+
+  it('should complete subscription operations after client disconnects', async () => {
+    const { handler } = createTHandler();
+
+    const [body, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: `subscription { ping(key: "${Math.random()}") }` },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(body);
+
+    // simulate client disconnect in next tick
+    setTimeout(() => body.return(undefined), 0);
+
+    for await (const _ of body) {
+      // noop
+    }
+  });
 });

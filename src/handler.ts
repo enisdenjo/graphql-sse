@@ -431,12 +431,44 @@ export function createHandler<
           deferred.resolve(true);
         },
       };
+
+      const iterator = (async function* () {
+        // drain any pending messages before the generator started
+        while (pending.length) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          yield pending.shift()!;
+        }
+
+        while (!deferred.done) {
+          deferred.done = await new Promise(
+            (resolve) => (deferred.resolve = resolve),
+          );
+          while (pending.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            yield pending.shift()!;
+          }
+          if (deferred.error) {
+            throw deferred.error;
+          }
+        }
+      })();
+
+      iterator.throw = async (err) => {
+        deferred.reject(err);
+        return { done: true, value: undefined };
+      };
+
+      iterator.return = async () => {
+        deferred.resolve(true);
+        return { done: true, value: undefined };
+      };
+
       return {
         send: (msg: string) => {
           pending.push(msg);
           deferred.resolve(false);
         },
-        panic: (err: Error) => {
+        error: (err: Error) => {
           clearInterval(pinger);
 
           // TODO: cleanup?
@@ -458,26 +490,7 @@ export function createHandler<
 
           deferred.resolve(true);
         },
-        iterator: (async function* createGenerator() {
-          // drain any pending messages before the generator started
-          while (pending.length) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            yield pending.shift()!;
-          }
-
-          while (!deferred.done) {
-            deferred.done = await new Promise(
-              (resolve) => (deferred.resolve = resolve),
-            );
-            while (pending.length) {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              yield pending.shift()!;
-            }
-            if (deferred.error) {
-              throw deferred.error;
-            }
-          }
-        })(),
+        iterator,
       };
     })();
 
@@ -553,7 +566,7 @@ export function createHandler<
               delete ops[opId];
             }
           })
-          .catch(msgs.panic);
+          .catch(msgs.error);
       },
     };
   }
