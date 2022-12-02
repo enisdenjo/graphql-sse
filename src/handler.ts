@@ -466,31 +466,35 @@ export function createHandler<
         return { done: true, value: undefined };
       };
 
+      async function dispose() {
+        clearInterval(pinger);
+
+        // make room for another potential stream while this one is being disposed
+        if (typeof token === 'string') delete streams[token];
+
+        // complete all operations and flush messages queue before ending the stream
+        for (const op of Object.values(ops)) {
+          if (isAsyncGenerator(op)) {
+            await op.return(undefined);
+          }
+        }
+      }
+
       return {
-        send: (msg: string) => {
+        send(msg: string) {
           pending.push(msg);
           deferred.resolve(false);
         },
-        error: (err: Error) => {
-          clearInterval(pinger);
-
-          // TODO: cleanup?
-
+        error(err: Error) {
+          dispose().catch((err) => {
+            // TODO: is the following behaviour ok?
+            // make sure we report the error, only log if generator return function throws
+            console.error('Additional error thrown during dispose', err);
+          });
           deferred.reject(err);
         },
-        complete: async () => {
-          clearInterval(pinger);
-
-          // make room for another potential stream while this one is being disposed
-          if (typeof token === 'string') delete streams[token];
-
-          // complete all operations and flush messages queue before ending the stream
-          for (const op of Object.values(ops)) {
-            if (isAsyncGenerator(op)) {
-              await op.return(undefined);
-            }
-          }
-
+        async complete() {
+          await dispose();
           deferred.resolve(true);
         },
         iterator,
@@ -559,17 +563,15 @@ export function createHandler<
           );
 
           await onComplete?.(ctx, req);
-        })()
-          .then(() => {
-            if (!opId) {
-              // end on complete when no operation id is present
-              // because distinct event streams are used for each operation
-              msgs.complete();
-            } else {
-              delete ops[opId];
-            }
-          })
-          .catch(msgs.error);
+
+          if (!opId) {
+            // end on complete when no operation id is present
+            // because distinct event streams are used for each operation
+            await msgs.complete();
+          } else {
+            delete ops[opId];
+          }
+        })().catch(msgs.error);
       },
     };
   }
