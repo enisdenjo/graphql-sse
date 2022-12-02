@@ -1,12 +1,12 @@
-import { createTHandler } from './utils/thandler';
+import { createTHandler, assertString } from './utils/thandler';
 import { TOKEN_HEADER_KEY } from '../common';
 
 it('should only accept valid accept headers', async () => {
   const { handler } = createTHandler();
 
   let [body, init] = await handler('PUT');
-  expect(typeof body).toBe('string');
-  const token = body as string;
+  assertString(body);
+  const token = body;
 
   [body, init] = await handler('GET', {
     headers: {
