@@ -879,9 +879,7 @@ export function createHandler<
       ];
     }
 
-    if (
-      !['*/*', 'application/graphql+json', 'application/json'].includes(accept)
-    ) {
+    if (!['*/*', 'application/*', 'application/json'].includes(accept)) {
       return [
         null,
         {
