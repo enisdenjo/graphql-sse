@@ -173,7 +173,7 @@ describe('distinct connections mode', () => {
     setTimeout(() => body.return(undefined), 0);
 
     for await (const _ of body) {
-      // noop
+      // loop must break for test to pass
     }
   });
 
@@ -251,7 +251,7 @@ describe('distinct connections mode', () => {
     await expect(
       (async () => {
         for await (const _ of body) {
-          // wait
+          // wait for throw
         }
       })(),
     ).rejects.toBe(err);
