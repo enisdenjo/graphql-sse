@@ -27,6 +27,9 @@ it('should only accept valid accept headers', async () => {
     },
   });
   expect(init.status).toBe(400);
+  expect(init.headers?.['content-type']).toBe(
+    'application/json; charset=utf-8',
+  );
   expect(body).toMatchInlineSnapshot(
     `"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"`,
   );
@@ -37,6 +40,9 @@ it('should only accept valid accept headers', async () => {
     },
   });
   expect(init.status).toBe(400);
+  expect(init.headers?.['content-type']).toBe(
+    'application/json; charset=utf-8',
+  );
   expect(body).toMatchInlineSnapshot(
     `"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"`,
   );
