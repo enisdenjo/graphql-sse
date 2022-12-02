@@ -986,8 +986,8 @@ async function parseReq(
         }
         break;
       }
-      case req.method ===
-        'POST' /* && getHeader(req, 'content-type')?.includes('application/json') */: {
+      case req.method === 'POST' &&
+        getHeader(req, 'content-type')?.includes('application/json'): {
         if (!req.body) {
           throw new Error('Missing body');
         }
