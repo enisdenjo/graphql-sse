@@ -50,7 +50,7 @@ export type RequestHeaders =
  *
  * @category Server
  */
-export interface Request<Raw, Context> {
+export interface Request<Raw = unknown, Context = unknown> {
   readonly method: string;
   readonly url: string;
   readonly headers: RequestHeaders;
