@@ -74,4 +74,80 @@ describe('distinct connections mode', () => {
       expect(msg).toMatchSnapshot();
     }
   });
+
+  it('should stream subscription operations to connected event stream and then disconnect', async () => {
+    const { handler } = createTHandler();
+
+    // GET
+    const search = new URLSearchParams();
+    search.set('query', 'subscription { greetings }');
+    let [body, init] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(body);
+    for await (const msg of body) {
+      expect(msg).toMatchSnapshot();
+    }
+
+    // POST
+    [body, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: 'subscription { greetings }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(body);
+    for await (const msg of body) {
+      expect(msg).toMatchSnapshot();
+    }
+  });
+
+  it('should report operation validation issues by streaming them', async () => {
+    const { handler } = createTHandler();
+
+    const [body, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: '{ notExists }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(body);
+    await expect(body.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+    await expect(body.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": false,
+        "value": "event: next
+      data: {\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}
+
+      ",
+      }
+    `);
+    await expect(body.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": false,
+        "value": "event: complete
+
+      ",
+      }
+    `);
+    await expect(body.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+  });
 });

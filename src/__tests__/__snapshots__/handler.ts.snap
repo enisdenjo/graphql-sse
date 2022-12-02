@@ -37,3 +37,97 @@ exports[`distinct connections mode should stream query operations to connected e
 
 "
 `;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 1`] = `
+":
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 2`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 3`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 4`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Hola\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 5`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Ciao\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 6`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 7`] = `
+"event: complete
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 8`] = `
+":
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 9`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 10`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 11`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Hola\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 12`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Ciao\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 13`] = `
+"event: next
+data: {\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 14`] = `
+"event: complete
+
+"
+`;
