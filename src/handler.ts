@@ -414,28 +414,34 @@ export function createHandler<
 
     let pinger: ReturnType<typeof setInterval>;
     const msgs = (() => {
+      const pending: string[] = [];
       const deferred = {
-        resolve: (_done: boolean) => {
-          // noop
+        done: false,
+        resolve: (done: boolean) => {
+          // if resolved before deferred is set by iterator, just
+          // report as done which will skip the loop in the iterator
+          deferred.done = done;
         },
-        reject: (_err: unknown) => {
-          // noop
+        error: null as unknown,
+        reject: (err: unknown) => {
+          deferred.error = err;
+
+          // we resolve with done on reject because we want to flush the pending
+          // messages and only then report the error (see iterator below)
+          deferred.resolve(true);
         },
       };
-      const pending: string[] = [];
-      let throwMe: unknown = null;
       return {
         send: (msg: string) => {
           pending.push(msg);
           deferred.resolve(false);
         },
         panic: (err: Error) => {
-          throwMe = err;
           clearInterval(pinger);
 
           // TODO: cleanup?
 
-          deferred.reject(throwMe);
+          deferred.reject(err);
         },
         complete: async () => {
           clearInterval(pinger);
@@ -459,17 +465,17 @@ export function createHandler<
             yield pending.shift()!;
           }
 
-          let done = false;
-          while (!done) {
-            done = await new Promise((resolve, reject) => {
-              deferred.resolve = resolve;
-              deferred.reject = reject;
-            });
+          while (!deferred.done) {
+            deferred.done = await new Promise(
+              (resolve) => (deferred.resolve = resolve),
+            );
             while (pending.length) {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               yield pending.shift()!;
             }
-            if (throwMe) throw throwMe;
+            if (deferred.error) {
+              throw deferred.error;
+            }
           }
         })(),
       };

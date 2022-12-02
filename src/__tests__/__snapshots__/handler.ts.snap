@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 1`] = `
+":
+
+"
+`;
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 2`] = `
+"event: next
+data: {\\"data\\":{\\"getValue\\":\\"value\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 3`] = `
+"event: complete
+
+"
+`;
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 4`] = `
+":
+
+"
+`;
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 5`] = `
+"event: next
+data: {\\"data\\":{\\"getValue\\":\\"value\\"}}
+
+"
+`;
+
+exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 6`] = `
+"event: complete
+
+"
+`;
