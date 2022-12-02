@@ -589,9 +589,11 @@ export function createHandler<
       isAsyncIterable(onSubscribeResult)
     )
       return {
+        // even if the result is already available, use
+        // context because onNext and onComplete needs it
         ctx: (typeof context === 'function'
           ? await context(req, params)
-          : context)!,
+          : context) as Context,
         perform() {
           return onSubscribeResult;
         },
@@ -636,7 +638,7 @@ export function createHandler<
         variableValues: variables,
         contextValue: (typeof context === 'function'
           ? await context(req, params)
-          : context)!,
+          : context) as Context,
       };
       args = {
         ...argsWithoutSchema,
