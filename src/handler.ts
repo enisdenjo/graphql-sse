@@ -591,7 +591,8 @@ export function createHandler<
                 err instanceof Error
                   ? {
                       message: err.message,
-                      stack: err.stack,
+                      // TODO: stack might leak sensitive information
+                      // stack: err.stack,
                     }
                   : err,
               ],
@@ -1040,7 +1041,8 @@ async function parseReq(
           err instanceof Error
             ? {
                 message: err.message,
-                stack: err.stack,
+                // TODO: stack might leak sensitive information
+                // stack: err.stack,
               }
             : err,
         ],
