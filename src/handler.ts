@@ -100,7 +100,7 @@ export type ResponseHeaders = {
  *
  * @category Server
  */
-export type ResponseBody = AsyncGenerator<string>;
+export type ResponseBody = string | AsyncGenerator<string>;
 
 /**
  * Server agnostic response options (ex. status and headers) returned from
@@ -586,18 +586,16 @@ export function createHandler<
           query = parse(query);
         } catch (err) {
           return [
-            yielded(
-              JSON.stringify({
-                errors: [
-                  err instanceof Error
-                    ? {
-                        message: err.message,
-                        stack: err.stack,
-                      }
-                    : err,
-                ],
-              }),
-            ),
+            JSON.stringify({
+              errors: [
+                err instanceof Error
+                  ? {
+                      message: err.message,
+                      stack: err.stack,
+                    }
+                  : err,
+              ],
+            }),
             {
               status: 400,
               statusText: 'Bad Request',
@@ -631,11 +629,9 @@ export function createHandler<
       operation = ast.operation;
     } catch {
       return [
-        yielded(
-          JSON.stringify({
-            errors: [{ message: 'Unable to detect operation AST' }],
-          }),
-        ),
+        JSON.stringify({
+          errors: [{ message: 'Unable to detect operation AST' }],
+        }),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -648,11 +644,9 @@ export function createHandler<
     // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#get
     if (operation === 'mutation' && req.method === 'GET') {
       return [
-        yielded(
-          JSON.stringify({
-            errors: [{ message: 'Cannot perform mutations over GET' }],
-          }),
-        ),
+        JSON.stringify({
+          errors: [{ message: 'Cannot perform mutations over GET' }],
+        }),
         {
           status: 405,
           statusText: 'Method Not Allowed',
@@ -682,7 +676,7 @@ export function createHandler<
       }
 
       return [
-        yielded(JSON.stringify({ errors: validationErrs })),
+        JSON.stringify({ errors: validationErrs }),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -746,9 +740,7 @@ export function createHandler<
       // open stream cant exist, only one per token is allowed
       if (stream.open) {
         return [
-          yielded(
-            JSON.stringify({ errors: [{ message: 'Stream already open' }] }),
-          ),
+          JSON.stringify({ errors: [{ message: 'Stream already open' }] }),
           {
             status: 409,
             statusText: 'Conflict',
@@ -785,11 +777,9 @@ export function createHandler<
       // streams mustnt exist if putting new one
       if (stream) {
         return [
-          yielded(
-            JSON.stringify({
-              errors: [{ message: 'Stream already registered' }],
-            }),
-          ),
+          JSON.stringify({
+            errors: [{ message: 'Stream already registered' }],
+          }),
           {
             status: 409,
             statusText: 'Conflict',
@@ -803,7 +793,7 @@ export function createHandler<
       streams[token] = createStream(token);
 
       return [
-        yielded(token),
+        token,
         {
           status: 201,
           statusText: 'Created',
@@ -818,11 +808,9 @@ export function createHandler<
       // streams must exist when completing operations
       if (!stream) {
         return [
-          yielded(
-            JSON.stringify({
-              errors: [{ message: 'Stream not found' }],
-            }),
-          ),
+          JSON.stringify({
+            errors: [{ message: 'Stream not found' }],
+          }),
           {
             status: 404,
             statusText: 'Not Found',
@@ -838,11 +826,9 @@ export function createHandler<
       );
       if (!opId) {
         return [
-          yielded(
-            JSON.stringify({
-              errors: [{ message: 'Operation ID is missing' }],
-            }),
-          ),
+          JSON.stringify({
+            errors: [{ message: 'Operation ID is missing' }],
+          }),
           {
             status: 400,
             statusText: 'Bad Request',
@@ -879,11 +865,9 @@ export function createHandler<
     } else if (!stream) {
       // for all other requests, streams must exist to attach the result onto
       return [
-        yielded(
-          JSON.stringify({
-            errors: [{ message: 'Stream not found' }],
-          }),
-        ),
+        JSON.stringify({
+          errors: [{ message: 'Stream not found' }],
+        }),
         {
           status: 404,
           statusText: 'Not Found',
@@ -913,11 +897,9 @@ export function createHandler<
     const opId = String(params.extensions?.operationId ?? '');
     if (!opId) {
       return [
-        yielded(
-          JSON.stringify({
-            errors: [{ message: 'Operation ID is missing' }],
-          }),
-        ),
+        JSON.stringify({
+          errors: [{ message: 'Operation ID is missing' }],
+        }),
         {
           status: 400,
           statusText: 'Bad Request',
@@ -929,11 +911,9 @@ export function createHandler<
     }
     if (opId in stream.ops) {
       return [
-        yielded(
-          JSON.stringify({
-            errors: [{ message: 'Operation with ID already exists' }],
-          }),
-        ),
+        JSON.stringify({
+          errors: [{ message: 'Operation with ID already exists' }],
+        }),
         {
           status: 409,
           statusText: 'Conflict',
@@ -1055,18 +1035,16 @@ async function parseReq(
     return params as RequestParams;
   } catch (err) {
     return [
-      yielded(
-        JSON.stringify({
-          errors: [
-            err instanceof Error
-              ? {
-                  message: err.message,
-                  stack: err.stack,
-                }
-              : err,
-          ],
-        }),
-      ),
+      JSON.stringify({
+        errors: [
+          err instanceof Error
+            ? {
+                message: err.message,
+                stack: err.stack,
+              }
+            : err,
+        ],
+      }),
       {
         status: 400,
         statusText: 'Bad Request',
@@ -1084,10 +1062,6 @@ function isResponse(val: unknown): val is Response {
 function isExecutionResult(val: unknown): val is ExecutionResult {
   // TODO: comprehensive check
   return isObject(val);
-}
-
-async function* yielded<T>(val: T): AsyncGenerator<T> {
-  yield val;
 }
 
 function getHeader(
