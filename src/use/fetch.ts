@@ -50,6 +50,10 @@ export function createHandler<Context extends OperationContext = undefined>(
         await resp.return(e);
       },
     });
+
+    // make sure the signal is connected as well
+    req.signal.addEventListener('abort', () => resp.return());
+
     return new api.Response(stream, init);
   };
 }
