@@ -7,11 +7,11 @@ interface TSubscribe<T> {
   waitForNext: (
     test?: (value: ExecutionResult<T, unknown>) => void,
     expire?: number,
-  ) => Promise<void>;
+  ) => Promise<ExecutionResult<T, unknown>>;
   waitForError: (
     test?: (error: unknown) => void,
     expire?: number,
-  ) => Promise<void>;
+  ) => Promise<unknown>;
   waitForComplete: (test?: () => void, expire?: number) => Promise<void>;
   dispose: () => void;
 }
@@ -48,14 +48,14 @@ export function tsubscribe<T = unknown>(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const result = results.shift()!;
           test?.(result);
-          resolve();
+          resolve(result);
         }
         if (results.length > 0) return done();
         emitter.once('next', done);
         if (expire)
           setTimeout(() => {
             emitter.off('next', done); // expired
-            resolve();
+            resolve(result);
           }, expire);
       });
     },
@@ -64,14 +64,14 @@ export function tsubscribe<T = unknown>(
         function done() {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           test?.(error);
-          resolve();
+          resolve(error);
         }
         if (error) return done();
         emitter.once('err', done);
         if (expire)
           setTimeout(() => {
             emitter.off('err', done); // expired
-            resolve();
+            resolve(error);
           }, expire);
       });
     },
