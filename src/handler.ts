@@ -100,7 +100,7 @@ export type ResponseHeaders = {
  *
  * @category Server
  */
-export type ResponseBody = string | AsyncGenerator<string>;
+export type ResponseBody = string | AsyncGenerator<string, void, undefined>;
 
 /**
  * Server agnostic response options (ex. status and headers) returned from
@@ -432,24 +432,30 @@ export function createHandler<
         },
       };
 
-      const iterator = (async function* () {
-        // drain any pending messages before the generator started
-        while (pending.length) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          yield pending.shift()!;
-        }
+      const iterator = (async function* iterator() {
+        // error can be reported before the iterator began
         if (deferred.error) {
           throw deferred.error;
         }
 
         while (!deferred.done) {
-          deferred.done = await new Promise(
-            (resolve) => (deferred.resolve = resolve),
-          );
+          if (!pending.length) {
+            // only wait if there are no pending messages available
+            await new Promise<void>((resolve) => {
+              deferred.resolve = (done) => {
+                //  TODO: why is this not the same as returning this promise to deferred.done?
+                //        like this: `deferred.done = await new Promise((resolve) => (deferred.resolve = resolve));`
+                deferred.done = done;
+                resolve();
+              };
+            });
+          }
+          // first flush
           while (pending.length) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             yield pending.shift()!;
           }
+          // then report
           if (deferred.error) {
             throw deferred.error;
           }

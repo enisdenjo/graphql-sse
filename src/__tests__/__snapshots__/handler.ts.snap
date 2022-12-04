@@ -131,3 +131,45 @@ exports[`distinct connections mode should stream subscription operations to conn
 
 "
 `;
+
+exports[`single connection mode should stream subscription operations to connected event stream 2`] = `
+"event: next
+data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}
+
+"
+`;
+
+exports[`single connection mode should stream subscription operations to connected event stream 3`] = `
+"event: next
+data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}}
+
+"
+`;
+
+exports[`single connection mode should stream subscription operations to connected event stream 4`] = `
+"event: next
+data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hola\\"}}}
+
+"
+`;
+
+exports[`single connection mode should stream subscription operations to connected event stream 5`] = `
+"event: next
+data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}}
+
+"
+`;
+
+exports[`single connection mode should stream subscription operations to connected event stream 6`] = `
+"event: next
+data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}}
+
+"
+`;
+
+exports[`single connection mode should stream subscription operations to connected event stream 7`] = `
+"event: complete
+data: {\\"id\\":\\"1\\"}
+
+"
+`;
