@@ -19,7 +19,7 @@ it('should parse whole message', () => {
   expect(parse(encoder.encode('event: complete\n\n'))).toMatchSnapshot();
 });
 
-it.only('should parse message with prepended ping', () => {
+it('should parse message with prepended ping', () => {
   const parse = createParser();
 
   expect(
@@ -87,7 +87,7 @@ it('should accept valid events only', () => {
 it('should ignore server pings', () => {
   const parse = createParser();
 
-  expect(parse(encoder.encode(':\n\n'))).toBeUndefined();
+  expect(parse(encoder.encode(':\n\n'))).toEqual([]);
 });
 
 it('should parse multiple messages from one chunk', () => {
