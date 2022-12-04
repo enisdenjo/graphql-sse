@@ -4,9 +4,10 @@ import { tsubscribe } from './utils/tsubscribe';
 
 it('should use the provided headers', async () => {
   // single connection mode
+  let headers!: Headers;
   let { fetch } = createTFetch({
     authenticate: (req) => {
-      expect(req.raw.headers.get('x-single')).toBe('header');
+      headers = req.raw.headers;
       return '';
     },
   });
@@ -27,10 +28,12 @@ it('should use the provided headers', async () => {
   await client.waitForComplete();
   client.dispose();
 
+  expect(headers.get('x-single')).toBe('header');
+
   // distinct connections mode
   ({ fetch } = createTFetch({
     authenticate: (req) => {
-      expect(req.raw.headers.get('x-distinct')).toBe('header');
+      headers = req.raw.headers;
       return '';
     },
   }));
@@ -50,4 +53,6 @@ it('should use the provided headers', async () => {
   });
   await client.waitForComplete();
   client.dispose();
+
+  expect(headers.get('x-distinct')).toBe('header');
 });
