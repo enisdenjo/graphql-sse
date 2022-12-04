@@ -561,11 +561,30 @@ describe('distinct connections mode', () => {
       break;
     }
 
+    // message was already queued up (pending), it's ok to have it
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-          Object {
-            "done": true,
-            "value": undefined,
-          }
-      `);
+      Object {
+        "done": false,
+        "value": "event: next
+      data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+
+      ",
+      }
+    `);
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": false,
+        "value": "event: complete
+
+      ",
+      }
+    `);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "done": true,
+        "value": undefined,
+      }
+    `);
   });
 });

@@ -417,18 +417,9 @@ export function createHandler<
       const pending: string[] = [];
       const deferred = {
         done: false,
-        resolve: (done: boolean) => {
-          // if resolved before deferred is set by iterator, just
-          // report as done which will skip the loop in the iterator
-          deferred.done = done;
-        },
         error: null as unknown,
-        reject: (err: unknown) => {
-          deferred.error = err;
-
-          // we resolve with done on reject because we want to flush the pending
-          // messages and only then report the error (see iterator below)
-          deferred.resolve(true);
+        resolve: () => {
+          // noop
         },
       };
 
@@ -455,14 +446,7 @@ export function createHandler<
         while (!deferred.done) {
           if (!pending.length) {
             // only wait if there are no pending messages available
-            await new Promise<void>((resolve) => {
-              deferred.resolve = (done) => {
-                //  TODO: why is this not the same as returning this promise to deferred.done?
-                //        like this: `deferred.done = await new Promise((resolve) => (deferred.resolve = resolve));`
-                deferred.done = done;
-                resolve();
-              };
-            });
+            await new Promise<void>((resolve) => (deferred.resolve = resolve));
           }
           // first flush
           while (pending.length) {
@@ -477,20 +461,28 @@ export function createHandler<
       })();
 
       iterator.throw = async (err) => {
-        deferred.reject(err);
-        await dispose();
+        if (!deferred.done) {
+          deferred.done = true;
+          deferred.error = err;
+          deferred.resolve();
+          await dispose();
+        }
         return { done: true, value: undefined };
       };
+
       iterator.return = async () => {
-        deferred.resolve(true);
-        await dispose();
+        if (!deferred.done) {
+          deferred.done = true;
+          deferred.resolve();
+          await dispose();
+        }
         return { done: true, value: undefined };
       };
 
       return {
         next(msg: string) {
           pending.push(msg);
-          deferred.resolve(false);
+          deferred.resolve();
         },
         iterator,
       };
