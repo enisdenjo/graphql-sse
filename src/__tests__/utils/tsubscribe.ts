@@ -6,6 +6,7 @@ import { RequestParams } from '../../common';
 interface TSubscribe<T> {
   waitForNext: () => Promise<ExecutionResult<T, unknown>>;
   waitForError: () => Promise<unknown>;
+  throwOnError: () => Promise<void>;
   waitForComplete: () => Promise<void>;
   dispose: () => void;
 }
@@ -34,8 +35,21 @@ export function tsubscribe<T = unknown>(
       emitter.removeAllListeners();
     },
   });
+  function waitForError() {
+    return new Promise((resolve) => {
+      function done() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        resolve(error);
+      }
+      if (error) {
+        done();
+      } else {
+        emitter.once('err', done);
+      }
+    });
+  }
   return {
-    waitForNext: () => {
+    waitForNext() {
       return new Promise((resolve) => {
         function done() {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -48,20 +62,12 @@ export function tsubscribe<T = unknown>(
         }
       });
     },
-    waitForError: () => {
-      return new Promise((resolve) => {
-        function done() {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          resolve(error);
-        }
-        if (error) {
-          done();
-        } else {
-          emitter.once('err', done);
-        }
-      });
-    },
-    waitForComplete: () => {
+    waitForError,
+    throwOnError: () =>
+      waitForError().then((err) => {
+        throw err;
+      }),
+    waitForComplete() {
       return new Promise((resolve) => {
         function done() {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
