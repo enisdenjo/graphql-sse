@@ -438,12 +438,7 @@ export function createHandler<
       }
 
       const iterator = (async function* iterator() {
-        // error can be reported before the iterator began
-        if (deferred.error) {
-          throw deferred.error;
-        }
-
-        while (!deferred.done) {
+        for (;;) {
           if (!pending.length) {
             // only wait if there are no pending messages available
             await new Promise<void>((resolve) => (deferred.resolve = resolve));
@@ -453,9 +448,13 @@ export function createHandler<
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             yield pending.shift()!;
           }
-          // then report
+          // then error
           if (deferred.error) {
             throw deferred.error;
+          }
+          // or complete
+          if (deferred.done) {
+            return;
           }
         }
       })();
