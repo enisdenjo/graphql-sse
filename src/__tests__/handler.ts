@@ -395,6 +395,7 @@ describe('single connection mode', () => {
         await new Promise((resolve) => setTimeout(resolve, 20)),
       ]),
     ).resolves.toBeUndefined();
+    stream.return();
   });
 });
 
