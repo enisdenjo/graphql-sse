@@ -98,6 +98,36 @@ it.each(['onNext', 'onComplete'])(
   },
 );
 
+it('should bubble onNext errors to the response body iterator even if late', async () => {
+  const err = new Error('hang hang');
+  let i = 0;
+  const { handler } = createTHandler({
+    onNext() {
+      i++;
+      if (i > 3) {
+        throw err;
+      }
+    },
+  });
+
+  const [stream, init] = await handler('POST', {
+    headers: {
+      accept: 'text/event-stream',
+    },
+    body: { query: 'subscription { greetings }' },
+  });
+  expect(init.status).toBe(200);
+  assertAsyncGenerator(stream);
+
+  await expect(
+    (async () => {
+      for await (const _ of stream) {
+        // wait
+      }
+    })(),
+  ).rejects.toBe(err);
+});
+
 describe('single connection mode', () => {
   it('should respond with 404s when token was not previously registered', async () => {
     const { handler } = createTHandler();
@@ -536,35 +566,5 @@ describe('distinct connections mode', () => {
             "value": undefined,
           }
       `);
-  });
-
-  it('should bubble onNext errors to the response body iterator even if late', async () => {
-    const err = new Error('hang hang');
-    let i = 0;
-    const { handler } = createTHandler({
-      onNext() {
-        i++;
-        if (i > 3) {
-          throw err;
-        }
-      },
-    });
-
-    const [stream, init] = await handler('POST', {
-      headers: {
-        accept: 'text/event-stream',
-      },
-      body: { query: 'subscription { greetings }' },
-    });
-    expect(init.status).toBe(200);
-    assertAsyncGenerator(stream);
-
-    await expect(
-      (async () => {
-        for await (const _ of stream) {
-          // wait
-        }
-      })(),
-    ).rejects.toBe(err);
   });
 });
