@@ -17,7 +17,7 @@ it('should use the provided headers', async () => {
     url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
-    headers: async () => {
+    headers: () => {
       return { 'x-single': 'header' };
     },
   });
@@ -43,7 +43,7 @@ it('should use the provided headers', async () => {
     url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
-    headers: async () => {
+    headers: () => {
       return { 'x-distinct': 'header' };
     },
   });
