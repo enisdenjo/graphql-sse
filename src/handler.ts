@@ -432,6 +432,20 @@ export function createHandler<
         },
       };
 
+      async function dispose() {
+        clearInterval(pinger);
+
+        // make room for another potential stream while this one is being disposed
+        if (typeof token === 'string') delete streams[token];
+
+        // complete all operations and flush messages queue before ending the stream
+        for (const op of Object.values(ops)) {
+          if (isAsyncGenerator(op)) {
+            await op.return(undefined);
+          }
+        }
+      }
+
       const iterator = (async function* iterator() {
         // error can be reported before the iterator began
         if (deferred.error) {
@@ -464,44 +478,19 @@ export function createHandler<
 
       iterator.throw = async (err) => {
         deferred.reject(err);
+        await dispose();
         return { done: true, value: undefined };
       };
-
       iterator.return = async () => {
         deferred.resolve(true);
+        await dispose();
         return { done: true, value: undefined };
       };
 
-      async function dispose() {
-        clearInterval(pinger);
-
-        // make room for another potential stream while this one is being disposed
-        if (typeof token === 'string') delete streams[token];
-
-        // complete all operations and flush messages queue before ending the stream
-        for (const op of Object.values(ops)) {
-          if (isAsyncGenerator(op)) {
-            await op.return(undefined);
-          }
-        }
-      }
-
       return {
-        send(msg: string) {
+        next(msg: string) {
           pending.push(msg);
           deferred.resolve(false);
-        },
-        error(err: Error) {
-          dispose().catch((err) => {
-            // TODO: is the following behaviour ok?
-            // make sure we report the error, only log if generator return function throws
-            console.error('Additional error thrown during dispose', err);
-          });
-          deferred.reject(err);
-        },
-        async complete() {
-          await dispose();
-          deferred.resolve(true);
         },
         iterator,
       };
@@ -518,10 +507,10 @@ export function createHandler<
 
         // write an empty message because some browsers (like Firefox and Safari)
         // dont accept the header flush
-        msgs.send(':\n\n');
+        msgs.next(':\n\n');
 
         // ping client every 12 seconds to keep the connection alive
-        pinger = setInterval(() => msgs.send(':\n\n'), 12_000);
+        pinger = setInterval(() => msgs.next(':\n\n'), 12_000);
 
         return msgs.iterator;
       },
@@ -532,7 +521,7 @@ export function createHandler<
             for await (let part of result) {
               const maybeResult = await onNext?.(ctx, req, part);
               if (maybeResult) part = maybeResult;
-              msgs.send(
+              msgs.next(
                 print({
                   event: 'next',
                   data: opId
@@ -548,7 +537,7 @@ export function createHandler<
             /** single emitted result */
             const maybeResult = await onNext?.(ctx, req, result);
             if (maybeResult) result = maybeResult;
-            msgs.send(
+            msgs.next(
               print({
                 event: 'next',
                 data: opId
@@ -561,7 +550,7 @@ export function createHandler<
             );
           }
 
-          msgs.send(
+          msgs.next(
             print({
               event: 'complete',
               data: opId ? { id: opId } : null,
@@ -573,11 +562,11 @@ export function createHandler<
           if (!opId) {
             // end on complete when no operation id is present
             // because distinct event streams are used for each operation
-            await msgs.complete();
+            await msgs.iterator.return();
           } else {
             delete ops[opId];
           }
-        })().catch(msgs.error);
+        })().catch(msgs.iterator.throw);
       },
     };
   }
