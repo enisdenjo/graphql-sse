@@ -141,7 +141,28 @@ it('should report error to sink if server goes away', async () => {
     query: `subscription { ping(key: "${Math.random()}") }`,
   });
 
-  setTimeout(() => dispose(), 0);
+  dispose();
+
+  await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+    `[NetworkError: Connection closed while having active streams]`,
+  );
+});
+
+it('should report error to sink if server goes away during generator emission', async () => {
+  const { fetch, dispose } = createTFetch();
+
+  const client = createClient({
+    fetchFn: fetch,
+    url: 'http://localhost',
+    retryAttempts: 0,
+  });
+
+  const sub = tsubscribe(client, {
+    query: 'subscription { slowGreetings }',
+  });
+  await sub.waitForNext();
+
+  dispose();
 
   await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
     `[NetworkError: Connection closed while having active streams]`,
