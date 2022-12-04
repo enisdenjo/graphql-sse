@@ -4,6 +4,7 @@ import { createHandler, FetchAPI } from '../../use/fetch';
 
 export interface TFetch {
   fetch: typeof fetch;
+  dispose(): void;
 }
 
 export function createTFetch(
@@ -13,7 +14,21 @@ export function createTFetch(
     schema,
     ...opts,
   });
+  const ctrls: AbortController[] = [];
   return {
-    fetch: (...args) => handler(new Request(...args)),
+    fetch: (input, init) => {
+      const ctrl = new AbortController();
+      ctrls.push(ctrl);
+      init?.signal?.addEventListener('abort', () => ctrl.abort());
+      return handler(
+        new Request(input, {
+          ...init,
+          signal: ctrl.signal,
+        }),
+      );
+    },
+    dispose() {
+      ctrls.forEach((ctrl) => ctrl.abort());
+    },
   };
 }
