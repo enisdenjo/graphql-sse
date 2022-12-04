@@ -28,7 +28,10 @@ export function createTFetch(
       );
     },
     dispose() {
-      ctrls.forEach((ctrl) => ctrl.abort());
+      // dispose in next tick to allow fetches to complete
+      setTimeout(() => {
+        ctrls.forEach((ctrl) => ctrl.abort());
+      }, 0);
     },
   };
 }
