@@ -1,6 +1,7 @@
 import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
+import { pong } from './fixtures/simple';
 
 it('should use the provided headers', async () => {
   // single connection mode
@@ -167,4 +168,83 @@ it('should report error to sink if server goes away during generator emission', 
   await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
     `[NetworkError: Connection closed while having active streams]`,
   );
+});
+
+describe('single connection mode', () => {
+  it('should not call complete after subscription error', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: '}}',
+    });
+
+    await expect(
+      Promise.race([sub.waitForError(), sub.waitForComplete()]),
+    ).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 400: Bad Request]`,
+    );
+  });
+
+  it('should execute a simple query', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: '{ getValue }',
+    });
+
+    await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "data": Object {
+          "getValue": "value",
+        },
+      }
+    `);
+
+    await sub.waitForComplete();
+  });
+
+  it('should complete subscriptions when disposing them', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+      lazy: true,
+    });
+
+    const key = Math.random().toString();
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${key}") }`,
+    });
+
+    setTimeout(() => pong(key), 0);
+
+    await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
+      Object {
+        "data": Object {
+          "ping": "pong",
+        },
+      }
+    `);
+
+    sub.dispose();
+
+    await sub.waitForComplete();
+  });
 });
