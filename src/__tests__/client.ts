@@ -76,20 +76,20 @@ it('should supply all valid messages received to onMessage', async () => {
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
   expect(msgs).toMatchInlineSnapshot(`
-    Array [
-      Object {
-        "data": Object {
+    [
+      {
+        "data": {
           "id": "veryunique",
-          "payload": Object {
-            "data": Object {
+          "payload": {
+            "data": {
               "getValue": "value",
             },
           },
         },
         "event": "next",
       },
-      Object {
-        "data": Object {
+      {
+        "data": {
           "id": "veryunique",
         },
         "event": "complete",
@@ -112,16 +112,16 @@ it('should supply all valid messages received to onMessage', async () => {
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
   expect(msgs).toMatchInlineSnapshot(`
-    Array [
-      Object {
-        "data": Object {
-          "data": Object {
+    [
+      {
+        "data": {
+          "data": {
             "getValue": "value",
           },
         },
         "event": "next",
       },
-      Object {
+      {
         "data": null,
         "event": "complete",
       },
@@ -207,8 +207,8 @@ describe('single connection mode', () => {
     });
 
     await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
-      Object {
-        "data": Object {
+      {
+        "data": {
           "getValue": "value",
         },
       }
@@ -236,8 +236,8 @@ describe('single connection mode', () => {
     setTimeout(() => pong(key), 0);
 
     await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
-      Object {
-        "data": Object {
+      {
+        "data": {
           "ping": "pong",
         },
       }

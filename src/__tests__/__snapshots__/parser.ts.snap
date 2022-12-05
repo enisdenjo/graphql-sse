@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should accept valid events only 1`] = `"Invalid stream event \\"done\\""`;
+exports[`should accept valid events only 1`] = `"Invalid stream event "done""`;
 
-exports[`should accept valid events only 2`] = `"Invalid stream event \\"value\\""`;
+exports[`should accept valid events only 2`] = `"Invalid stream event "value""`;
 
 exports[`should ignore comments 1`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -16,9 +16,9 @@ Array [
 `;
 
 exports[`should parse chunked message 1`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -27,9 +27,9 @@ Array [
 `;
 
 exports[`should parse message whose lines are separated by \\r\\n 1`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -38,9 +38,9 @@ Array [
 `;
 
 exports[`should parse message with prepended ping 1`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -49,13 +49,13 @@ Array [
 `;
 
 exports[`should parse multiple messages from one chunk 1`] = `
-Array [
-  Object {
-    "data": Object {},
+[
+  {
+    "data": {},
     "event": "next",
   },
-  Object {
-    "data": Object {
+  {
+    "data": {
       "no": "data",
     },
     "event": "next",
@@ -64,24 +64,24 @@ Array [
 `;
 
 exports[`should parse multiple messages from one chunk 2`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "almost": "done",
     },
     "event": "next",
   },
-  Object {
-    "data": Object {},
+  {
+    "data": {},
     "event": "complete",
   },
 ]
 `;
 
 exports[`should parse whole message 1`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -90,9 +90,9 @@ Array [
 `;
 
 exports[`should parse whole message 2`] = `
-Array [
-  Object {
-    "data": Object {
+[
+  {
+    "data": {
       "iAm": "data",
     },
     "event": "next",
@@ -101,8 +101,8 @@ Array [
 `;
 
 exports[`should parse whole message 3`] = `
-Array [
-  Object {
+[
+  {
     "data": null,
     "event": "complete",
   },

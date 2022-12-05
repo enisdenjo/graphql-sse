@@ -31,7 +31,7 @@ it('should only accept valid accept headers', async () => {
     'application/json; charset=utf-8',
   );
   expect(body).toMatchInlineSnapshot(
-    `"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"`,
+    `"{"errors":[{"message":"Missing query"}]}"`,
   );
 
   [body, init] = await handler('GET', {
@@ -44,7 +44,7 @@ it('should only accept valid accept headers', async () => {
     'application/json; charset=utf-8',
   );
   expect(body).toMatchInlineSnapshot(
-    `"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"`,
+    `"{"errors":[{"message":"Missing query"}]}"`,
   );
 });
 
@@ -142,7 +142,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"`,
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
 
     const search = new URLSearchParams();
@@ -154,7 +154,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"`,
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
 
     [body, init] = await handler('DELETE', { search });
@@ -163,7 +163,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"`,
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
   });
 
@@ -191,7 +191,7 @@ describe('single connection mode', () => {
     });
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"`,
+      `"{"errors":[{"message":"Missing query"}]}"`,
     );
   });
 
@@ -240,7 +240,7 @@ describe('single connection mode', () => {
 
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Operation ID is missing\\"}]}"`,
+      `"{"errors":[{"message":"Operation ID is missing"}]}"`,
     );
   });
 
@@ -266,7 +266,7 @@ describe('single connection mode', () => {
     expect(body).toBeNull();
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": ":
 
@@ -275,20 +275,20 @@ describe('single connection mode', () => {
     `); // ping
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: next
-      data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}
+      data: {"id":"1","payload":{"data":{"getValue":"value"}}}
 
       ",
       }
     `);
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: complete
-      data: {\\"id\\":\\"1\\"}
+      data: {"id":"1"}
 
       ",
       }
@@ -313,7 +313,7 @@ describe('single connection mode', () => {
     });
     assertAsyncGenerator(stream);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": ":
 
@@ -341,7 +341,7 @@ describe('single connection mode', () => {
     }
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": true,
         "value": undefined,
       }
@@ -366,7 +366,7 @@ describe('single connection mode', () => {
     });
     assertAsyncGenerator(stream);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": ":
 
@@ -385,7 +385,7 @@ describe('single connection mode', () => {
     });
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      `"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Subscription\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":16}]}]}"`,
+      `"{"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Subscription\\".","locations":[{"line":1,"column":16}]}]}"`,
     );
 
     // stream remains open
@@ -476,7 +476,7 @@ describe('distinct connections mode', () => {
     expect(init.status).toBe(200);
     assertAsyncGenerator(stream);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": ":
 
@@ -484,16 +484,16 @@ describe('distinct connections mode', () => {
       }
     `); // ping
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: next
-      data: {\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}
+      data: {"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Query\\".","locations":[{"line":1,"column":3}]}]}
 
       ",
       }
     `);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: complete
 
@@ -501,7 +501,7 @@ describe('distinct connections mode', () => {
       }
     `);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": true,
         "value": undefined,
       }
@@ -541,7 +541,7 @@ describe('distinct connections mode', () => {
     assertAsyncGenerator(stream);
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": ":
 
@@ -552,7 +552,7 @@ describe('distinct connections mode', () => {
     for await (const msg of stream) {
       expect(msg).toMatchInlineSnapshot(`
         "event: next
-        data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+        data: {"data":{"greetings":"Hi"}}
 
         "
       `);
@@ -563,17 +563,17 @@ describe('distinct connections mode', () => {
 
     // message was already queued up (pending), it's ok to have it
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: next
-      data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+      data: {"data":{"greetings":"Bonjour"}}
 
       ",
       }
     `);
 
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": false,
         "value": "event: complete
 
@@ -581,7 +581,7 @@ describe('distinct connections mode', () => {
       }
     `);
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
-      Object {
+      {
         "done": true,
         "value": undefined,
       }
