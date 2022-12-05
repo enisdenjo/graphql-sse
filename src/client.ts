@@ -461,7 +461,10 @@ export function createClient<SingleConnection extends boolean = false>(
 
               const { getResults } = await connect({
                 signal: control.signal,
-                headers,
+                headers: {
+                  ...headers,
+                  'content-type': 'application/json; charset=utf-8',
+                },
                 credentials,
                 referrer,
                 referrerPolicy,
@@ -531,7 +534,10 @@ export function createClient<SingleConnection extends boolean = false>(
                 credentials,
                 referrer,
                 referrerPolicy,
-                headers,
+                headers: {
+                  ...headers,
+                  'content-type': 'application/json; charset=utf-8',
+                },
                 body: JSON.stringify(request),
               });
             } catch (err) {
