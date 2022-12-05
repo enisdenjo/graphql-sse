@@ -582,7 +582,10 @@ export function createClient<SingleConnection extends boolean = false>(
             if (control.signal.aborted) return await complete?.();
 
             // all non-network errors are worth reporting immediately
-            if (!(err instanceof NetworkError)) throw err;
+            if (!(err instanceof NetworkError)) {
+              control.abort(); // TODO: tests for making sure the control's aborted
+              throw err;
+            }
 
             // was a network error, get rid of the current connection to ensure retries
             // but only if the client is running in lazy mode (otherwise the non-lazy lock will get rid of the connection)
@@ -591,7 +594,10 @@ export function createClient<SingleConnection extends boolean = false>(
             }
 
             // retries are not allowed or we tried to many times, report error
-            if (!retryAttempts || retries >= retryAttempts) throw err;
+            if (!retryAttempts || retries >= retryAttempts) {
+              control.abort(); // TODO: tests for making sure the control's aborted
+              throw err;
+            }
 
             // try again
             retryingErr = err;
