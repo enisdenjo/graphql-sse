@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/enisdenjo/graphql-sse/compare/v1.3.0...v1.3.1) (2022-12-05)
+
+
+### Bug Fixes
+
+* **client:** Abort request when reporting error ([91057bd](https://github.com/enisdenjo/graphql-sse/commit/91057bd58a9edd7c83b2af4bb368511bdcf312b4))
+* **client:** Operation requests are of application/json content-type ([0084de7](https://github.com/enisdenjo/graphql-sse/commit/0084de7c7f55c77c9b9156b98c264b90f49bf2b2))
+
 # [1.3.0](https://github.com/enisdenjo/graphql-sse/compare/v1.2.5...v1.3.0) (2022-07-20)
 
 
