@@ -293,7 +293,7 @@ Read more about the Protocol in the PROTOCOL.md documentation file.
 | Name | Type |
 | :------ | :------ |
 | `Request` | extends `IncomingMessage`<`Request`\> = `IncomingMessage` |
-| `Response` | extends `ServerResponse`<`Response`\> = `ServerResponse` |
+| `Response` | extends `ServerResponse`<`IncomingMessage`, `Response`\> = `ServerResponse`<`IncomingMessage`\> |
 
 #### Parameters
 
