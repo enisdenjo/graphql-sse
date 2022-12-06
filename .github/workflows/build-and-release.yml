@@ -25,6 +25,8 @@ jobs:
           path: |
             lib
             umd
+      - name: Dry run release
+        run: yarn release --dry-run >> $GITHUB_STEP_SUMMARY
 
   release:
     name: Release
