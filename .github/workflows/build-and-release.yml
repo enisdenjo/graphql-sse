@@ -29,6 +29,7 @@ jobs:
   dry-run-release:
     name: Dry run release
     runs-on: ubuntu-latest
+    environment: npm
     steps:
       - name: Checkout
         uses: actions/checkout@v3
