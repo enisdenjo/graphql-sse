@@ -5,6 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import {
   ExecutionArgs,
   getOperationAST,
@@ -26,6 +27,16 @@ import {
   TOKEN_HEADER_KEY,
   TOKEN_QUERY_KEY,
 } from './common';
+
+/**
+ * @category Server
+ */
+export type NodeRequest = IncomingMessage | Http2ServerRequest;
+
+/**
+ * @category Server
+ */
+export type NodeResponse = ServerResponse | Http2ServerResponse;
 
 /**
  * A concrete GraphQL execution context value type.
@@ -60,8 +71,8 @@ export type OperationResult =
 
 /** @category Server */
 export interface HandlerOptions<
-  Request extends IncomingMessage = IncomingMessage,
-  Response extends ServerResponse = ServerResponse,
+  Request extends NodeRequest = NodeRequest,
+  Response extends NodeResponse = NodeResponse,
 > {
   /**
    * The GraphQL schema on which the operations will
@@ -280,13 +291,13 @@ export interface HandlerOptions<
  * @category Server
  */
 export type Handler<
-  Request extends IncomingMessage = IncomingMessage,
-  Response extends ServerResponse = ServerResponse,
+  Request extends NodeRequest = NodeRequest,
+  Response extends NodeResponse = NodeResponse,
 > = (req: Request, res: Response, body?: unknown) => Promise<void>;
 
 interface Stream<
-  Request extends IncomingMessage = IncomingMessage,
-  Response extends ServerResponse = ServerResponse,
+  Request extends NodeRequest = NodeRequest,
+  Response extends NodeResponse = NodeResponse,
 > {
   /**
    * Does the stream have an open connection to some client.
@@ -327,8 +338,8 @@ interface Stream<
  * @category Server
  */
 export function createHandler<
-  Request extends IncomingMessage = IncomingMessage,
-  Response extends ServerResponse = ServerResponse,
+  Request extends NodeRequest = NodeRequest,
+  Response extends NodeResponse = NodeResponse,
 >(options: HandlerOptions<Request, Response>): Handler<Request, Response> {
   const {
     schema,
@@ -363,7 +374,7 @@ export function createHandler<
     onDisconnect,
   } = options;
 
-  const streams: Record<string, Stream> = {};
+  const streams: Record<string, Stream<Request, Response>> = {};
 
   function createStream(token: string | null): Stream<Request, Response> {
     let request: Request | null = null,
@@ -376,10 +387,11 @@ export function createHandler<
       AsyncGenerator<unknown> | AsyncIterable<unknown> | null
     > = {};
 
-    function write(msg: unknown) {
+    function write(msg: string) {
       return new Promise<boolean>((resolve, reject) => {
         if (disposed || !response || !response.writable) return resolve(false);
-        response.write(msg, (err) => {
+        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
+        response.write(msg, 'utf-8', (err) => {
           if (err) return reject(err);
           resolve(true);
         });
@@ -444,7 +456,7 @@ export function createHandler<
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('X-Accel-Buffering', 'no');
         if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
+        if ('flushHeaders' in res) res.flushHeaders();
 
         // write an empty message because some browsers (like Firefox and Safari)
         // dont accept the header flush
@@ -595,6 +607,7 @@ export function createHandler<
               ? 'application/json; charset=utf-8'
               : 'application/graphql+json; charset=utf-8',
         })
+        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
         .write(JSON.stringify({ errors: validationErrs }));
       res.end();
       return;
@@ -693,6 +706,7 @@ export function createHandler<
       streams[token] = createStream(token);
       res
         .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
+        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
         .write(token);
       res.end();
       return;
@@ -721,7 +735,7 @@ export function createHandler<
       return;
     } else if (req.method !== 'GET' && req.method !== 'POST') {
       // only POSTs and GETs are accepted at this point
-      res.writeHead(405, undefined, { Allow: 'GET, POST, PUT, DELETE' }).end();
+      res.writeHead(405, { Allow: 'GET, POST, PUT, DELETE' }).end();
       return;
     } else if (!stream) {
       // for all other requests, streams must exist to attach the result onto
@@ -793,7 +807,7 @@ export function createHandler<
   };
 }
 
-async function parseReq<Request extends IncomingMessage>(
+async function parseReq<Request extends NodeRequest>(
   req: Request,
   body: unknown,
 ): Promise<RequestParams> {

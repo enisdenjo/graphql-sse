@@ -23,6 +23,8 @@ graphql-sse
 
 - [ExecutionContext](README.md#executioncontext)
 - [Handler](README.md#handler)
+- [NodeRequest](README.md#noderequest)
+- [NodeResponse](README.md#noderesponse)
 - [OperationResult](README.md#operationresult)
 - [StreamData](README.md#streamdata)
 - [StreamDataForID](README.md#streamdataforid)
@@ -211,8 +213,8 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage` = `IncomingMessage` |
-| `Response` | extends `ServerResponse` = `ServerResponse` |
+| `Request` | extends [`NodeRequest`](README.md#noderequest) = [`NodeRequest`](README.md#noderequest) |
+| `Response` | extends [`NodeResponse`](README.md#noderesponse) = [`NodeResponse`](README.md#noderesponse) |
 
 #### Type declaration
 
@@ -273,6 +275,18 @@ beware that the `body` argument will be consumed **only** if it's an object.
 
 ___
 
+### NodeRequest
+
+Ƭ **NodeRequest**: `IncomingMessage` \| `Http2ServerRequest`
+
+___
+
+### NodeResponse
+
+Ƭ **NodeResponse**: `ServerResponse` \| `Http2ServerResponse`
+
+___
+
 ### OperationResult
 
 Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| [`ExecutionResult`](interfaces/ExecutionResult.md)\> \| `AsyncGenerator`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| [`ExecutionResult`](interfaces/ExecutionResult.md)
@@ -292,8 +306,8 @@ Read more about the Protocol in the PROTOCOL.md documentation file.
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage`<`Request`\> = `IncomingMessage` |
-| `Response` | extends `ServerResponse`<`IncomingMessage`, `Response`\> = `ServerResponse`<`IncomingMessage`\> |
+| `Request` | extends [`NodeRequest`](README.md#noderequest) = [`NodeRequest`](README.md#noderequest) |
+| `Response` | extends [`NodeResponse`](README.md#noderesponse) = [`NodeResponse`](README.md#noderesponse) |
 
 #### Parameters
 

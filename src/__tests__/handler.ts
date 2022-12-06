@@ -7,6 +7,7 @@ import { eventStream } from './utils/eventStream';
 import { createClient, createHandler } from '../index';
 import { TOKEN_HEADER_KEY, TOKEN_QUERY_KEY } from '../common';
 import http from 'http';
+import http2 from 'http2';
 import { schema } from './fixtures/simple';
 import fetch from 'node-fetch';
 import express from 'express';
@@ -401,6 +402,23 @@ describe('distinct connections mode', () => {
         next: noop,
         error: noop,
         complete: noop,
+      },
+    );
+  });
+});
+
+describe('http2', () => {
+  // ts-only-test
+  it.skip('should work as advertised in the readme', async () => {
+    const handler = createHandler({ schema });
+    http2.createSecureServer(
+      {
+        key: 'localhost-privkey.pem',
+        cert: 'localhost-cert.pem',
+      },
+      (req, res) => {
+        if (req.url.startsWith('/graphql/stream')) return handler(req, res);
+        return res.writeHead(404).end();
       },
     );
   });

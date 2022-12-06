@@ -6,8 +6,8 @@
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends `IncomingMessage` = `IncomingMessage` |
-| `Response` | extends `ServerResponse` = `ServerResponse` |
+| `Request` | extends [`NodeRequest`](../README.md#noderequest) = [`NodeRequest`](../README.md#noderequest) |
+| `Response` | extends [`NodeResponse`](../README.md#noderesponse) = [`NodeResponse`](../README.md#noderesponse) |
 
 ## Table of contents
 
