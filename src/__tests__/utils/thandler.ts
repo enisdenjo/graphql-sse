@@ -1,8 +1,14 @@
 import { schema } from '../fixtures/simple';
-import { createHandler, HandlerOptions, Response } from '../../handler';
+import {
+  createHandler,
+  HandlerOptions,
+  Response,
+  Request,
+} from '../../handler';
 import { isAsyncGenerator, RequestParams } from '../../common';
+import { TestKit, injectTestKit, queue } from './testkit';
 
-export interface THandler {
+export interface THandler extends TestKit {
   handler(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     req?: {
@@ -11,38 +17,46 @@ export interface THandler {
       body?: RequestParams;
     },
   ): Promise<Response>;
+  waitForRequest(): Promise<Request>;
 }
 
 export function createTHandler(opts: Partial<HandlerOptions> = {}): THandler {
+  const testkit = injectTestKit(opts);
+  const onRequest = queue<Request>();
   const handler = createHandler({
     schema,
     ...opts,
   });
-
   return {
-    handler: (method, req) => {
+    ...testkit,
+    handler: (method, treq) => {
       let url = 'http://localhost';
 
-      const search = req?.search?.toString();
+      const search = treq?.search?.toString();
       if (search) url += `?${search}`;
 
       const headers = {
-        'content-type': req?.body
+        'content-type': treq?.body
           ? 'application/json; charset=utf-8'
           : undefined,
-        ...req?.headers,
+        ...treq?.headers,
       };
 
-      const body = (req?.body as unknown as Record<string, string>) || null;
+      const body = (treq?.body as unknown as Record<string, string>) || null;
 
-      return handler({
+      const req = {
         method,
         url,
         headers,
         body,
         raw: null,
         context: null,
-      });
+      };
+      onRequest.add(req);
+      return handler(req);
+    },
+    waitForRequest() {
+      return onRequest.next();
     },
   };
 }
