@@ -2,6 +2,8 @@ import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
 import { pong } from './fixtures/simple';
+import { assertAsyncGenerator } from './utils/thandler';
+import { wait } from './utils/testkit';
 
 it('should use the provided headers', async () => {
   // single connection mode
@@ -246,5 +248,44 @@ describe('single connection mode', () => {
     sub.dispose();
 
     await sub.waitForComplete();
+  });
+
+  describe('lazy', () => {
+    it('should connect on first subscribe and disconnect on last complete', async () => {
+      const { fetch, waitForOperation, waitForRequest } = createTFetch();
+
+      const client = createClient({
+        singleConnection: true,
+        lazy: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+      });
+
+      const sub1 = tsubscribe(client, {
+        query: `subscription { ping(key: "${Math.random()}") }`,
+      });
+      await waitForOperation();
+
+      // put
+      await waitForRequest();
+      // stream
+      const streamReq = await waitForRequest();
+
+      const sub2 = tsubscribe(client, {
+        query: `subscription { ping(key: "${Math.random()}") }`,
+      });
+      await waitForOperation();
+
+      sub1.dispose();
+      await sub1.waitForComplete();
+      await wait(20);
+      expect(streamReq.signal.aborted).toBeFalsy();
+
+      sub2.dispose();
+      await sub2.waitForComplete();
+      await wait(20);
+      expect(streamReq.signal.aborted).toBeTruthy();
+    });
   });
 });
