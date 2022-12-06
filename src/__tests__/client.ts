@@ -2,8 +2,7 @@ import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
 import { pong } from './fixtures/simple';
-import { assertAsyncGenerator } from './utils/thandler';
-import { wait } from './utils/testkit';
+import { sleep } from './utils/testkit';
 
 it('should use the provided headers', async () => {
   // single connection mode
@@ -279,12 +278,12 @@ describe('single connection mode', () => {
 
       sub1.dispose();
       await sub1.waitForComplete();
-      await wait(20);
+      await sleep(20);
       expect(streamReq.signal.aborted).toBeFalsy();
 
       sub2.dispose();
       await sub2.waitForComplete();
-      await wait(20);
+      await sleep(20);
       expect(streamReq.signal.aborted).toBeTruthy();
     });
   });
