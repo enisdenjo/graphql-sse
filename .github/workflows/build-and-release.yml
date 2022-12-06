@@ -26,8 +26,8 @@ jobs:
             lib
             umd
 
-  dry-run-release:
-    name: Dry run release
+  dry-run:
+    name: Dry run
     runs-on: ubuntu-latest
     environment: npm
     steps:
