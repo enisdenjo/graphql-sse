@@ -46,7 +46,7 @@ ___
 
 ### credentials
 
-• `Optional` **credentials**: ``"omit"`` \| ``"same-origin"`` \| ``"include"``
+• `Optional` **credentials**: ``"include"`` \| ``"omit"`` \| ``"same-origin"``
 
 Indicates whether the user agent should send cookies from the other domain in the case
 of cross-origin requests.
@@ -208,7 +208,7 @@ ___
 
 ### referrerPolicy
 
-• `Optional` **referrerPolicy**: ``"same-origin"`` \| ``"no-referrer"`` \| ``"no-referrer-when-downgrade"`` \| ``"origin"`` \| ``"strict-origin"`` \| ``"origin-when-cross-origin"`` \| ``"strict-origin-when-cross-origin"`` \| ``"unsafe-url"``
+• `Optional` **referrerPolicy**: ``"origin"`` \| ``"same-origin"`` \| ``"no-referrer"`` \| ``"no-referrer-when-downgrade"`` \| ``"origin-when-cross-origin"`` \| ``"strict-origin"`` \| ``"strict-origin-when-cross-origin"`` \| ``"unsafe-url"``
 
 Specifies the referrer policy to use for the request.
 

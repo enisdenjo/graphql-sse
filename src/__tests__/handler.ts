@@ -48,7 +48,7 @@ it('should only accept valid accept headers', async () => {
   );
 });
 
-it.each(['authenticate', 'onConnect', 'onSubscribe', 'context'])(
+it.each(['authenticate', 'onConnect', 'onSubscribe', 'context', 'onOperation'])(
   'should bubble %s errors to the handler',
   async (hook) => {
     const err = new Error('hang hang');

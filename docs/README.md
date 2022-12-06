@@ -15,17 +15,22 @@ graphql-sse
 - [ExecutionPatchResult](interfaces/ExecutionPatchResult.md)
 - [ExecutionResult](interfaces/ExecutionResult.md)
 - [HandlerOptions](interfaces/HandlerOptions.md)
+- [Request](interfaces/Request.md)
 - [RequestParams](interfaces/RequestParams.md)
+- [ResponseInit](interfaces/ResponseInit.md)
 - [Sink](interfaces/Sink.md)
 - [StreamMessage](interfaces/StreamMessage.md)
 
 ### Type Aliases
 
-- [ExecutionContext](README.md#executioncontext)
 - [Handler](README.md#handler)
-- [NodeRequest](README.md#noderequest)
-- [NodeResponse](README.md#noderesponse)
+- [OperationArgs](README.md#operationargs)
+- [OperationContext](README.md#operationcontext)
 - [OperationResult](README.md#operationresult)
+- [RequestHeaders](README.md#requestheaders)
+- [Response](README.md#response)
+- [ResponseBody](README.md#responsebody)
+- [ResponseHeaders](README.md#responseheaders)
 - [StreamData](README.md#streamdata)
 - [StreamDataForID](README.md#streamdataforid)
 - [StreamEvent](README.md#streamevent)
@@ -40,7 +45,9 @@ graphql-sse
 - [createClient](README.md#createclient)
 - [createHandler](README.md#createhandler)
 - [isAsyncGenerator](README.md#isasyncgenerator)
+- [isAsyncIterable](README.md#isasynciterable)
 - [parseStreamData](README.md#parsestreamdata)
+- [print](README.md#print)
 - [validateStreamEvent](README.md#validatestreamevent)
 
 ## Client
@@ -130,6 +137,54 @@ Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#sing
 
 ___
 
+### isAsyncGenerator
+
+▸ **isAsyncGenerator**<`T`\>(`val`): val is AsyncGenerator<T, any, unknown\>
+
+Checkes whether the provided value is an async generator.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `val` | `unknown` |
+
+#### Returns
+
+val is AsyncGenerator<T, any, unknown\>
+
+___
+
+### isAsyncIterable
+
+▸ **isAsyncIterable**<`T`\>(`val`): val is AsyncIterable<T\>
+
+Checkes whether the provided value is an async iterable.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `val` | `unknown` |
+
+#### Returns
+
+val is AsyncIterable<T\>
+
+___
+
 ### parseStreamData
 
 ▸ **parseStreamData**<`ForID`, `E`\>(`e`, `data`): `ForID` extends ``true`` ? [`StreamDataForID`](README.md#streamdataforid)<`E`\> : [`StreamData`](README.md#streamdata)<`E`\>
@@ -154,6 +209,29 @@ ___
 
 ___
 
+### print
+
+▸ **print**<`ForID`, `E`\>(`msg`): `string`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `ForID` | extends `boolean` |
+| `E` | extends [`StreamEvent`](README.md#streamevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `msg` | [`StreamMessage`](interfaces/StreamMessage.md)<`ForID`, `E`\> |
+
+#### Returns
+
+`string`
+
+___
+
 ### validateStreamEvent
 
 ▸ **validateStreamEvent**(`e`): [`StreamEvent`](README.md#streamevent)
@@ -168,33 +246,57 @@ ___
 
 [`StreamEvent`](README.md#streamevent)
 
-## Other
+## Server
 
-### isAsyncGenerator
+### Handler
 
-▸ **isAsyncGenerator**<`T`\>(`val`): val is AsyncGenerator<T, any, unknown\>
+Ƭ **Handler**<`RequestRaw`, `RequestContext`\>: (`req`: [`Request`](interfaces/Request.md)<`RequestRaw`, `RequestContext`\>) => `Promise`<[`Response`](README.md#response)\>
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `T` |
+| Name | Type |
+| :------ | :------ |
+| `RequestRaw` | `unknown` |
+| `RequestContext` | `unknown` |
 
-#### Parameters
+#### Type declaration
+
+▸ (`req`): `Promise`<[`Response`](README.md#response)\>
+
+The ready-to-use handler. Simply plug it in your favourite fetch-enabled HTTP
+framework and enjoy.
+
+Errors thrown from **any** of the provided options or callbacks (or even due to
+library misuse or potential bugs) will reject the handler's promise. They are
+considered internal errors and you should take care of them accordingly.
+
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `val` | `unknown` |
+| `req` | [`Request`](interfaces/Request.md)<`RequestRaw`, `RequestContext`\> |
 
-#### Returns
+##### Returns
 
-val is AsyncGenerator<T, any, unknown\>
+`Promise`<[`Response`](README.md#response)\>
 
-## Server
+___
 
-### ExecutionContext
+### OperationArgs
 
-Ƭ **ExecutionContext**: `object` \| `symbol` \| `number` \| `string` \| `boolean` \| `undefined` \| ``null``
+Ƭ **OperationArgs**<`Context`\>: `ExecutionArgs` & { `contextValue`: `Context`  }
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](README.md#operationcontext) = `undefined` |
+
+___
+
+### OperationContext
+
+Ƭ **OperationContext**: `Record`<`PropertyKey`, `unknown`\> \| `symbol` \| `number` \| `string` \| `boolean` \| `undefined` \| ``null``
 
 A concrete GraphQL execution context value type.
 
@@ -205,99 +307,53 @@ the `context` server option.
 
 ___
 
-### Handler
-
-Ƭ **Handler**<`Request`, `Response`\>: (`req`: `Request`, `res`: `Response`, `body?`: `unknown`) => `Promise`<`void`\>
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `Request` | extends [`NodeRequest`](README.md#noderequest) = [`NodeRequest`](README.md#noderequest) |
-| `Response` | extends [`NodeResponse`](README.md#noderesponse) = [`NodeResponse`](README.md#noderesponse) |
-
-#### Type declaration
-
-▸ (`req`, `res`, `body?`): `Promise`<`void`\>
-
-The ready-to-use handler. Simply plug it in your favourite HTTP framework
-and enjoy.
-
-Beware that the handler resolves only after the whole operation completes.
-- If query/mutation, waits for result
-- If subscription, waits for complete
-
-Errors thrown from **any** of the provided options or callbacks (or even due to
-library misuse or potential bugs) will reject the handler's promise. They are
-considered internal errors and you should take care of them accordingly.
-
-For production environments, its recommended not to transmit the exact internal
-error details to the client, but instead report to an error logging tool or simply
-the console. Roughly:
-
-```ts
-import http from 'http';
-import { createHandler } from 'graphql-sse';
-
-const handler = createHandler({ ... });
-
-http.createServer(async (req, res) => {
-  try {
-    await handler(req, res);
-  } catch (err) {
-    console.error(err);
-    // or
-    Sentry.captureException(err);
-
-    if (!res.headersSent) {
-      res.writeHead(500, 'Internal Server Error').end();
-    }
-  }
-});
-```
-
-Note that some libraries, like fastify, parse the body before reaching the handler.
-In such cases all request 'data' events are already consumed. Use this `body` argument
-too pass in the read body and avoid listening for the 'data' events internally. Do
-beware that the `body` argument will be consumed **only** if it's an object.
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `req` | `Request` |
-| `res` | `Response` |
-| `body?` | `unknown` |
-
-##### Returns
-
-`Promise`<`void`\>
-
-___
-
-### NodeRequest
-
-Ƭ **NodeRequest**: `IncomingMessage` \| `Http2ServerRequest`
-
-___
-
-### NodeResponse
-
-Ƭ **NodeResponse**: `ServerResponse` \| `Http2ServerResponse`
-
-___
-
 ### OperationResult
 
 Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| [`ExecutionResult`](interfaces/ExecutionResult.md)\> \| `AsyncGenerator`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](interfaces/ExecutionResult.md) \| [`ExecutionPatchResult`](interfaces/ExecutionPatchResult.md)\> \| [`ExecutionResult`](interfaces/ExecutionResult.md)
 
 ___
 
+### RequestHeaders
+
+Ƭ **RequestHeaders**: { `[key: string]`: `string` \| `string`[] \| `undefined`; `set-cookie?`: `string` \| `string`[]  } \| { `get`: (`key`: `string`) => `string` \| ``null``  }
+
+The incoming request headers the implementing server should provide.
+
+___
+
+### Response
+
+Ƭ **Response**: readonly [body: ResponseBody \| null, init: ResponseInit]
+
+Server agnostic response returned from `graphql-sse` containing the
+body and init options needing to be coerced to the server implementation in use.
+
+___
+
+### ResponseBody
+
+Ƭ **ResponseBody**: `string` \| `AsyncGenerator`<`string`, `void`, `undefined`\>
+
+Server agnostic response body returned from `graphql-sse` needing
+to be coerced to the server implementation in use.
+
+When the body is a string, it is NOT a GraphQL response.
+
+___
+
+### ResponseHeaders
+
+Ƭ **ResponseHeaders**: { `accept?`: `string` ; `allow?`: `string` ; `content-type?`: `string`  } & `Record`<`string`, `string`\>
+
+The response headers that get returned from graphql-sse.
+
+___
+
 ### createHandler
 
-▸ **createHandler**<`Request`, `Response`\>(`options`): [`Handler`](README.md#handler)<`Request`, `Response`\>
+▸ **createHandler**<`RequestRaw`, `RequestContext`, `Context`\>(`options`): [`Handler`](README.md#handler)<`RequestRaw`, `RequestContext`\>
 
-Makes a Protocol complient HTTP GraphQL server  handler. The handler can
+Makes a Protocol complient HTTP GraphQL server handler. The handler can
 be used with your favourite server library.
 
 Read more about the Protocol in the PROTOCOL.md documentation file.
@@ -306,15 +362,16 @@ Read more about the Protocol in the PROTOCOL.md documentation file.
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends [`NodeRequest`](README.md#noderequest) = [`NodeRequest`](README.md#noderequest) |
-| `Response` | extends [`NodeResponse`](README.md#noderesponse) = [`NodeResponse`](README.md#noderesponse) |
+| `RequestRaw` | `unknown` |
+| `RequestContext` | `unknown` |
+| `Context` | extends [`OperationContext`](README.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](interfaces/HandlerOptions.md)<`Request`, `Response`\> |
+| `options` | [`HandlerOptions`](interfaces/HandlerOptions.md)<`RequestRaw`, `RequestContext`, `Context`\> |
 
 #### Returns
 
-[`Handler`](README.md#handler)<`Request`, `Response`\>
+[`Handler`](README.md#handler)<`RequestRaw`, `RequestContext`\>

@@ -1,13 +1,14 @@
 [graphql-sse](../README.md) / HandlerOptions
 
-# Interface: HandlerOptions<Request, Response\>
+# Interface: HandlerOptions<RequestRaw, RequestContext, Context\>
 
 ## Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `Request` | extends [`NodeRequest`](../README.md#noderequest) = [`NodeRequest`](../README.md#noderequest) |
-| `Response` | extends [`NodeResponse`](../README.md#noderesponse) = [`NodeResponse`](../README.md#noderesponse) |
+| `RequestRaw` | `unknown` |
+| `RequestContext` | `unknown` |
+| `Context` | extends [`OperationContext`](../README.md#operationcontext) = `undefined` |
 
 ## Table of contents
 
@@ -17,9 +18,7 @@
 - [context](HandlerOptions.md#context)
 - [execute](HandlerOptions.md#execute)
 - [onComplete](HandlerOptions.md#oncomplete)
-- [onConnected](HandlerOptions.md#onconnected)
-- [onConnecting](HandlerOptions.md#onconnecting)
-- [onDisconnect](HandlerOptions.md#ondisconnect)
+- [onConnect](HandlerOptions.md#onconnect)
 - [onNext](HandlerOptions.md#onnext)
 - [onOperation](HandlerOptions.md#onoperation)
 - [onSubscribe](HandlerOptions.md#onsubscribe)
@@ -31,21 +30,19 @@
 
 ### authenticate
 
-• `Optional` **authenticate**: (`req`: `Request`, `res`: `Response`) => `undefined` \| `string` \| `void` \| `Promise`<`undefined` \| `string` \| `void`\>
+• `Optional` **authenticate**: (`req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response)\>
 
 #### Type declaration
 
-▸ (`req`, `res`): `undefined` \| `string` \| `void` \| `Promise`<`undefined` \| `string` \| `void`\>
+▸ (`req`): `undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response)\>
 
 Authenticate the client. Returning a string indicates that the client
 is authenticated and the request is ready to be processed.
 
-A token of type string MUST be supplied; if there is no token, you may
-return an empty string (`''`);
+A distinct token of type string must be supplied to enable the "single connection mode".
 
-If you want to respond to the client with a custom status or body,
-you should do so using the provided `res` argument which will stop
-further execution.
+Providing `null` as the token will completely disable the "single connection mode"
+and all incoming requests will always use the "distinct connection mode".
 
 **`Default`**
 
@@ -55,18 +52,17 @@ further execution.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `Request` |
-| `res` | `Response` |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> |
 
 ##### Returns
 
-`undefined` \| `string` \| `void` \| `Promise`<`undefined` \| `string` \| `void`\>
+`undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../README.md#response)\>
 
 ___
 
 ### context
 
-• `Optional` **context**: [`ExecutionContext`](../README.md#executioncontext) \| (`req`: `Request`, `args`: `ExecutionArgs`) => [`ExecutionContext`](../README.md#executioncontext) \| `Promise`<[`ExecutionContext`](../README.md#executioncontext)\>
+• `Optional` **context**: `Context` \| (`req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](RequestParams.md)) => `Context` \| `Promise`<`Context`\>
 
 A value which is provided to every resolver and holds
 important contextual information like the currently
@@ -77,11 +73,14 @@ Meaning, for subscriptions, only at the point of initialising the subscription;
 not on every subscription event emission. Read more about the context lifecycle
 in subscriptions here: https://github.com/graphql/graphql-js/issues/894.
 
+If you don't provide the context context field, but have a context - you're trusted to
+provide one in `onSubscribe`.
+
 ___
 
 ### execute
 
-• `Optional` **execute**: (`args`: `ExecutionArgs`) => [`OperationResult`](../README.md#operationresult)
+• `Optional` **execute**: (`args`: [`OperationArgs`](../README.md#operationargs)<`Context`\>) => [`OperationResult`](../README.md#operationresult)
 
 #### Type declaration
 
@@ -94,7 +93,7 @@ used to execute the query and mutation operations.
 
 | Name | Type |
 | :------ | :------ |
-| `args` | `ExecutionArgs` |
+| `args` | [`OperationArgs`](../README.md#operationargs)<`Context`\> |
 
 ##### Returns
 
@@ -104,11 +103,11 @@ ___
 
 ### onComplete
 
-• `Optional` **onComplete**: (`req`: `Request`, `args`: `ExecutionArgs`) => `void` \| `Promise`<`void`\>
+• `Optional` **onComplete**: (`ctx`: `Context`, `req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>) => `void` \| `Promise`<`void`\>
 
 #### Type declaration
 
-▸ (`req`, `args`): `void` \| `Promise`<`void`\>
+▸ (`ctx`, `req`): `void` \| `Promise`<`void`\>
 
 The complete callback is executed after the operation
 has completed and the client has been notified.
@@ -117,15 +116,12 @@ Since the library makes sure to complete streaming
 operations even after an abrupt closure, this callback
 will always be called.
 
-First argument, the request, is always the GraphQL operation
-request.
-
 ##### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `req` | `Request` |
-| `args` | `ExecutionArgs` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `ctx` | `Context` | - |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
 
 ##### Returns
 
@@ -133,88 +129,37 @@ request.
 
 ___
 
-### onConnected
+### onConnect
 
-• `Optional` **onConnected**: (`req`: `Request`) => `void` \| `Promise`<`void`\>
-
-#### Type declaration
-
-▸ (`req`): `void` \| `Promise`<`void`\>
-
-Called when a new event stream has been succesfully connected and
-accepted, and after all pending messages have been flushed.
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `req` | `Request` |
-
-##### Returns
-
-`void` \| `Promise`<`void`\>
-
-___
-
-### onConnecting
-
-• `Optional` **onConnecting**: (`req`: `Request`, `res`: `Response`) => `void` \| `Promise`<`void`\>
+• `Optional` **onConnect**: (`req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response)\>
 
 #### Type declaration
 
-▸ (`req`, `res`): `void` \| `Promise`<`void`\>
+▸ (`req`): `undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response)\>
 
 Called when a new event stream is connecting BEFORE it is accepted.
-By accepted, its meant the server responded with a 200 (OK), alongside
-flushing the necessary event stream headers.
-
-If you want to respond to the client with a custom status or body,
-you should do so using the provided `res` argument which will stop
-further execution.
+By accepted, its meant the server processed the request and responded
+with a 200 (OK), alongside flushing the necessary event stream headers.
 
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `Request` |
-| `res` | `Response` |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> |
 
 ##### Returns
 
-`void` \| `Promise`<`void`\>
-
-___
-
-### onDisconnect
-
-• `Optional` **onDisconnect**: (`req`: `Request`) => `void` \| `Promise`<`void`\>
-
-#### Type declaration
-
-▸ (`req`): `void` \| `Promise`<`void`\>
-
-Called when an event stream has disconnected right before the
-accepting the stream.
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `req` | `Request` |
-
-##### Returns
-
-`void` \| `Promise`<`void`\>
+`undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../README.md#response)\>
 
 ___
 
 ### onNext
 
-• `Optional` **onNext**: (`req`: `Request`, `args`: `ExecutionArgs`, `result`: [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>) => `void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+• `Optional` **onNext**: (`ctx`: `Context`, `req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>, `result`: [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>) => `void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 #### Type declaration
 
-▸ (`req`, `args`, `result`): `void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+▸ (`ctx`, `req`, `result`): `void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 Executed after an operation has emitted a result right before
 that result has been sent to the client.
@@ -225,16 +170,13 @@ invoke this callback.
 Use this callback if you want to format the execution result
 before it reaches the client.
 
-First argument, the request, is always the GraphQL operation
-request.
-
 ##### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `req` | `Request` |
-| `args` | `ExecutionArgs` |
-| `result` | [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `ctx` | `Context` | - |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
+| `result` | [`ExecutionResult`](ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> | - |
 
 ##### Returns
 
@@ -244,11 +186,11 @@ ___
 
 ### onOperation
 
-• `Optional` **onOperation**: (`req`: `Request`, `res`: `Response`, `args`: `ExecutionArgs`, `result`: [`OperationResult`](../README.md#operationresult)) => `void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
+• `Optional` **onOperation**: (`ctx`: `Context`, `req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `ExecutionArgs`, `result`: [`OperationResult`](../README.md#operationresult)) => `void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
 
 #### Type declaration
 
-▸ (`req`, `res`, `args`, `result`): `void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
+▸ (`ctx`, `req`, `args`, `result`): `void` \| [`OperationResult`](../README.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../README.md#operationresult)\>
 
 Executed after the operation call resolves. For streaming
 operations, triggering this callback does not necessarely
@@ -259,22 +201,18 @@ and that the client is now subscribed.
 The `OperationResult` argument is the result of operation
 execution. It can be an iterator or already a value.
 
-Use this callback to listen for GraphQL operations and
-execution result manipulation.
+If you want the single result and the events from a streaming
+operation, use the `onNext` callback.
 
-If you want to respond to the client with a custom status or body,
-you should do so using the provided `res` argument which will stop
-further execution.
-
-First argument, the request, is always the GraphQL operation
-request.
+If `onSubscribe` returns an `OperationResult`, this hook
+will NOT be called.
 
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `Request` |
-| `res` | `Response` |
+| `ctx` | `Context` |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> |
 | `args` | `ExecutionArgs` |
 | `result` | [`OperationResult`](../README.md#operationresult) |
 
@@ -286,11 +224,11 @@ ___
 
 ### onSubscribe
 
-• `Optional` **onSubscribe**: (`req`: `Request`, `res`: `Response`, `params`: [`RequestParams`](RequestParams.md)) => `void` \| `ExecutionArgs` \| `Promise`<`void` \| `ExecutionArgs`\>
+• `Optional` **onSubscribe**: (`req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](RequestParams.md)) => `void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\>\>
 
 #### Type declaration
 
-▸ (`req`, `res`, `params`): `void` \| `ExecutionArgs` \| `Promise`<`void` \| `ExecutionArgs`\>
+▸ (`req`, `params`): `void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\>\>
 
 The subscribe callback executed right after processing the request
 before proceeding with the GraphQL operation execution.
@@ -314,19 +252,18 @@ and supply the appropriate GraphQL operation execution arguments.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | `Request` |
-| `res` | `Response` |
+| `req` | [`Request`](Request.md)<`RequestRaw`, `RequestContext`\> |
 | `params` | [`RequestParams`](RequestParams.md) |
 
 ##### Returns
 
-`void` \| `ExecutionArgs` \| `Promise`<`void` \| `ExecutionArgs`\>
+`void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../README.md#response) \| [`OperationResult`](../README.md#operationresult) \| [`OperationArgs`](../README.md#operationargs)<`Context`\>\>
 
 ___
 
 ### schema
 
-• `Optional` **schema**: `GraphQLSchema` \| (`req`: `Request`, `args`: `Omit`<`ExecutionArgs`, ``"schema"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
+• `Optional` **schema**: `GraphQLSchema` \| (`req`: [`Request`](Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `Pick`<[`OperationArgs`](../README.md#operationargs)<`Context`\>, ``"document"`` \| ``"contextValue"`` \| ``"operationName"`` \| ``"variableValues"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
 
 The GraphQL schema on which the operations will
 be executed and validated against.
@@ -343,7 +280,7 @@ ___
 
 ### subscribe
 
-• `Optional` **subscribe**: (`args`: `ExecutionArgs`) => [`OperationResult`](../README.md#operationresult)
+• `Optional` **subscribe**: (`args`: [`OperationArgs`](../README.md#operationargs)<`Context`\>) => [`OperationResult`](../README.md#operationresult)
 
 #### Type declaration
 
@@ -356,7 +293,7 @@ used to execute the subscription operation.
 
 | Name | Type |
 | :------ | :------ |
-| `args` | `ExecutionArgs` |
+| `args` | [`OperationArgs`](../README.md#operationargs)<`Context`\> |
 
 ##### Returns
 

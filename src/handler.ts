@@ -278,6 +278,28 @@ export interface HandlerOptions<
     | OperationArgs<Context>
     | void;
   /**
+   * Executed after the operation call resolves. For streaming
+   * operations, triggering this callback does not necessarely
+   * mean that there is already a result available - it means
+   * that the subscription process for the stream has resolved
+   * and that the client is now subscribed.
+   *
+   * The `OperationResult` argument is the result of operation
+   * execution. It can be an iterator or already a value.
+   *
+   * If you want the single result and the events from a streaming
+   * operation, use the `onNext` callback.
+   *
+   * If `onSubscribe` returns an `OperationResult`, this hook
+   * will NOT be called.
+   */
+  onOperation?: (
+    ctx: Context,
+    req: Request<RequestRaw, RequestContext>,
+    args: ExecutionArgs,
+    result: OperationResult,
+  ) => Promise<OperationResult | void> | OperationResult | void;
+  /**
    * Executed after an operation has emitted a result right before
    * that result has been sent to the client.
    *
@@ -368,6 +390,7 @@ export function createHandler<
     onConnect,
     context,
     onSubscribe,
+    onOperation,
     onNext,
     onComplete,
   } = options;
@@ -701,7 +724,17 @@ export function createHandler<
     return {
       ctx: args.contextValue,
       async perform() {
-        return operation === 'subscription' ? subscribe(args) : execute(args);
+        const result = await (operation === 'subscription'
+          ? subscribe(args)
+          : execute(args));
+        const maybeResult = await onOperation?.(
+          args.contextValue,
+          req,
+          args,
+          result,
+        );
+        if (maybeResult) return maybeResult;
+        return result;
       },
     };
   }
