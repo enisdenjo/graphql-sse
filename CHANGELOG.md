@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/enisdenjo/graphql-sse/compare/v1.3.1...v1.3.2) (2022-12-06)
+
+
+### Bug Fixes
+
+* **handler:** Correct typings and support for http2 ([08d6ca3](https://github.com/enisdenjo/graphql-sse/commit/08d6ca39d4cd178b9262af342266bb8fbd9268d1)), closes [#38](https://github.com/enisdenjo/graphql-sse/issues/38)
+
 ## [1.3.1](https://github.com/enisdenjo/graphql-sse/compare/v1.3.0...v1.3.1) (2022-12-05)
 
 
