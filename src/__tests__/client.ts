@@ -347,3 +347,57 @@ describe('single connection mode', () => {
     });
   });
 });
+
+describe('distinct connections mode', () => {
+  it('should not call complete after subscription error', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: '}}',
+    });
+
+    await sub.waitForError();
+
+    await Promise.race([
+      sleep(20),
+      sub.waitForComplete().then(() => {
+        throw new Error("Shouldn't have completed");
+      }),
+    ]);
+  });
+
+  it('should establish separate connections for each subscribe', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      retryAttempts: 0,
+      fetchFn: fetch,
+    });
+
+    const sub1 = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    const req1 = await waitForRequest();
+
+    const sub2 = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    const req2 = await waitForRequest();
+
+    sub1.dispose();
+    await Promise.race([sub1.throwOnError(), sub1.waitForComplete()]);
+    expect(req1.signal.aborted).toBeTruthy();
+
+    sub2.dispose();
+    await Promise.race([sub2.throwOnError(), sub2.waitForComplete()]);
+    expect(req2.signal.aborted).toBeTruthy();
+  });
+});
