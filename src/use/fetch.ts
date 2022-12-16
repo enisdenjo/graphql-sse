@@ -35,6 +35,7 @@ export function createHandler<Context extends OperationContext = undefined>(
       return new api.Response(resp, init);
     }
 
+    let cancelled = false;
     const enc = new api.TextEncoder();
     const stream = new api.ReadableStream({
       async pull(controller) {
@@ -47,12 +48,23 @@ export function createHandler<Context extends OperationContext = undefined>(
         }
       },
       async cancel(e) {
+        cancelled = true;
         await resp.return(e);
       },
     });
 
-    // make sure the signal is connected as well
-    req.signal.addEventListener('abort', () => resp.return());
+    if (req.signal.aborted) {
+      // TODO: can this check be before the readable stream is created?
+      // it's possible that the request was aborted before listening
+      resp.return(undefined);
+    } else {
+      // make sure to connect the signals as well
+      req.signal.addEventListener('abort', () => {
+        if (!cancelled) {
+          resp.return();
+        }
+      });
+    }
 
     return new api.Response(stream, init);
   };
