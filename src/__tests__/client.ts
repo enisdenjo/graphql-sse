@@ -4,6 +4,10 @@ import { tsubscribe } from './utils/tsubscribe';
 import { pong } from './fixtures/simple';
 import { sleep } from './utils/testkit';
 
+function noop() {
+  // do nothing
+}
+
 it('should use the provided headers', async () => {
   // single connection mode
   let headers!: Headers;
@@ -319,6 +323,27 @@ describe('single connection mode', () => {
       await sleep(10);
       // but will disconnect after timeout
       expect(streamReq.signal.aborted).toBeTruthy();
+    });
+  });
+
+  describe('non-lazy', () => {
+    it('should connect as soon as the client is created and disconnect when disposed', async () => {
+      const { fetch, waitForRequest } = createTFetch();
+
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+        lazy: false,
+        onNonLazyError: noop, // avoiding premature close errors
+      });
+
+      const req = await waitForRequest();
+
+      client.dispose();
+
+      expect(req.signal.aborted).toBeTruthy();
     });
   });
 });
