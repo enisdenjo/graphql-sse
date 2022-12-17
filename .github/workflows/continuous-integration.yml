@@ -59,4 +59,5 @@ jobs:
       - name: Install
         run: yarn install --immutable
       - name: Test
-        run: yarn test --forceExit
+        timeout-minutes: 1 # detectOpenHandles will probably hang if leaking
+        run: yarn test --detectOpenHandles
