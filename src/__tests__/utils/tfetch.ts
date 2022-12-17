@@ -6,7 +6,7 @@ import { injectTestKit, queue, TestKit } from './testkit';
 export interface TFetch extends TestKit<Request, FetchAPI> {
   fetch: typeof fetch;
   waitForRequest(): Promise<Request>;
-  dispose(): void;
+  dispose(): Promise<void>;
 }
 
 export function createTFetch(
@@ -35,11 +35,15 @@ export function createTFetch(
     waitForRequest() {
       return onRequest.next();
     },
-    dispose() {
-      // dispose in next tick to allow fetches to complete
-      setTimeout(() => {
-        ctrls.forEach((ctrl) => ctrl.abort());
-      }, 0);
+    async dispose() {
+      return new Promise((resolve) => {
+        // dispose in next tick to allow pending fetches to complete
+        setTimeout(() => {
+          ctrls.forEach((ctrl) => ctrl.abort());
+          // finally resolve in next tick to flush the aborts
+          setTimeout(resolve, 0);
+        }, 0);
+      });
     },
   };
 }

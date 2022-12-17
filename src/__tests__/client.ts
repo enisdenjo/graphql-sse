@@ -147,7 +147,7 @@ it('should report error to sink if server goes away', async () => {
     query: `subscription { ping(key: "${Math.random()}") }`,
   });
 
-  dispose();
+  await dispose();
 
   await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
     `[NetworkError: Connection closed while having active streams]`,
@@ -168,7 +168,7 @@ it('should report error to sink if server goes away during generator emission', 
   });
   await sub.waitForNext();
 
-  dispose();
+  await dispose();
 
   await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
     `[NetworkError: Connection closed while having active streams]`,
