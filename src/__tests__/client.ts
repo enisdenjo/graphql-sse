@@ -388,19 +388,19 @@ describe('distinct connections mode', () => {
     const sub1 = tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
-    const req1 = await waitForRequest();
+    const stream1 = await waitForRequest();
 
     const sub2 = tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
-    const req2 = await waitForRequest();
+    const stream2 = await waitForRequest();
 
     sub1.dispose();
     await Promise.race([sub1.throwOnError(), sub1.waitForComplete()]);
-    expect(req1.signal.aborted).toBeTruthy();
+    expect(stream1.signal.aborted).toBeTruthy();
 
     sub2.dispose();
     await Promise.race([sub2.throwOnError(), sub2.waitForComplete()]);
-    expect(req2.signal.aborted).toBeTruthy();
+    expect(stream2.signal.aborted).toBeTruthy();
   });
 });
