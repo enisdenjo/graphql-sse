@@ -403,4 +403,30 @@ describe('distinct connections mode', () => {
     await Promise.race([sub2.throwOnError(), sub2.waitForComplete()]);
     expect(stream2.signal.aborted).toBeTruthy();
   });
+
+  it('should complete all connections when client disposes', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      retryAttempts: 0,
+      fetchFn: fetch,
+    });
+
+    tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    const stream1 = await waitForRequest();
+
+    tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    const stream2 = await waitForRequest();
+
+    client.dispose();
+
+    expect(stream1.signal.aborted).toBeTruthy();
+    expect(stream2.signal.aborted).toBeTruthy();
+  });
 });
