@@ -376,7 +376,7 @@ describe('distinct connections mode', () => {
   });
 
   it('should establish separate connections for each subscribe', async () => {
-    const { fetch, waitForRequest } = createTFetch();
+    const { fetch, waitForRequest, waitForOperation } = createTFetch();
 
     const client = createClient({
       singleConnection: false,
@@ -388,11 +388,13 @@ describe('distinct connections mode', () => {
     const sub1 = tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
+    await waitForOperation();
     const stream1 = await waitForRequest();
 
     const sub2 = tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
+    await waitForOperation();
     const stream2 = await waitForRequest();
 
     sub1.dispose();
@@ -405,7 +407,7 @@ describe('distinct connections mode', () => {
   });
 
   it('should complete all connections when client disposes', async () => {
-    const { fetch, waitForRequest } = createTFetch();
+    const { fetch, waitForRequest, waitForOperation } = createTFetch();
 
     const client = createClient({
       singleConnection: false,
@@ -417,11 +419,13 @@ describe('distinct connections mode', () => {
     tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
+    await waitForOperation();
     const stream1 = await waitForRequest();
 
     tsubscribe(client, {
       query: `subscription { ping(key: "${Math.random()}") }`,
     });
+    await waitForOperation();
     const stream2 = await waitForRequest();
 
     client.dispose();
