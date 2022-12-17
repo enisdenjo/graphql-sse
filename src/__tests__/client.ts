@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
@@ -432,5 +433,130 @@ describe('distinct connections mode', () => {
 
     expect(stream1.signal.aborted).toBeTruthy();
     expect(stream2.signal.aborted).toBeTruthy();
+  });
+});
+
+describe('retries', () => {
+  it('should keep retrying network errors until the retry attempts are exceeded', async () => {
+    let tried = 0;
+    const { fetch } = createTFetch({
+      authenticate() {
+        tried++;
+        return [null, { status: 403, statusText: 'Forbidden' }];
+      },
+    });
+
+    // non-lazy
+    tried = 0;
+    await new Promise<void>((resolve) => {
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 2,
+        retry: () => Promise.resolve(),
+        lazy: false,
+        onNonLazyError: (err) => {
+          expect(err).toMatchInlineSnapshot(
+            `[NetworkError: Server responded with 403: Forbidden]`,
+          );
+          expect(tried).toBe(3); // initial + 2 retries
+          resolve();
+          client.dispose();
+        },
+      });
+    });
+
+    // lazy
+    tried = 0;
+    let client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
+    });
+    let sub = tsubscribe(client, { query: '{ getValue }' });
+    await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 403: Forbidden]`,
+    );
+    expect(tried).toBe(3); // initial + 2 retries
+    client.dispose();
+
+    // distinct connections mode
+    tried = 0;
+    client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
+    });
+    sub = tsubscribe(client, { query: '{ getValue }' });
+    await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 403: Forbidden]`,
+    );
+    expect(tried).toBe(3); // initial + 2 retries
+    client.dispose();
+  });
+
+  it('should retry network errors even if they occur during event emission', async () => {
+    const { fetch, dispose } = createTFetch();
+
+    const retryFn = jest.fn(async () => {
+      // noop
+    });
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 1,
+      retry: retryFn,
+    });
+
+    const sub = tsubscribe(client, {
+      query: 'subscription { slowGreetings }',
+    });
+
+    await sub.waitForNext();
+
+    await dispose();
+
+    expect(retryFn).toHaveBeenCalled();
+
+    client.dispose();
+  });
+
+  it('should not retry fatal errors occurring during event emission', async () => {
+    const { fetch } = createTFetch();
+
+    let msgsCount = 0;
+    const fatalErr = new Error('Boom, I am fatal');
+    const retryFn = jest.fn(async () => {
+      // noop
+    });
+
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 1,
+      retry: retryFn,
+      onMessage: () => {
+        // onMessage is in the middle of stream processing, throwing from it is considered fatal
+        msgsCount++;
+        if (msgsCount > 3) {
+          throw fatalErr;
+        }
+      },
+    });
+
+    const sub = tsubscribe(client, {
+      query: 'subscription { slowGreetings }',
+    });
+
+    await sub.waitForNext();
+
+    await expect(sub.waitForError()).resolves.toBe(fatalErr);
+
+    expect(retryFn).not.toHaveBeenCalled();
   });
 });
