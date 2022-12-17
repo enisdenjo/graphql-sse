@@ -339,11 +339,14 @@ describe('single connection mode', () => {
         onNonLazyError: noop, // avoiding premature close errors
       });
 
-      const req = await waitForRequest();
+      // put
+      await waitForRequest();
+      // stream
+      const stream = await waitForRequest();
 
       client.dispose();
 
-      expect(req.signal.aborted).toBeTruthy();
+      expect(stream.signal.aborted).toBeTruthy();
     });
   });
 });
