@@ -47,6 +47,11 @@
       "require": "./lib/use/http.js",
       "import": "./lib/use/http.mjs"
     },
+    "./lib/use/http2": {
+      "types": "./lib/use/http2.d.ts",
+      "require": "./lib/use/http2.js",
+      "import": "./lib/use/http2.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",

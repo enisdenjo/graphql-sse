@@ -11,3 +11,4 @@ graphql-sse
 - [handler](modules/handler.md)
 - [use/fetch](modules/use_fetch.md)
 - [use/http](modules/use_http.md)
+- [use/http2](modules/use_http2.md)
