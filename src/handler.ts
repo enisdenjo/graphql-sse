@@ -1048,10 +1048,13 @@ async function parseReq(
         if (!isObject(data)) {
           throw new Error('JSON body must be an object');
         }
-        // anys are ok now since the values will be type checked below
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
         params.operationName = data.operationName as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
         params.query = data.query as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
         params.variables = data.variables as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
         params.extensions = data.extensions as any;
         break;
       }
