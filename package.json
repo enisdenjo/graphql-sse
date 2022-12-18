@@ -55,7 +55,9 @@
   },
   "scripts": {
     "gendocs": "typedoc --options typedoc.js src/",
-    "lint": "eslint 'src'",
+    "lint:eslint": "eslint 'src'",
+    "lint:prettier": "prettier -c .",
+    "lint": "yarn lint:eslint && yarn lint:prettier",
     "type-check": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build:esm": "tsc -b tsconfig.esm.json && node scripts/esm-post-process.mjs",
@@ -89,7 +91,6 @@
     "babel-jest": "^28.1.3",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.2.1",
     "eventsource": "^2.0.2",
     "express": "^4.18.2",
     "fastify": "^4.10.2",

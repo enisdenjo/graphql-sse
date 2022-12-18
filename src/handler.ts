@@ -49,7 +49,6 @@ export type NodeResponse = ServerResponse | Http2ServerResponse;
  * @category Server
  */
 export type ExecutionContext =
-  // eslint-disable-next-line @typescript-eslint/ban-types
   | object // you can literally pass "any" JS object as the context value
   | symbol
   | number
