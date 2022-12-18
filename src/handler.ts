@@ -777,6 +777,9 @@ export function createHandler<
             status: 200,
             statusText: 'OK',
             headers: {
+              connection: 'keep-alive',
+              'cache-control': 'no-cache',
+              'content-encoding': 'none',
               'content-type': 'text/event-stream; charset=utf-8',
             },
           },
@@ -803,6 +806,9 @@ export function createHandler<
           status: 200,
           statusText: 'OK',
           headers: {
+            connection: 'keep-alive',
+            'cache-control': 'no-cache',
+            'content-encoding': 'none',
             'content-type': 'text/event-stream; charset=utf-8',
           },
         },
