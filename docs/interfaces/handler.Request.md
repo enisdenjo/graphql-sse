@@ -1,6 +1,8 @@
-[graphql-sse](../README.md) / Request
+[graphql-sse](../README.md) / [handler](../modules/handler.md) / Request
 
 # Interface: Request<Raw, Context\>
+
+[handler](../modules/handler.md).Request
 
 Server agnostic request interface containing the raw request
 which is server dependant.
@@ -16,12 +18,12 @@ which is server dependant.
 
 ### Properties
 
-- [body](Request.md#body)
-- [context](Request.md#context)
-- [headers](Request.md#headers)
-- [method](Request.md#method)
-- [raw](Request.md#raw)
-- [url](Request.md#url)
+- [body](handler.Request.md#body)
+- [context](handler.Request.md#context)
+- [headers](handler.Request.md#headers)
+- [method](handler.Request.md#method)
+- [raw](handler.Request.md#raw)
+- [url](handler.Request.md#url)
 
 ## Properties
 
@@ -48,7 +50,7 @@ ___
 
 ### headers
 
-• `Readonly` **headers**: [`RequestHeaders`](../README.md#requestheaders)
+• `Readonly` **headers**: [`RequestHeaders`](../modules/handler.md#requestheaders)
 
 ___
 

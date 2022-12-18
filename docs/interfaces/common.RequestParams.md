@@ -1,6 +1,8 @@
-[graphql-sse](../README.md) / RequestParams
+[graphql-sse](../README.md) / [common](../modules/common.md) / RequestParams
 
 # Interface: RequestParams
+
+[common](../modules/common.md).RequestParams
 
 Parameters for GraphQL's request for execution.
 
@@ -10,10 +12,10 @@ Reference: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOv
 
 ### Properties
 
-- [extensions](RequestParams.md#extensions)
-- [operationName](RequestParams.md#operationname)
-- [query](RequestParams.md#query)
-- [variables](RequestParams.md#variables)
+- [extensions](common.RequestParams.md#extensions)
+- [operationName](common.RequestParams.md#operationname)
+- [query](common.RequestParams.md#query)
+- [variables](common.RequestParams.md#variables)
 
 ## Properties
 

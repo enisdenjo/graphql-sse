@@ -2,6 +2,7 @@
  * @type {Partial<import('typedoc').TypeDocOptions>}
  */
 const opts = {
+  entryPointStrategy: 'expand',
   out: './docs',
   readme: 'none',
   plugin: ['typedoc-plugin-markdown'],
