@@ -1,16 +1,16 @@
 import { schema } from '../fixtures/simple';
 import { HandlerOptions } from '../../handler';
-import { createHandler, FetchAPI } from '../../use/fetch';
+import { createHandler, RequestContext } from '../../use/fetch';
 import { injectTestKit, queue, TestKit } from './testkit';
 
-export interface TFetch extends TestKit<Request, FetchAPI> {
+export interface TFetch extends TestKit<Request, RequestContext> {
   fetch: typeof fetch;
   waitForRequest(): Promise<Request>;
   dispose(): Promise<void>;
 }
 
 export function createTFetch(
-  opts: Partial<HandlerOptions<Request, FetchAPI>> = {},
+  opts: Partial<HandlerOptions<Request, RequestContext>> = {},
 ): TFetch {
   const testkit = injectTestKit(opts);
   const onRequest = queue<Request>();

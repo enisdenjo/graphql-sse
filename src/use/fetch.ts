@@ -4,17 +4,17 @@ import {
   OperationContext,
 } from '../handler';
 
-export interface FetchAPI {
+export interface RequestContext {
   Response: typeof Response;
   ReadableStream: typeof ReadableStream;
   TextEncoder: typeof TextEncoder;
 }
 
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Request, FetchAPI, Context>,
-  fetchApi: Partial<FetchAPI> = {},
+  options: HandlerOptions<Request, RequestContext, Context>,
+  fetchApi: Partial<RequestContext> = {},
 ): (req: Request) => Promise<Response> {
-  const api: FetchAPI = {
+  const api: RequestContext = {
     Response: fetchApi.Response || Response,
     TextEncoder: fetchApi.TextEncoder || TextEncoder,
     ReadableStream: fetchApi.ReadableStream || ReadableStream,
