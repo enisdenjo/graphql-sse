@@ -12,11 +12,37 @@
 
 - [createHandler](use_fetch.md#createhandler)
 
-## Functions
+## Server/fetch
 
 ### createHandler
 
-▸ **createHandler**<`Context`\>(`options`, `fetchApi?`): (`req`: `Request`) => `Promise`<`Response`\>
+▸ **createHandler**<`Context`\>(`options`, `reqCtx?`): (`req`: `Request`) => `Promise`<`Response`\>
+
+The ready-to-use fetch handler. To be used with your favourite fetch
+framework, in a lambda function, or have deploy to the edge.
+
+Errors thrown from **any** of the provided options or callbacks (or even due to
+library misuse or potential bugs) will reject the handler's promise. They are
+considered internal errors and you should take care of them accordingly.
+
+For production environments, its recommended not to transmit the exact internal
+error details to the client, but instead report to an error logging tool or simply
+the console.
+
+```ts
+import { createHandler } from 'graphql-sse/lib/use/fetch';
+import { schema } from './my-schema';
+
+const handler = createHandler({ schema });
+
+export async function fetch(req: Request): Promise<Response> {
+  try {
+    return await handler(req);
+  } catch (err) {
+    return new Response(JSON.stringify(err), { status: 500 });
+  }
+}
+```
 
 #### Type parameters
 
@@ -29,7 +55,7 @@
 | Name | Type |
 | :------ | :------ |
 | `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_fetch.RequestContext.md), `Context`\> |
-| `fetchApi` | `Partial`<[`RequestContext`](../interfaces/use_fetch.RequestContext.md)\> |
+| `reqCtx` | `Partial`<[`RequestContext`](../interfaces/use_fetch.RequestContext.md)\> |
 
 #### Returns
 
