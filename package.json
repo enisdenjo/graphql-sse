@@ -42,6 +42,11 @@
       "require": "./lib/use/fetch.js",
       "import": "./lib/use/fetch.mjs"
     },
+    "./lib/use/http": {
+      "types": "./lib/use/http.d.ts",
+      "require": "./lib/use/http.js",
+      "import": "./lib/use/http.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
