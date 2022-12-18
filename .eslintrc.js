@@ -1,4 +1,7 @@
-module.exports = {
+/**
+ * @type {import('eslint').Linter.Config}
+ */
+const opts = {
   env: {
     es2020: true,
     node: true,
@@ -22,3 +25,4 @@ module.exports = {
     ],
   },
 };
+module.exports = opts;

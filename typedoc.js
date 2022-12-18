@@ -1,7 +1,10 @@
-module.exports = {
+/**
+ * @type {Partial<import('typedoc').TypeDocOptions>}
+ */
+const opts = {
   out: './docs',
   readme: 'none',
-  plugin: 'typedoc-plugin-markdown',
+  plugin: ['typedoc-plugin-markdown'],
   excludeExternals: true,
   excludePrivate: true,
   disableSources: true,
@@ -9,3 +12,4 @@ module.exports = {
   githubPages: false,
   exclude: ['**/index.ts', '**/utils.ts', '**/parser.ts', '**/__tests__/**/*'],
 };
+module.exports = opts;

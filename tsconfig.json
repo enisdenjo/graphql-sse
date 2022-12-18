@@ -11,5 +11,13 @@
     "useUnknownInCatchVariables": false,
     "checkJs": true
   },
-  "include": ["src", "scripts", "rollup.config.ts"]
+  "include": [
+    "src",
+    "scripts",
+    "rollup.config.ts",
+    "babel.config.js",
+    "jest.config.js",
+    ".eslintrc.js",
+    "typedoc.js"
+  ]
 }
