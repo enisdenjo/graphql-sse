@@ -57,6 +57,11 @@
       "require": "./lib/use/express.js",
       "import": "./lib/use/express.mjs"
     },
+    "./lib/use/fastify": {
+      "types": "./lib/use/fastify.d.ts",
+      "require": "./lib/use/fastify.js",
+      "import": "./lib/use/fastify.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
@@ -112,6 +117,7 @@
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "express": "^4.18.2",
+    "fastify": "^4.10.2",
     "glob": "^8.0.3",
     "graphql": "^16.6.0",
     "jest": "^29.3.1",

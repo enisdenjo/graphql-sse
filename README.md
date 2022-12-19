@@ -136,7 +136,7 @@ console.log('Listening to port 4000');
 ##### With [`express`](https://expressjs.com)
 
 ```js
-import express from 'express';
+import express from 'express'; // yarn add express
 import { createHandler } from 'graphql-sse/lib/use/express';
 import { schema } from './previous-step';
 
@@ -164,6 +164,39 @@ app.use('/graphql/stream', async (req, res) => {
 });
 
 server.listen(4000);
+console.log('Listening to port 4000');
+```
+
+##### With [`fastify`](https://www.fastify.io)
+
+```js
+import Fastify from 'fastify'; // yarn add fastify
+import { createHandler } from 'graphql-sse/lib/use/fastify';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create a fastify app
+const fastify = Fastify();
+
+// Serve all methods on `/graphql/stream`
+fastify.all('/graphql/stream', async (req, reply) => {
+  try {
+    await handler(req, reply);
+  } catch (err) {
+    console.error(err);
+    // or
+    Sentry.captureException(err);
+
+    if (!reply.raw.headersSent) {
+      // could happen that some hook throws
+      // after the headers have been flushed
+      reply.code(500).send();
+    }
+  }
+});
+
+fastify.listen({ port: 4000 });
 console.log('Listening to port 4000');
 ```
 
