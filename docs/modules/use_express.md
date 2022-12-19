@@ -29,7 +29,7 @@ error details to the client, but instead report to an error logging tool or simp
 the console.
 
 ```ts
-import express from 'express';
+import express from 'express'; // yarn add express
 import { createHandler } from 'graphql-sse/lib/use/express';
 import { schema } from './my-graphql';
 
