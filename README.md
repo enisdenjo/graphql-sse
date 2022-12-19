@@ -133,6 +133,40 @@ server.listen(4000);
 console.log('Listening to port 4000');
 ```
 
+##### With [`express`](https://expressjs.com)
+
+```js
+import express from 'express';
+import { createHandler } from 'graphql-sse/lib/use/express';
+import { schema } from './previous-step';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create an express app
+const app = express();
+
+// Serve all methods on `/graphql/stream`
+app.use('/graphql/stream', async (req, res) => {
+  try {
+    await handler(req, res);
+  } catch (err) {
+    console.error(err);
+    // or
+    Sentry.captureException(err);
+
+    if (!res.headersSent) {
+      // could happen that some hook throws
+      // after the headers have been flushed
+      res.writeHead(500, 'Internal Server Error').end();
+    }
+  }
+});
+
+server.listen(4000);
+console.log('Listening to port 4000');
+```
+
 ##### With [`Deno`](https://deno.land/)
 
 ```ts

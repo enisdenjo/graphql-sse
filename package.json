@@ -52,6 +52,11 @@
       "require": "./lib/use/http2.js",
       "import": "./lib/use/http2.mjs"
     },
+    "./lib/use/express": {
+      "types": "./lib/use/express.d.ts",
+      "require": "./lib/use/express.js",
+      "import": "./lib/use/express.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
@@ -98,7 +103,7 @@
     "@semantic-release/git": "^10.0.1",
     "@types/eslint": "^8.4.10",
     "@types/eventsource": "^1.1.10",
-    "@types/express": "^4.17.14",
+    "@types/express": "^4.17.15",
     "@types/glob": "^8.0.0",
     "@types/jest": "^29.2.4",
     "@typescript-eslint/eslint-plugin": "^5.45.1",
@@ -106,6 +111,7 @@
     "babel-jest": "^29.3.1",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
+    "express": "^4.18.2",
     "glob": "^8.0.3",
     "graphql": "^16.6.0",
     "jest": "^29.3.1",
