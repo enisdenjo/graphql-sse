@@ -22,7 +22,7 @@ yarn add graphql-sse
 
 #### Create a GraphQL schema
 
-```ts
+```js
 import { GraphQLSchema, GraphQLObjectType, GraphQLString } from 'graphql';
 
 /**
@@ -65,19 +65,29 @@ const schema = new GraphQLSchema({
 
 ##### With [`http`](https://nodejs.org/api/http.html)
 
-```ts
+```js
 import http from 'http';
-import { createHandler } from 'graphql-sse';
+import { createHandler } from 'graphql-sse/lib/use/http';
+import { schema } from './previous-step';
 
 // Create the GraphQL over SSE handler
-const handler = createHandler({
-  schema, // from the previous step
-});
+const handler = createHandler({ schema });
 
-// Create a HTTP server using the handler on `/graphql/stream`
-const server = http.createServer((req, res) => {
-  if (req.url.startsWith('/graphql/stream')) return handler(req, res);
-  return res.writeHead(404).end();
+// Create an HTTP server using the handler on `/graphql/stream`
+const server = http.createServer(async (req, res) => {
+  try {
+    if (req.url.startsWith('/graphql/stream')) {
+      return handler(req, res);
+    }
+    return res.writeHead(404).end();
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) {
+      // could happen that some hook throws
+      // after the headers have been flushed
+      res.writeHead(500, 'Internal Server Error').end();
+    }
+  }
 });
 
 server.listen(4000);
@@ -93,75 +103,96 @@ $ openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
   -keyout localhost-privkey.pem -out localhost-cert.pem
 ```
 
-```ts
+```js
 import fs from 'fs';
 import http2 from 'http2';
-import { createHandler } from 'graphql-sse';
+import { createHandler } from 'graphql-sse/lib/use/http2';
+import { schema } from './previous-step';
 
 // Create the GraphQL over SSE handler
-const handler = createHandler({
-  schema, // from the previous step
-});
+const handler = createHandler({ schema });
 
-// Create a HTTP/2 server using the handler on `/graphql/stream`
-const server = http2.createSecureServer(
-  {
-    key: fs.readFileSync('localhost-privkey.pem'),
-    cert: fs.readFileSync('localhost-cert.pem'),
-  },
-  (req, res) => {
-    if (req.url.startsWith('/graphql/stream')) return handler(req, res);
+// Create an HTTP server using the handler on `/graphql/stream`
+const server = http.createServer(async (req, res) => {
+  try {
+    if (req.url.startsWith('/graphql/stream')) {
+      return handler(req, res);
+    }
     return res.writeHead(404).end();
-  },
-);
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) {
+      // could happen that some hook throws
+      // after the headers have been flushed
+      res.writeHead(500, 'Internal Server Error').end();
+    }
+  }
+});
 
 server.listen(4000);
 console.log('Listening to port 4000');
 ```
 
-##### With [`express`](https://expressjs.com/)
+##### With [`Deno`](https://deno.land/)
 
 ```ts
-import express from 'express'; // yarn add express
-import { createHandler } from 'graphql-sse';
+import { serve } from 'https://deno.land/std/http/server.ts';
+import { createHandler } from 'https://esm.sh/graphql-sse/lib/use/fetch';
+import { schema } from './previous-step';
 
-// Create the GraphQL over SSE handler
+// Create the GraphQL over SSE native fetch handler
 const handler = createHandler({ schema });
 
-// Create an express app serving all methods on `/graphql/stream`
-const app = express();
-app.use('/graphql/stream', handler);
-
-app.listen(4000);
-console.log('Listening to port 4000');
+// Serve on `/graphql/stream` using the handler
+await serve(
+  (req: Request) => {
+    try {
+      const [path, _search] = req.url.split('?');
+      if (path.endsWith('/graphql/stream')) {
+        return await handler(req);
+      }
+      return new Response(null, { status: 404 });
+    } catch (err) {
+      console.error(err);
+      return new Response(null, { status: 500 });
+    }
+  },
+  {
+    port: 4000, // Listening to port 4000
+  },
+);
 ```
 
-##### With [`fastify`](https://www.fastify.io/)
+##### With [`Bun`](https://bun.sh/)
 
-```ts
-import Fastify from 'fastify'; // yarn add fastify
-import { createHandler } from 'graphql-sse';
+```js
+import { createHandler } from 'graphql-sse/lib/use/fetch'; // bun install graphql-sse
+import { schema } from './previous-step';
 
-// Create the GraphQL over SSE handler
+// Create the GraphQL over SSE native fetch handler
 const handler = createHandler({ schema });
 
-// Create a fastify instance serving all methods on `/graphql/stream`
-const fastify = Fastify();
-fastify.all('/graphql/stream', (req, res) =>
-  handler(
-    req.raw,
-    res.raw,
-    req.body, // fastify reads the body for you
-  ),
-);
-
-fastify.listen(4000);
-console.log('Listening to port 4000');
+// Serve on `/graphql/stream` using the handler
+export default {
+  port: 4000, // Listening to port 4000
+  async fetch(req) {
+    try {
+      const [path, _search] = req.url.split('?');
+      if (path.endsWith('/graphql/stream')) {
+        return await handler(req);
+      }
+      return new Response(null, { status: 404 });
+    } catch (err) {
+      console.error(err);
+      return new Response(null, { status: 500 });
+    }
+  },
+};
 ```
 
 #### Use the client
 
-```ts
+```js
 import { createClient } from 'graphql-sse';
 
 const client = createClient({
@@ -221,13 +252,13 @@ const client = createClient({
 <summary><a href="#promise">🔗</a> Client usage with Promise</summary>
 
 ```ts
-import { createClient, SubscribePayload } from 'graphql-sse';
+import { createClient, RequestParams } from 'graphql-sse';
 
 const client = createClient({
   url: 'http://hey.there:4000/graphql/stream',
 });
 
-async function execute<T>(payload: SubscribePayload) {
+export async function execute<T>(payload: RequestParams) {
   return new Promise<T>((resolve, reject) => {
     let result: T;
     client.subscribe<T>(payload, {
@@ -257,22 +288,19 @@ async function execute<T>(payload: SubscribePayload) {
 <details id="async-iterator">
 <summary><a href="#async-iterator">🔗</a> Client usage with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator">AsyncIterator</a></summary>
 
-```ts
-import { createClient, SubscribePayload } from 'graphql-sse';
+```js
+import { createClient, RequestParams } from 'graphql-sse';
 
 const client = createClient({
   url: 'http://iterators.ftw:4000/graphql/stream',
 });
 
-function subscribe<T>(payload: SubscribePayload): AsyncGenerator<T> {
-  let deferred: {
-    resolve: (done: boolean) => void;
-    reject: (err: unknown) => void;
-  } | null = null;
-  const pending: T[] = [];
-  let throwMe: unknown = null,
+export function subscribe(payload) {
+  let deferred = null;
+  const pending = [];
+  let throwMe = null,
     done = false;
-  const dispose = client.subscribe<T>(payload, {
+  const dispose = client.subscribe(payload, {
     next: (data) => {
       pending.push(data);
       deferred?.resolve(false);
@@ -293,17 +321,21 @@ function subscribe<T>(payload: SubscribePayload): AsyncGenerator<T> {
     async next() {
       if (done) return { done: true, value: undefined };
       if (throwMe) throw throwMe;
-      if (pending.length) return { value: pending.shift()! };
-      return (await new Promise<boolean>(
+      if (pending.length) return { value: pending.shift() };
+      return (await new Promise(
         (resolve, reject) => (deferred = { resolve, reject }),
       ))
         ? { done: true, value: undefined }
-        : { value: pending.shift()! };
+        : { value: pending.shift() };
     },
     async throw(err) {
-      throw err;
+      throwMe = err;
+      deferred?.reject(throwMe);
+      return { done: true, value: undefined };
     },
     async return() {
+      done = true;
+      deferred?.resolve(true);
       dispose();
       return { done: true, value: undefined };
     },
@@ -328,7 +360,7 @@ function subscribe<T>(payload: SubscribePayload): AsyncGenerator<T> {
 <details id="observable">
 <summary><a href="#observable">🔗</a> Client usage with <a href="https://github.com/tc39/proposal-observable">Observable</a></summary>
 
-```ts
+```js
 import { Observable } from 'relay-runtime';
 // or
 import { Observable } from '@apollo/client/core';
@@ -342,7 +374,7 @@ const client = createClient({
   url: 'http://graphql.loves:4000/observables',
 });
 
-function toObservable(operation) {
+export function toObservable(operation) {
   return new Observable((observer) =>
     client.subscribe(operation, {
       next: (data) => observer.next(data),
@@ -370,7 +402,7 @@ subscription.unsubscribe();
 <details id="relay">
 <summary><a href="#relay">🔗</a> Client usage with <a href="https://relay.dev">Relay</a></summary>
 
-```ts
+```js
 import { GraphQLError } from 'graphql';
 import {
   Network,
@@ -416,15 +448,15 @@ export const network = Network.create(fetchOrSubscribe, fetchOrSubscribe);
 <details id="urql">
 <summary><a href="#urql">🔗</a> Client usage with <a href="https://formidable.com/open-source/urql/">urql</a></summary>
 
-```ts
+```js
 import { createClient, defaultExchanges, subscriptionExchange } from 'urql';
-import { createClient as createWSClient } from 'graphql-sse';
+import { createClient as createSSEClient } from 'graphql-sse';
 
-const sseClient = createWSClient({
+const sseClient = createSSEClient({
   url: 'http://its.urql:4000/graphql/stream',
 });
 
-const client = createClient({
+export const client = createClient({
   url: '/graphql/stream',
   exchanges: [
     ...defaultExchanges,
@@ -449,7 +481,7 @@ const client = createClient({
 <details id="apollo-client">
 <summary><a href="#apollo-client">🔗</a> Client usage with <a href="https://www.apollographql.com">Apollo</a></summary>
 
-```typescript
+```ts
 import {
   ApolloLink,
   Operation,
@@ -481,7 +513,7 @@ class SSELink extends ApolloLink {
   }
 }
 
-const link = new SSELink({
+export const link = new SSELink({
   url: 'http://where.is:4000/graphql/stream',
   headers: () => {
     const session = getSession();
@@ -498,10 +530,10 @@ const link = new SSELink({
 <details id="single-connection-mode">
 <summary><a href="#single-connection-mode">🔗</a> Client usage for HTTP/1 (aka. <a href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode">single connection mode</a>)</summary>
 
-```typescript
+```js
 import { createClient } from 'graphql-sse';
 
-const client = createClient({
+export const client = createClient({
   singleConnection: true, // this is literally it 😄
   url: 'http://use.single:4000/connection/graphql/stream',
   // lazy: true (default) -> connect on first subscribe and disconnect on last unsubscribe
@@ -518,13 +550,13 @@ const client = createClient({
 <details id="retry-strategy">
 <summary><a href="#retry-strategy">🔗</a> Client usage with custom retry timeout strategy</summary>
 
-```typescript
+```js
 import { createClient } from 'graphql-sse';
 import { waitForHealthy } from './my-servers';
 
 const url = 'http://i.want.retry:4000/control/graphql/stream';
 
-const client = createClient({
+export const client = createClient({
   url,
   retryWait: async function waitForServerHealthyBeforeRetry() {
     // if you have a server healthcheck, you can wait for it to become
@@ -545,10 +577,10 @@ const client = createClient({
 <details id="client-debug-messages">
 <summary><a href="#client-debug-messages">🔗</a> Client usage with logging of incoming messages (<a href="https://github.com/enisdenjo/graphql-sse/issues/20">browsers don't show them in the DevTools</a>)</summary>
 
-```typescript
+```js
 import { createClient } from 'graphql-sse';
 
-const client = createClient({
+export const client = createClient({
   url: 'http://let-me-see.messages:4000/graphql/stream',
   onMessage: console.log,
 });
@@ -587,14 +619,14 @@ const client = createClient({
 <details id="node-client">
 <summary><a href="#node-client">🔗</a> Client usage in Node</summary>
 
-```ts
+```js
 const ws = require('ws'); // yarn add ws
 const fetch = require('node-fetch'); // yarn add node-fetch
 const { AbortController } = require('node-abort-controller'); // (node < v15) yarn add node-abort-controller
 const Crypto = require('crypto');
 const { createClient } = require('graphql-sse');
 
-const client = createClient({
+export const client = createClient({
   url: 'http://no.browser:4000/graphql/stream',
   fetchFn: fetch,
   abortControllerImpl: AbortController, // node < v15
@@ -607,8 +639,6 @@ const client = createClient({
       (c ^ (Crypto.randomBytes(1)[0] & (15 >> (c / 4)))).toString(16),
     ),
 });
-
-// consider other recipes for usage inspiration
 ```
 
 </details>
@@ -616,7 +646,7 @@ const client = createClient({
 <details id="auth">
 <summary><a href="#schema">🔗</a> Server handler usage with custom authentication</summary>
 
-```typescript
+```js
 import { createHandler } from 'graphql-sse';
 import {
   schema,
@@ -625,10 +655,10 @@ import {
   processAuthorizationHeader,
 } from './my-graphql';
 
-const handler = createHandler({
+export const handler = createHandler({
   schema,
-  authenticate: async (req, res) => {
-    let token = req.headers['x-graphql-event-stream-token'];
+  authenticate: async (req) => {
+    let token = req.headers.get('x-graphql-event-stream-token');
     if (token) {
       // When the client is working in a "single connection mode"
       // all subsequent requests for operations will have the
@@ -647,20 +677,25 @@ const handler = createHandler({
     // of generating the token is completely up to the implementor.
     token = getOrCreateTokenFromCookies(req);
     // or
-    token = processAuthorizationHeader(req.headers['authorization']);
+    token = processAuthorizationHeader(req.headers.get('authorization'));
     // or
     token = await customAuthenticationTokenDiscovery(req);
 
     // Using the response argument the implementor may respond to
     // authentication issues however he sees fit.
-    if (!token) return res.writeHead(401, 'Unauthorized').end();
+    if (!token) {
+      return [null, { status: 401, statusText: 'Unauthorized' }];
+    }
 
     // Clients that operate in "distinct connections mode" dont
     // need a unique stream token. It is completely ok to simply
     // return an empty string for authenticated clients.
     //
     // Read more: https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#distinct-connections-mode
-    if (req.method === 'POST' && req.headers.accept === 'text/event-stream') {
+    if (
+      req.method === 'POST' &&
+      req.headers.get('accept') === 'text/event-stream'
+    ) {
       // "distinct connections mode" requests an event-stream with a POST
       // method. These two checks, together with the lack of `X-GraphQL-Event-Stream-Token`
       // header, are sufficient for accurate detection.
@@ -675,8 +710,6 @@ const handler = createHandler({
     return token;
   },
 });
-
-// use `handler` with your favourite http library
 ```
 
 </details>
@@ -684,11 +717,11 @@ const handler = createHandler({
 <details id="dynamic-schema">
 <summary><a href="#dynamic-schema">🔗</a> Server handler usage with dynamic schema</summary>
 
-```typescript
+```js
 import { createHandler } from 'graphql-sse';
 import { schema, checkIsAdmin, getDebugSchema } from './my-graphql';
 
-const handler = createHandler({
+export const handler = createHandler({
   schema: async (req, executionArgsWithoutSchema) => {
     // will be called on every subscribe request
     // allowing you to dynamically supply the schema
@@ -698,8 +731,6 @@ const handler = createHandler({
     return schema;
   },
 });
-
-// use `handler` with your favourite http library
 ```
 
 </details>
@@ -707,19 +738,17 @@ const handler = createHandler({
 <details id="context">
 <summary><a href="#context">🔗</a> Server handler usage with custom context value</summary>
 
-```typescript
+```js
 import { createHandler } from 'graphql-sse';
 import { schema, getDynamicContext } from './my-graphql';
 
-const handler = createHandler({
+export const handler = createHandler({
   schema,
   // or static context by supplying the value direcly
-  context: async (req, args) => {
+  context: (req, args) => {
     return getDynamicContext(req, args);
   },
 });
-
-// use `handler` with your favourite http library
 ```
 
 </details>
@@ -727,27 +756,24 @@ const handler = createHandler({
 <details id="custom-exec">
 <summary><a href="#custom-exec">🔗</a> Server handler usage with custom execution arguments</summary>
 
-```typescript
+```js
 import { parse } from 'graphql';
 import { createHandler } from 'graphql-sse';
 import { getSchema, myValidationRules } from './my-graphql';
 
-const handler = createHandler({
-  onSubscribe: async (req, _res, params) => {
+export const handler = createHandler({
+  onSubscribe: async (req, params) => {
     const schema = await getSchema(req);
-
-    const args = {
+    return {
       schema,
       operationName: params.operationName,
-      document: parse(params.query),
+      document:
+        typeof params.query === 'string' ? parse(params.query) : params.query,
       variableValues: params.variables,
+      contextValue: undefined,
     };
-
-    return args;
   },
 });
-
-// use `handler` with your favourite http library
 ```
 
 </details>
@@ -755,12 +781,12 @@ const handler = createHandler({
 <details id="persisted">
 <summary><a href="#persisted">🔗</a> Server handler and client usage with persisted queries</summary>
 
-```typescript
+```ts
 // 🛸 server
 
 import { parse, ExecutionArgs } from 'graphql';
 import { createHandler } from 'graphql-sse';
-import { schema } from './my-graphql-schema';
+import { schema } from './my-graphql';
 
 // a unique GraphQL execution ID used for representing
 // a query in the persisted queries store. when subscribing
@@ -774,28 +800,25 @@ const queriesStore: Record<QueryID, ExecutionArgs> = {
   },
 };
 
-const handler = createHandler(
-  {
-    onSubscribe: (req, res, params) => {
-      const persistedQuery = queriesStore[params.extensions?.persistedQuery];
-      if (persistedQuery) {
-        return {
-          ...persistedQuery,
-          variableValues: params.variables, // use the variables from the client
-        };
-      }
+export const handler = createHandler({
+  onSubscribe: (_req, params) => {
+    const persistedQuery =
+      queriesStore[String(params.extensions?.persistedQuery)];
+    if (persistedQuery) {
+      return {
+        ...persistedQuery,
+        variableValues: params.variables, // use the variables from the client
+        contextValue: undefined,
+      };
+    }
 
-      // for extra security only allow the queries from the store
-      return res.writeHead(404, 'Query Not Found').end();
-    },
+    // for extra security only allow the queries from the store
+    return [null, { status: 404, statusText: 'Not Found' }];
   },
-  wsServer,
-);
-
-// use `handler` with your favourite http library
+});
 ```
 
-```typescript
+```ts
 // 📺 client
 
 import { createClient } from 'graphql-sse';
