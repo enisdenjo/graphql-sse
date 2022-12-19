@@ -36,7 +36,7 @@ the console.
 ```ts
 import http from 'http';
 import { createHandler } from 'graphql-sse/lib/use/http';
-import { schema } from './my-schema';
+import { schema } from './my-graphql';
 
 const handler = createHandler({ schema });
 

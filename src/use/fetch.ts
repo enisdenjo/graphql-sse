@@ -27,7 +27,7 @@ export interface RequestContext {
  *
  * ```ts
  * import { createHandler } from 'graphql-sse/lib/use/fetch';
- * import { schema } from './my-schema';
+ * import { schema } from './my-graphql';
  *
  * const handler = createHandler({ schema });
  *
@@ -35,7 +35,11 @@ export interface RequestContext {
  *   try {
  *     return await handler(req);
  *   } catch (err) {
- *     return new Response(JSON.stringify(err), { status: 500 });
+ *     console.error(err);
+ *     // or
+ *     Sentry.captureException(err);
+ *
+ *     return new Response(null, { status: 500 });
  *   }
  * }
  * ```

@@ -31,7 +31,7 @@ export interface RequestContext {
  * ```ts
  * import http from 'http2';
  * import { createHandler } from 'graphql-sse/lib/use/http2';
- * import { schema } from './my-schema';
+ * import { schema } from './my-graphql';
  *
  * const handler = createHandler({ schema });
  *
