@@ -67,7 +67,12 @@ export function createHandler<Context extends OperationContext = undefined>(
       method: req.method!,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- The url will always be available with http requests.
       url: req.url!,
-      headers: req.headers,
+      headers: {
+        get(key) {
+          const header = req.headers[key];
+          return Array.isArray(header) ? header.join('\n') : header;
+        },
+      },
       body: () =>
         new Promise((resolve, reject) => {
           let body = '';

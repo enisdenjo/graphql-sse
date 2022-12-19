@@ -8,6 +8,7 @@
 
 - [HandlerOptions](../interfaces/handler.HandlerOptions.md)
 - [Request](../interfaces/handler.Request.md)
+- [RequestHeaders](../interfaces/handler.RequestHeaders.md)
 - [ResponseInit](../interfaces/handler.ResponseInit.md)
 
 ### Type Aliases
@@ -16,7 +17,6 @@
 - [OperationArgs](handler.md#operationargs)
 - [OperationContext](handler.md#operationcontext)
 - [OperationResult](handler.md#operationresult)
-- [RequestHeaders](handler.md#requestheaders)
 - [Response](handler.md#response)
 - [ResponseBody](handler.md#responsebody)
 - [ResponseHeaders](handler.md#responseheaders)
@@ -89,14 +89,6 @@ ___
 ### OperationResult
 
 Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)\> \| `AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)
-
-___
-
-### RequestHeaders
-
-Ƭ **RequestHeaders**: { `[key: string]`: `string` \| `string`[] \| `undefined`; `set-cookie?`: `string` \| `string`[]  } \| { `get`: (`key`: `string`) => `string` \| ``null``  }
-
-The incoming request headers the implementing server should provide.
 
 ___
 

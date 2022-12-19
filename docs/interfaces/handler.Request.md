@@ -50,7 +50,7 @@ ___
 
 ### headers
 
-• `Readonly` **headers**: [`RequestHeaders`](../modules/handler.md#requestheaders)
+• `Readonly` **headers**: [`RequestHeaders`](handler.RequestHeaders.md)
 
 ___
 

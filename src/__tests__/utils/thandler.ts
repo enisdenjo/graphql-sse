@@ -35,7 +35,7 @@ export function createTHandler(opts: Partial<HandlerOptions> = {}): THandler {
       const search = treq?.search?.toString();
       if (search) url += `?${search}`;
 
-      const headers = {
+      const headers: Record<string, string | undefined> = {
         'content-type': treq?.body
           ? 'application/json; charset=utf-8'
           : undefined,
@@ -47,7 +47,11 @@ export function createTHandler(opts: Partial<HandlerOptions> = {}): THandler {
       const req = {
         method,
         url,
-        headers,
+        headers: {
+          get(key: string) {
+            return headers[key] || null;
+          },
+        },
         body,
         raw: null,
         context: null,

@@ -31,18 +31,9 @@ import {
  *
  * @category Server
  */
-export type RequestHeaders =
-  | {
-      /**
-       * Always an array in Node. Duplicates are added to it.
-       * Not necessarily true for other environments.
-       */
-      'set-cookie'?: string | string[] | undefined;
-      [key: string]: string | string[] | undefined;
-    }
-  | {
-      get: (key: string) => string | null;
-    };
+export interface RequestHeaders {
+  get: (key: string) => string | null | undefined;
+}
 
 /**
  * Server agnostic request interface containing the raw request
@@ -371,7 +362,7 @@ export function createHandler<
     subscribe = graphqlSubscribe,
     schema,
     authenticate = function extractOrCreateStreamToken(req) {
-      const headerToken = getHeader(req, TOKEN_HEADER_KEY);
+      const headerToken = req.headers.get(TOKEN_HEADER_KEY);
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
@@ -698,7 +689,7 @@ export function createHandler<
     // reporting the validation errors might need the supplied context value
     const validationErrs = validate(args.schema, args.document);
     if (validationErrs.length) {
-      if (getHeader(req, 'accept') === 'text/event-stream') {
+      if (req.headers.get('accept') === 'text/event-stream') {
         // accept the request and emit the validation error in event streams,
         // promoting graceful GraphQL error reporting
         // Read more: https://www.w3.org/TR/eventsource/#processing-model
@@ -744,7 +735,7 @@ export function createHandler<
     if (isResponse(token)) return token;
 
     // TODO: make accept detection more resilient
-    const accept = getHeader(req, 'accept') || '*/*';
+    const accept = req.headers.get('accept') || '*/*';
 
     const stream = typeof token === 'string' ? streams[token] : null;
 
@@ -1038,7 +1029,7 @@ async function parseReq(
         break;
       }
       case req.method === 'POST' &&
-        getHeader(req, 'content-type')?.includes('application/json'): {
+        req.headers.get('content-type')?.includes('application/json'): {
         if (!req.body) {
           throw new Error('Missing body');
         }
@@ -1116,22 +1107,4 @@ function isResponse(val: unknown): val is Response {
 function isExecutionResult(val: unknown): val is ExecutionResult {
   // TODO: comprehensive check
   return isObject(val);
-}
-
-function getHeader(
-  req: Request<unknown, unknown>,
-  key: 'set-cookie',
-): string[] | null;
-function getHeader(
-  req: Request<unknown, unknown>,
-  key: 'accept' | 'allow' | 'content-type' | string,
-): string | null;
-function getHeader(
-  req: Request<unknown, unknown>,
-  key: string,
-): string | string[] | null {
-  if (typeof req.headers.get === 'function') {
-    return req.headers.get(key);
-  }
-  return Object(req.headers)[key];
 }
