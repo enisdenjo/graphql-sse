@@ -15,10 +15,6 @@ export interface RequestContext {
 /**
  * The ready-to-use handler for [express](https://expressjs.com).
  *
- * Beware that the handler resolves only after the whole operation completes.
- *   - If query/mutation, waits for result
- *   - If subscription, waits for complete
- *
  * Errors thrown from **any** of the provided options or callbacks (or even due to
  * library misuse or potential bugs) will reject the handler's promise. They are
  * considered internal errors and you should take care of them accordingly.

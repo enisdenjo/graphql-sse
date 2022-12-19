@@ -13,12 +13,7 @@ export interface RequestContext {
 }
 
 /**
- * The ready-to-use handler. Simply plug it in your favourite HTTP framework
- * and enjoy.
- *
- * Beware that the handler resolves only after the whole operation completes.
- * - If query/mutation, waits for result
- * - If subscription, waits for complete
+ * The ready-to-use handler for Node's [http](https://nodejs.org/api/http2.html).
  *
  * Errors thrown from **any** of the provided options or callbacks (or even due to
  * library misuse or potential bugs) will reject the handler's promise. They are
