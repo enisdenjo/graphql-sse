@@ -1,497 +1,590 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { jest } from '@jest/globals';
-import EventSource from 'eventsource';
-import { startTServer, startDisposableServer } from './utils/tserver';
-import { eventStream } from './utils/eventStream';
-import { createClient, createHandler } from '../index';
-import { TOKEN_HEADER_KEY, TOKEN_QUERY_KEY } from '../common';
-import http from 'http';
-import http2 from 'http2';
-import { schema } from './fixtures/simple';
-import fetch from 'node-fetch';
-import express from 'express';
-import Fastify from 'fastify';
-
-// just does nothing
-function noop(): void {
-  /**/
-}
+import {
+  createTHandler,
+  assertString,
+  assertAsyncGenerator,
+} from './utils/thandler';
+import { TOKEN_HEADER_KEY } from '../common';
 
 it('should only accept valid accept headers', async () => {
-  const { request } = await startTServer();
+  const { handler } = createTHandler();
 
-  const { data: token } = await request('PUT');
+  let [body, init] = await handler('PUT');
+  assertString(body);
+  const token = body;
 
-  let res = await request('GET', {
-    accept: 'gibberish',
-    [TOKEN_HEADER_KEY]: token,
+  [body, init] = await handler('GET', {
+    headers: {
+      accept: 'gibberish',
+      [TOKEN_HEADER_KEY]: token,
+    },
   });
-  expect(res.statusCode).toBe(406);
+  expect(init.status).toBe(406);
 
-  res = await request('GET', {
-    accept: 'application/graphql+json',
-    [TOKEN_HEADER_KEY]: token,
+  [body, init] = await handler('GET', {
+    headers: {
+      accept: 'application/json',
+      [TOKEN_HEADER_KEY]: token,
+    },
   });
-  expect(res.statusCode).toBe(400);
-  expect(res.statusMessage).toBe('Missing query');
+  expect(init.status).toBe(400);
+  expect(init.headers?.['content-type']).toBe(
+    'application/json; charset=utf-8',
+  );
+  expect(body).toMatchInlineSnapshot(
+    `"{"errors":[{"message":"Missing query"}]}"`,
+  );
 
-  res = await request('GET', {
-    accept: 'application/json',
-    [TOKEN_HEADER_KEY]: token,
+  [body, init] = await handler('GET', {
+    headers: {
+      accept: 'text/event-stream',
+    },
   });
-  expect(res.statusCode).toBe(400);
-  expect(res.statusMessage).toBe('Missing query');
-
-  res = await request('GET', { accept: 'text/event-stream' });
-  expect(res.statusCode).toBe(400);
-  expect(res.statusMessage).toBe('Missing query');
-
-  res = await request('POST', { accept: 'text/event-stream' }, { query: '' });
-  expect(res.statusCode).toBe(400);
-  expect(res.statusMessage).toBe('Missing query');
+  expect(init.status).toBe(400);
+  expect(init.headers?.['content-type']).toBe(
+    'application/json; charset=utf-8',
+  );
+  expect(body).toMatchInlineSnapshot(
+    `"{"errors":[{"message":"Missing query"}]}"`,
+  );
 });
 
-it.todo('should throw all unexpected errors from the handler');
+it.each(['authenticate', 'onConnect', 'onSubscribe', 'context', 'onOperation'])(
+  'should bubble %s errors to the handler',
+  async (hook) => {
+    const err = new Error('hang hang');
+    const { handler } = createTHandler({
+      [hook]() {
+        throw err;
+      },
+    });
 
-it.todo('should use the string body argument from the handler');
+    await expect(
+      handler('POST', {
+        headers: {
+          accept: 'text/event-stream',
+        },
+        body: { query: '{ getValue }' },
+      }),
+    ).rejects.toBe(err);
+  },
+);
 
-it.todo('should use the object body argument from the handler');
+it.each(['onNext', 'onComplete'])(
+  'should bubble %s errors to the response body iterator',
+  async (hook) => {
+    const err = new Error('hang hang');
+    const { handler } = createTHandler({
+      [hook]() {
+        throw err;
+      },
+    });
+
+    const [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: '{ getValue }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+
+    await expect(
+      (async () => {
+        for await (const _ of stream) {
+          // wait
+        }
+      })(),
+    ).rejects.toBe(err);
+  },
+);
+
+it('should bubble onNext errors to the response body iterator even if late', async () => {
+  const err = new Error('hang hang');
+  let i = 0;
+  const { handler } = createTHandler({
+    onNext() {
+      i++;
+      if (i > 3) {
+        throw err;
+      }
+    },
+  });
+
+  const [stream, init] = await handler('POST', {
+    headers: {
+      accept: 'text/event-stream',
+    },
+    body: { query: 'subscription { greetings }' },
+  });
+  expect(init.status).toBe(200);
+  assertAsyncGenerator(stream);
+
+  await expect(
+    (async () => {
+      for await (const _ of stream) {
+        // wait
+      }
+    })(),
+  ).rejects.toBe(err);
+});
 
 describe('single connection mode', () => {
   it('should respond with 404s when token was not previously registered', async () => {
-    const { request } = await startTServer();
+    const { handler } = createTHandler();
 
-    // maybe POST gql request
-    let res = await request('POST');
-    expect(res.statusCode).toBe(404);
-    expect(res.statusMessage).toBe('Stream not found');
+    let [body, init] = await handler('POST', {
+      headers: {
+        [TOKEN_HEADER_KEY]: '0',
+      },
+    });
+    expect(init.status).toBe(404);
+    expect(init.headers?.['content-type']).toBe(
+      'application/json; charset=utf-8',
+    );
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Stream not found"}]}"`,
+    );
 
-    // maybe GET gql request
-    res = await request('GET');
-    expect(res.statusCode).toBe(404);
-    expect(res.statusMessage).toBe('Stream not found');
+    const search = new URLSearchParams();
+    search.set('token', '0');
 
-    // completing/ending an operation
-    res = await request('DELETE');
-    expect(res.statusCode).toBe(404);
-    expect(res.statusMessage).toBe('Stream not found');
+    [body, init] = await handler('GET', { search });
+    expect(init.status).toBe(404);
+    expect(init.headers?.['content-type']).toBe(
+      'application/json; charset=utf-8',
+    );
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Stream not found"}]}"`,
+    );
+
+    [body, init] = await handler('DELETE', { search });
+    expect(init.status).toBe(404);
+    expect(init.headers?.['content-type']).toBe(
+      'application/json; charset=utf-8',
+    );
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Stream not found"}]}"`,
+    );
   });
 
   it('should get a token with PUT request', async () => {
-    const { request } = await startTServer({ authenticate: () => 'token' });
+    const { handler } = createTHandler({
+      authenticate() {
+        return 'token';
+      },
+    });
 
-    const { statusCode, headers, data } = await request('PUT');
-
-    expect(statusCode).toBe(201);
-    expect(headers['content-type']).toBe('text/plain; charset=utf-8');
-    expect(data).toBe('token');
+    const [body, init] = await handler('PUT');
+    expect(init.status).toBe(201);
+    expect(init.headers?.['content-type']).toBe('text/plain; charset=utf-8');
+    expect(body).toBe('token');
   });
 
-  it('should allow event streams on reservations only', async () => {
-    const { url, request } = await startTServer();
+  it('should treat event streams without reservations as regular requests', async () => {
+    const { handler } = createTHandler();
 
-    // no reservation no connect
-    let es = new EventSource(url);
-    await new Promise<void>((resolve) => {
-      es.onerror = () => {
-        resolve();
-        es.close(); // no retry
-      };
+    const [body, init] = await handler('GET', {
+      headers: {
+        [TOKEN_HEADER_KEY]: '0',
+        accept: 'text/event-stream',
+      },
     });
+    expect(init.status).toBe(400);
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Missing query"}]}"`,
+    );
+  });
 
-    // token can be sent through the header
-    let res = await request('PUT');
-    es = new EventSource(url, {
-      headers: { [TOKEN_HEADER_KEY]: res.data },
-    });
-    await new Promise<void>((resolve, reject) => {
-      es.onopen = () => resolve();
-      es.onerror = (e) => {
-        reject(e);
-        es.close(); // no retry
-      };
-    });
-    es.close();
+  it('should allow event streams on reservations', async () => {
+    const { handler } = createTHandler();
 
-    // token can be sent through the url
-    res = await request('PUT');
-    es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + res.data);
-    await new Promise<void>((resolve, reject) => {
-      es.onopen = () => resolve();
-      es.onerror = (e) => {
-        reject(e);
-        es.close(); // no retry
-      };
+    // token can be sent through headers
+    let [token] = await handler('PUT');
+    assertString(token);
+    let [stream, init] = await handler('GET', {
+      headers: {
+        [TOKEN_HEADER_KEY]: token,
+        accept: 'text/event-stream',
+      },
     });
-    es.close();
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    stream.return();
+
+    // token can be sent through url search param
+    [token] = await handler('PUT');
+    assertString(token);
+    const search = new URLSearchParams();
+    search.set('token', token);
+    [stream, init] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    stream.return();
   });
 
   it('should not allow operations without providing an operation id', async () => {
-    const { request } = await startTServer();
+    const { handler } = createTHandler();
 
-    const { data: token } = await request('PUT');
+    const [token] = await handler('PUT');
+    assertString(token);
 
-    const { statusCode, statusMessage } = await request(
-      'POST',
-      { [TOKEN_HEADER_KEY]: token },
-      { query: '{ getValue }' },
+    const [body, init] = await handler('POST', {
+      headers: { [TOKEN_HEADER_KEY]: token },
+      body: { query: '{ getValue }' },
+    });
+
+    expect(init.status).toBe(400);
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Operation ID is missing"}]}"`,
     );
-
-    expect(statusCode).toBe(400);
-    expect(statusMessage).toBe('Operation ID is missing');
   });
 
-  it('should stream query operations to connected event stream', async (done) => {
-    const { url, request } = await startTServer();
+  it('should stream query operations to connected event stream', async () => {
+    const { handler } = createTHandler();
 
-    const { data: token } = await request('PUT');
+    const [token] = await handler('PUT');
+    assertString(token);
 
-    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
-    es.addEventListener('next', (event) => {
-      expect((event as any).data).toMatchSnapshot();
-    });
-    es.addEventListener('complete', () => {
-      es.close();
-      done();
-    });
-
-    const { statusCode } = await request(
-      'POST',
-      { [TOKEN_HEADER_KEY]: token },
-      { query: '{ getValue }', extensions: { operationId: '1' } },
-    );
-    expect(statusCode).toBe(202);
-  });
-
-  it.todo('should stream query operations even if event stream connects later');
-
-  it('should stream subscription operations to connected event stream', async (done) => {
-    const { url, request } = await startTServer();
-
-    const { data: token } = await request('PUT');
-
-    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
-    es.addEventListener('next', (event) => {
-      // called 5 times
-      expect((event as any).data).toMatchSnapshot();
-    });
-    es.addEventListener('complete', () => {
-      es.close();
-      done();
-    });
-
-    const { statusCode } = await request(
-      'POST',
-      { [TOKEN_HEADER_KEY]: token },
-      { query: 'subscription { greetings }', extensions: { operationId: '1' } },
-    );
-    expect(statusCode).toBe(202);
-  });
-
-  it('should report operation validation issues to request', async () => {
-    const { url, request } = await startTServer();
-
-    const { data: token } = await request('PUT');
-
-    const es = new EventSource(url + '?' + TOKEN_QUERY_KEY + '=' + token);
-    es.addEventListener('next', () => {
-      fail('Shouldnt have omitted');
-    });
-    es.addEventListener('complete', () => {
-      fail('Shouldnt have omitted');
-    });
-
-    const { statusCode, data } = await request(
-      'POST',
-      { [TOKEN_HEADER_KEY]: token },
-      { query: '{ notExists }', extensions: { operationId: '1' } },
-    );
-    expect(statusCode).toBe(400);
-    expect(data).toMatchSnapshot();
-
-    es.close();
-  });
-
-  it('should bubble errors thrown in onNext to the handler', async (done) => {
-    const onNextErr = new Error('Woops!');
-
-    const handler = createHandler({
-      schema,
-      onNext: () => {
-        throw onNextErr;
+    const [stream] = await handler('POST', {
+      headers: {
+        [TOKEN_HEADER_KEY]: token,
+        accept: 'text/event-stream',
       },
     });
+    assertAsyncGenerator(stream);
 
-    const [, url, dispose] = await startDisposableServer(
-      http.createServer(async (req, res) => {
-        try {
-          await handler(req, res);
-        } catch (err) {
-          expect(err).toBe(onNextErr);
-
-          await dispose();
-          done();
-        }
-      }),
-    );
-
-    const client = createClient({
-      singleConnection: true,
-      url,
-      fetchFn: fetch,
-      retryAttempts: 0,
+    const [body, init] = await handler('POST', {
+      headers: { [TOKEN_HEADER_KEY]: token },
+      body: { query: '{ getValue }', extensions: { operationId: '1' } },
     });
+    expect(init.status).toBe(202);
+    expect(body).toBeNull();
 
-    client.subscribe(
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
-        query: '{ getValue }',
-      },
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
-        next: noop,
-        error: noop,
-        complete: noop,
+        "done": false,
+        "value": "event: next
+      data: {"id":"1","payload":{"data":{"getValue":"value"}}}
+
+      ",
+      }
+    `);
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": "event: complete
+      data: {"id":"1"}
+
+      ",
+      }
+    `);
+
+    stream.return();
+  });
+
+  it('should stream subscription operations to connected event stream', async () => {
+    const { handler } = createTHandler();
+
+    const [token] = await handler('PUT');
+    assertString(token);
+
+    const search = new URLSearchParams();
+    search.set('token', token);
+    const [stream] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
       },
+    });
+    assertAsyncGenerator(stream);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+
+    const [_0, init] = await handler('POST', {
+      headers: {
+        [TOKEN_HEADER_KEY]: token,
+      },
+      body: {
+        query: 'subscription { greetings }',
+        extensions: { operationId: '1' },
+      },
+    });
+    expect(init.status).toBe(202);
+
+    for await (const msg of stream) {
+      expect(msg).toMatchSnapshot();
+
+      if (msg.startsWith('event: complete')) {
+        break;
+      }
+    }
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+  });
+
+  it.todo('should stream operations even if event stream connects late');
+
+  it('should report validation issues to operation request', async () => {
+    const { handler } = createTHandler();
+
+    const [token] = await handler('PUT');
+    assertString(token);
+
+    const search = new URLSearchParams();
+    search.set('token', token);
+    const [stream] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
+    });
+    assertAsyncGenerator(stream);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+
+    const [body, init] = await handler('POST', {
+      headers: {
+        [TOKEN_HEADER_KEY]: token,
+      },
+      body: {
+        query: 'subscription { notExists }',
+        extensions: { operationId: '1' },
+      },
+    });
+    expect(init.status).toBe(400);
+    expect(body).toMatchInlineSnapshot(
+      `"{"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Subscription\\".","locations":[{"line":1,"column":16}]}]}"`,
     );
+
+    // stream remains open
+    await expect(
+      Promise.race([
+        stream.next(),
+        await new Promise((resolve) => setTimeout(resolve, 20)),
+      ]),
+    ).resolves.toBeUndefined();
+    stream.return();
   });
 });
 
 describe('distinct connections mode', () => {
   it('should stream query operations to connected event stream and then disconnect', async () => {
-    const { url, waitForDisconnect } = await startTServer();
-
-    const control = new AbortController();
-
-    // POST
-
-    let msgs = await eventStream({
-      signal: control.signal,
-      url,
-      body: { query: '{ getValue }' },
-    });
-
-    for await (const msg of msgs) {
-      expect(msg).toMatchSnapshot();
-    }
-
-    await waitForDisconnect();
+    const { handler } = createTHandler();
 
     // GET
-
-    const urlQuery = new URL(url);
-    urlQuery.searchParams.set('query', '{ getValue }');
-
-    msgs = await eventStream({
-      signal: control.signal,
-      url: urlQuery.toString(),
+    const search = new URLSearchParams();
+    search.set('query', '{ getValue }');
+    let [stream, init] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
     });
-
-    for await (const msg of msgs) {
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    for await (const msg of stream) {
       expect(msg).toMatchSnapshot();
     }
 
-    await waitForDisconnect();
+    // POST
+    [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: '{ getValue }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    for await (const msg of stream) {
+      expect(msg).toMatchSnapshot();
+    }
   });
 
   it('should stream subscription operations to connected event stream and then disconnect', async () => {
-    const { url, waitForDisconnect } = await startTServer();
-
-    const control = new AbortController();
-
-    // POST
-
-    let msgs = await eventStream({
-      signal: control.signal,
-      url,
-      body: { query: 'subscription { greetings }' },
-    });
-
-    for await (const msg of msgs) {
-      expect(msg).toMatchSnapshot();
-    }
-
-    await waitForDisconnect();
+    const { handler } = createTHandler();
 
     // GET
-
-    const urlQuery = new URL(url);
-    urlQuery.searchParams.set('query', 'subscription { greetings }');
-
-    msgs = await eventStream({
-      signal: control.signal,
-      url: urlQuery.toString(),
+    const search = new URLSearchParams();
+    search.set('query', 'subscription { greetings }');
+    let [stream, init] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
     });
-
-    for await (const msg of msgs) {
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    for await (const msg of stream) {
       expect(msg).toMatchSnapshot();
     }
 
-    await waitForDisconnect();
+    // POST
+    [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: 'subscription { greetings }' },
+    });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    for await (const msg of stream) {
+      expect(msg).toMatchSnapshot();
+    }
   });
 
   it('should report operation validation issues by streaming them', async () => {
-    const { url, waitForDisconnect } = await startTServer();
+    const { handler } = createTHandler();
 
-    const control = new AbortController();
-
-    const msgs = await eventStream({
-      signal: control.signal,
-      url,
+    const [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
       body: { query: '{ notExists }' },
     });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": ":
 
-    for await (const msg of msgs) {
-      expect(msg).toMatchSnapshot();
-    }
+      ",
+      }
+    `); // ping
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": "event: next
+      data: {"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Query\\".","locations":[{"line":1,"column":3}]}]}
 
-    await waitForDisconnect();
+      ",
+      }
+    `);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": "event: complete
+
+      ",
+      }
+    `);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
   });
 
   it('should complete subscription operations after client disconnects', async () => {
-    const { url, waitForOperation, waitForComplete } = await startTServer();
+    const { handler } = createTHandler();
 
-    const control = new AbortController();
-
-    await eventStream({
-      signal: control.signal,
-      url,
-      body: { query: 'subscription { ping }' },
+    const [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
+      },
+      body: { query: `subscription { ping(key: "${Math.random()}") }` },
     });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
 
-    await waitForOperation();
+    // simulate client disconnect in next tick
+    setTimeout(() => stream.return(), 0);
 
-    control.abort();
-
-    await waitForComplete();
+    for await (const _ of stream) {
+      // loop must break for test to pass
+    }
   });
 
-  it('should bubble errors thrown in onNext to the handler', async (done) => {
-    const onNextErr = new Error('Woops!');
+  it('should complete when stream ends before the subscription sent all events', async () => {
+    const { handler } = createTHandler();
 
-    const handler = createHandler({
-      schema,
-      onNext: () => {
-        throw onNextErr;
+    const [stream, init] = await handler('POST', {
+      headers: {
+        accept: 'text/event-stream',
       },
+      body: { query: `subscription { greetings }` },
     });
+    expect(init.status).toBe(200);
+    assertAsyncGenerator(stream);
 
-    const [, url, dispose] = await startDisposableServer(
-      http.createServer(async (req, res) => {
-        try {
-          await handler(req, res);
-        } catch (err) {
-          expect(err).toBe(onNextErr);
-
-          await dispose();
-          done();
-        }
-      }),
-    );
-
-    const client = createClient({
-      url,
-      fetchFn: fetch,
-      retryAttempts: 0,
-    });
-
-    client.subscribe(
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
-        query: '{ getValue }',
-      },
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+
+    for await (const msg of stream) {
+      expect(msg).toMatchInlineSnapshot(`
+        "event: next
+        data: {"data":{"greetings":"Hi"}}
+
+        "
+      `);
+
+      // return after first message (there are more)
+      break;
+    }
+
+    // message was already queued up (pending), it's ok to have it
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
-        next: noop,
-        error: noop,
-        complete: noop,
-      },
-    );
-  });
-});
+        "done": false,
+        "value": "event: next
+      data: {"data":{"greetings":"Bonjour"}}
 
-describe('http2', () => {
-  // ts-only-test
-  it.skip('should work as advertised in the readme', async () => {
-    const handler = createHandler({ schema });
-    http2.createSecureServer(
+      ",
+      }
+    `);
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
-        key: 'localhost-privkey.pem',
-        cert: 'localhost-cert.pem',
-      },
-      (req, res) => {
-        if (req.url.startsWith('/graphql/stream')) return handler(req, res);
-        return res.writeHead(404).end();
-      },
-    );
-  });
-});
+        "done": false,
+        "value": "event: complete
 
-describe('express', () => {
-  it('should work as advertised in the readme', async () => {
-    const app = express();
-    const handler = createHandler({ schema });
-    app.use('/graphql/stream', handler);
-    const [, url, dispose] = await startDisposableServer(
-      http.createServer(app),
-    );
-
-    const client = createClient({
-      url: url + '/graphql/stream',
-      fetchFn: fetch,
-      retryAttempts: 0,
-    });
-
-    const next = jest.fn();
-    await new Promise<void>((resolve, reject) => {
-      client.subscribe(
-        {
-          query: 'subscription { greetings }',
-        },
-        {
-          next: next,
-          error: reject,
-          complete: resolve,
-        },
-      );
-    });
-
-    expect(next).toBeCalledTimes(5);
-    expect(next.mock.calls).toMatchSnapshot();
-
-    await dispose();
-  });
-});
-
-describe('fastify', () => {
-  it('should work as advertised in the readme', async () => {
-    const handler = createHandler({ schema });
-    const fastify = Fastify();
-    fastify.all('/graphql/stream', (req, res) =>
-      handler(req.raw, res.raw, req.body),
-    );
-    const url = await fastify.listen({ port: 0 });
-
-    const client = createClient({
-      url: url + '/graphql/stream',
-      fetchFn: fetch,
-      retryAttempts: 0,
-    });
-
-    const next = jest.fn();
-    await new Promise<void>((resolve, reject) => {
-      client.subscribe(
-        {
-          query: 'subscription { greetings }',
-        },
-        {
-          next: next,
-          error: reject,
-          complete: resolve,
-        },
-      );
-    });
-
-    expect(next).toBeCalledTimes(5);
-    expect(next.mock.calls).toMatchSnapshot();
-
-    await fastify.close();
+      ",
+      }
+    `);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
   });
 });

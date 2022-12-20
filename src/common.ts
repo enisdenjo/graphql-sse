@@ -5,6 +5,7 @@
  */
 
 import type { DocumentNode, GraphQLError } from 'graphql';
+import { isObject } from './utils';
 
 /**
  * Header key through which the event stream token is transmitted
@@ -63,6 +64,16 @@ export function validateStreamEvent(e: unknown): StreamEvent {
   if (e !== 'next' && e !== 'complete')
     throw new Error(`Invalid stream event "${e}"`);
   return e;
+}
+
+/** @category Common */
+export function print<ForID extends boolean, E extends StreamEvent>(
+  msg: StreamMessage<ForID, E>,
+): string {
+  let str = `event: ${msg.event}`;
+  if (msg.data) str += `\ndata: ${JSON.stringify(msg.data)}`;
+  str += '\n\n';
+  return str;
 }
 
 /** @category Common */
@@ -136,4 +147,28 @@ export interface Sink<T = unknown> {
   error(error: unknown): void;
   /** The sink has completed. This function "closes" the sink. */
   complete(): void;
+}
+
+/**
+ * Checkes whether the provided value is an async iterable.
+ *
+ * @category Common
+ */
+export function isAsyncIterable<T>(val: unknown): val is AsyncIterable<T> {
+  return typeof Object(val)[Symbol.asyncIterator] === 'function';
+}
+
+/**
+ * Checkes whether the provided value is an async generator.
+ *
+ * @category Common
+ */
+export function isAsyncGenerator<T>(val: unknown): val is AsyncGenerator<T> {
+  return (
+    isObject(val) &&
+    typeof Object(val)[Symbol.asyncIterator] === 'function' &&
+    typeof val.return === 'function' &&
+    typeof val.throw === 'function' &&
+    typeof val.next === 'function'
+  );
 }

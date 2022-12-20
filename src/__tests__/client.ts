@@ -1,184 +1,166 @@
-import fetch from 'node-fetch';
-import { startTServer } from './utils/tserver';
+import { jest } from '@jest/globals';
+import { createClient, StreamMessage, StreamEvent } from '../client';
+import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
-import { createClient } from '../client';
+import { pong } from './fixtures/simple';
+import { sleep } from './utils/testkit';
 
-// just does nothing
-function noop(): void {
-  /**/
+function noop() {
+  // do nothing
 }
 
-it('should use the provided headers', async (done) => {
-  expect.assertions(4);
-
+it('should use the provided headers', async () => {
   // single connection mode
-
-  const singleConnServer = await startTServer({
+  let headers!: Headers;
+  let { fetch } = createTFetch({
     authenticate: (req) => {
-      expect(req.headers['x-single']).toBe('header');
+      headers = req.raw.headers;
       return '';
     },
   });
 
   const singleConnClient = createClient({
     singleConnection: true,
-    url: singleConnServer.url,
+    url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
-    headers: async () => {
+    headers: () => {
       return { 'x-single': 'header' };
     },
   });
 
-  await new Promise<void>((resolve) => {
-    singleConnClient.subscribe(
-      {
-        query: '{ getValue }',
-      },
-      {
-        next: noop,
-        error: fail,
-        complete: () => {
-          singleConnClient.dispose();
-          singleConnServer.dispose();
-          resolve();
-        },
-      },
-    );
+  let client = tsubscribe(singleConnClient, {
+    query: '{ getValue }',
   });
+  await Promise.race([client.throwOnError(), client.waitForComplete()]);
+  client.dispose();
+
+  expect(headers.get('x-single')).toBe('header');
 
   // distinct connections mode
-
-  const distinctConnServer = await startTServer({
+  ({ fetch } = createTFetch({
     authenticate: (req) => {
-      distinctConnClient.dispose();
-      distinctConnServer.dispose();
-      expect(req.headers['x-distinct']).toBe('header');
-      done();
+      headers = req.raw.headers;
       return '';
     },
-  });
+  }));
 
   const distinctConnClient = createClient({
     singleConnection: false,
-    url: distinctConnServer.url,
+    url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
-    headers: async () => {
+    headers: () => {
       return { 'x-distinct': 'header' };
     },
   });
 
-  distinctConnClient.subscribe(
-    {
-      query: '{ getValue }',
-    },
-    {
-      next: noop,
-      error: fail,
-      complete: noop,
-    },
-  );
+  client = tsubscribe(distinctConnClient, {
+    query: '{ getValue }',
+  });
+  await Promise.race([client.throwOnError(), client.waitForComplete()]);
+  client.dispose();
+
+  expect(headers.get('x-distinct')).toBe('header');
 });
 
 it('should supply all valid messages received to onMessage', async () => {
-  expect.assertions(4);
-
-  const { url } = await startTServer();
+  const { fetch } = createTFetch();
 
   // single connection mode
-  let i = 0;
+  let msgs: StreamMessage<boolean, StreamEvent>[] = [];
   let client = createClient({
     singleConnection: true,
-    url,
+    url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
     generateID: () => 'veryunique',
-    onMessage: (msg) => {
-      switch (++i) {
-        case 1:
-          expect(msg).toEqual({
-            event: 'next',
-            data: {
-              id: 'veryunique',
-              payload: { data: { getValue: 'value' } },
-            },
-          });
-          return;
-        case 2:
-          expect(msg).toEqual({
-            event: 'complete',
-            data: { id: 'veryunique' },
-          });
-          return;
-        default:
-          fail('Unexpected message receieved');
-      }
-    },
+    onMessage: (msg) => msgs.push(msg),
   });
   let sub = tsubscribe(client, {
     query: '{ getValue }',
   });
-  await sub.waitForComplete();
+  await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
+  expect(msgs).toMatchInlineSnapshot(`
+    [
+      {
+        "data": {
+          "id": "veryunique",
+          "payload": {
+            "data": {
+              "getValue": "value",
+            },
+          },
+        },
+        "event": "next",
+      },
+      {
+        "data": {
+          "id": "veryunique",
+        },
+        "event": "complete",
+      },
+    ]
+  `);
 
   // distinct connection mode
-  i = 0;
+  msgs = [];
   client = createClient({
     singleConnection: false,
-    url,
+    url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
     generateID: () => 'veryunique',
-    onMessage: (msg) => {
-      switch (++i) {
-        case 1:
-          expect(msg).toEqual({
-            event: 'next',
-            data: { data: { getValue: 'value' } },
-          });
-          return;
-        case 2:
-          expect(msg).toEqual({
-            event: 'complete',
-            data: null,
-          });
-          return;
-        default:
-          fail('Unexpected message receieved');
-      }
-    },
+    onMessage: (msg) => msgs.push(msg),
   });
   sub = tsubscribe(client, {
     query: '{ getValue }',
   });
-  await sub.waitForComplete();
+  await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
+  expect(msgs).toMatchInlineSnapshot(`
+    [
+      {
+        "data": {
+          "data": {
+            "getValue": "value",
+          },
+        },
+        "event": "next",
+      },
+      {
+        "data": null,
+        "event": "complete",
+      },
+    ]
+  `);
 });
 
 it('should report error to sink if server goes away', async () => {
-  const server = await startTServer();
+  const { fetch, dispose } = createTFetch();
 
   const client = createClient({
-    url: server.url,
     fetchFn: fetch,
+    url: 'http://localhost',
     retryAttempts: 0,
   });
 
   const sub = tsubscribe(client, {
-    query: 'subscription { ping }',
+    query: `subscription { ping(key: "${Math.random()}") }`,
   });
-  await server.waitForOperation();
 
-  await server.dispose();
+  await dispose();
 
-  await sub.waitForError();
+  await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+    `[NetworkError: Connection closed while having active streams]`,
+  );
 });
 
 it('should report error to sink if server goes away during generator emission', async () => {
-  const server = await startTServer();
+  const { fetch, dispose } = createTFetch();
 
   const client = createClient({
-    url: server.url,
     fetchFn: fetch,
+    url: 'http://localhost',
     retryAttempts: 0,
   });
 
@@ -187,18 +169,20 @@ it('should report error to sink if server goes away during generator emission', 
   });
   await sub.waitForNext();
 
-  await server.dispose();
+  await dispose();
 
-  await sub.waitForError();
+  await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+    `[NetworkError: Connection closed while having active streams]`,
+  );
 });
 
 describe('single connection mode', () => {
   it('should not call complete after subscription error', async () => {
-    const { url } = await startTServer();
+    const { fetch } = createTFetch();
 
     const client = createClient({
       singleConnection: true,
-      url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 0,
     });
@@ -207,187 +191,173 @@ describe('single connection mode', () => {
       query: '}}',
     });
 
-    await sub.waitForError();
-
-    await sub.waitForComplete(() => {
-      fail("shouldn't have completed");
-    }, 20);
+    await expect(
+      Promise.race([sub.waitForError(), sub.waitForComplete()]),
+    ).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 400: Bad Request]`,
+    );
   });
 
-  it('should execute a simple query', async (done) => {
-    expect.hasAssertions();
-
-    const { url } = await startTServer();
+  it('should execute a simple query', async () => {
+    const { fetch } = createTFetch();
 
     const client = createClient({
       singleConnection: true,
-      url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 0,
     });
 
-    client.subscribe(
+    const sub = tsubscribe(client, {
+      query: '{ getValue }',
+    });
+
+    await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
       {
-        query: '{ getValue }',
-      },
-      {
-        next: (val) => expect(val).toMatchSnapshot(),
-        error: fail,
-        complete: done,
-      },
-    );
+        "data": {
+          "getValue": "value",
+        },
+      }
+    `);
+
+    await sub.waitForComplete();
   });
 
-  it('should complete subscriptions when disposing them', async (done) => {
-    expect.hasAssertions();
-
-    const { url, waitForOperation, pong } = await startTServer();
+  it('should complete subscriptions when disposing them', async () => {
+    const { fetch } = createTFetch();
 
     const client = createClient({
       singleConnection: true,
-      url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 0,
       lazy: true,
     });
 
-    const dispose = client.subscribe(
+    const key = Math.random().toString();
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${key}") }`,
+    });
+
+    setTimeout(() => pong(key), 0);
+
+    await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
       {
-        query: 'subscription { ping }',
-      },
-      {
-        next: (val) => {
-          expect(val).toMatchSnapshot();
-          dispose();
+        "data": {
+          "ping": "pong",
         },
-        error: fail,
-        complete: done,
-      },
-    );
+      }
+    `);
 
-    await waitForOperation();
+    sub.dispose();
 
-    pong();
+    await sub.waitForComplete();
   });
 
   describe('lazy', () => {
     it('should connect on first subscribe and disconnect on last complete', async () => {
-      const { url, waitForOperation, waitForDisconnect, waitForComplete } =
-        await startTServer();
+      const { fetch, waitForOperation, waitForRequest } = createTFetch();
 
       const client = createClient({
         singleConnection: true,
-        lazy: true, // default
-        url,
+        lazy: true,
+        url: 'http://localhost',
         fetchFn: fetch,
         retryAttempts: 0,
       });
 
-      const dispose1 = client.subscribe(
-        {
-          query: 'subscription { ping(key: "1") }',
-        },
-        {
-          next: noop,
-          error: fail,
-          complete: noop,
-        },
-      );
+      const sub1 = tsubscribe(client, {
+        query: `subscription { ping(key: "${Math.random()}") }`,
+      });
       await waitForOperation();
 
-      const dispose2 = client.subscribe(
-        {
-          query: 'subscription { ping(key: "2") }',
-        },
-        {
-          next: noop,
-          error: fail,
-          complete: noop,
-        },
-      );
+      // put
+      await waitForRequest();
+      // stream
+      const streamReq = await waitForRequest();
+
+      const sub2 = tsubscribe(client, {
+        query: `subscription { ping(key: "${Math.random()}") }`,
+      });
       await waitForOperation();
 
-      dispose1();
-      await waitForComplete();
-      await waitForDisconnect(() => fail("Shouldn't have disconnected"), 30);
+      sub1.dispose();
+      await sub1.waitForComplete();
+      await sleep(20);
+      expect(streamReq.signal.aborted).toBeFalsy();
 
-      dispose2();
-      await waitForComplete();
-      await waitForDisconnect();
+      sub2.dispose();
+      await sub2.waitForComplete();
+      await sleep(20);
+      expect(streamReq.signal.aborted).toBeTruthy();
     });
 
     it('should disconnect after the lazyCloseTimeout has passed after last unsubscribe', async () => {
-      const { url, waitForOperation, waitForDisconnect } = await startTServer();
+      const { fetch, waitForOperation, waitForRequest } = createTFetch();
 
       const client = createClient({
         singleConnection: true,
         lazy: true, // default
         lazyCloseTimeout: 20,
-        url,
+        url: 'http://localhost',
         fetchFn: fetch,
         retryAttempts: 0,
       });
 
       const sub = tsubscribe(client, {
-        query: 'subscription { ping }',
+        query: `subscription { ping(key: "${Math.random()}") }`,
       });
       await waitForOperation();
 
-      sub.dispose();
+      // put
+      await waitForRequest();
+      // stream
+      const streamReq = await waitForRequest();
 
+      sub.dispose();
       await sub.waitForComplete();
 
+      await sleep(10);
       // still connected due to timeout
-      await waitForDisconnect(() => fail("Shouldn't have disconnected"), 10);
+      expect(streamReq.signal.aborted).toBeFalsy();
 
+      await sleep(10);
       // but will disconnect after timeout
-      await waitForDisconnect();
+      expect(streamReq.signal.aborted).toBeTruthy();
     });
   });
 
   describe('non-lazy', () => {
-    it('should connect as soon as the client is created', async () => {
-      const { url, waitForConnected } = await startTServer();
+    it('should connect as soon as the client is created and disconnect when disposed', async () => {
+      const { fetch, waitForRequest } = createTFetch();
 
-      createClient({
+      const client = createClient({
         singleConnection: true,
-        url,
+        url: 'http://localhost',
         fetchFn: fetch,
         retryAttempts: 0,
         lazy: false,
         onNonLazyError: noop, // avoiding premature close errors
       });
 
-      await waitForConnected();
-    });
-
-    it('should disconnect when the client gets disposed', async () => {
-      const { url, waitForConnected, waitForDisconnect } = await startTServer();
-
-      const client = createClient({
-        singleConnection: true,
-        url,
-        fetchFn: fetch,
-        retryAttempts: 0,
-        lazy: false,
-        onNonLazyError: fail,
-      });
-
-      await waitForConnected();
+      // put
+      await waitForRequest();
+      // stream
+      const stream = await waitForRequest();
 
       client.dispose();
 
-      await waitForDisconnect();
+      expect(stream.signal.aborted).toBeTruthy();
     });
   });
 });
 
 describe('distinct connections mode', () => {
   it('should not call complete after subscription error', async () => {
-    const { url } = await startTServer();
+    const { fetch } = createTFetch();
 
     const client = createClient({
-      url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 0,
     });
@@ -398,188 +368,149 @@ describe('distinct connections mode', () => {
 
     await sub.waitForError();
 
-    await sub.waitForComplete(() => {
-      fail("shouldn't have completed");
-    }, 20);
+    await Promise.race([
+      sleep(20),
+      sub.waitForComplete().then(() => {
+        throw new Error("Shouldn't have completed");
+      }),
+    ]);
   });
 
   it('should establish separate connections for each subscribe', async () => {
-    const { url, waitForConnected, waitForDisconnect } = await startTServer();
+    const { fetch, waitForRequest, waitForOperation } = createTFetch();
 
     const client = createClient({
       singleConnection: false,
-      url,
+      url: 'http://localhost',
       retryAttempts: 0,
       fetchFn: fetch,
     });
 
-    const dispose1 = client.subscribe(
-      {
-        query: 'subscription { ping(key: "1") }',
-      },
-      {
-        next: noop,
-        error: fail,
-        complete: noop,
-      },
-    );
-    await waitForConnected();
+    const sub1 = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+    const stream1 = await waitForRequest();
 
-    const dispose2 = client.subscribe(
-      {
-        query: 'subscription { ping(key: "2") }',
-      },
-      {
-        next: noop,
-        error: fail,
-        complete: noop,
-      },
-    );
-    await waitForConnected();
+    const sub2 = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+    const stream2 = await waitForRequest();
 
-    dispose1();
-    await waitForDisconnect();
+    sub1.dispose();
+    await Promise.race([sub1.throwOnError(), sub1.waitForComplete()]);
+    expect(stream1.signal.aborted).toBeTruthy();
 
-    dispose2();
-    await waitForDisconnect();
+    sub2.dispose();
+    await Promise.race([sub2.throwOnError(), sub2.waitForComplete()]);
+    expect(stream2.signal.aborted).toBeTruthy();
   });
 
   it('should complete all connections when client disposes', async () => {
-    const { url, waitForConnected, waitForDisconnect } = await startTServer();
+    const { fetch, waitForRequest, waitForOperation } = createTFetch();
 
     const client = createClient({
       singleConnection: false,
-      url,
+      url: 'http://localhost',
       retryAttempts: 0,
       fetchFn: fetch,
     });
 
-    client.subscribe(
-      {
-        query: 'subscription { ping(key: "1") }',
-      },
-      {
-        next: noop,
-        error: fail,
-        complete: noop,
-      },
-    );
-    await waitForConnected();
+    tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+    const stream1 = await waitForRequest();
 
-    client.subscribe(
-      {
-        query: 'subscription { ping(key: "2") }',
-      },
-      {
-        next: noop,
-        error: fail,
-        complete: noop,
-      },
-    );
-    await waitForConnected();
+    tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+    const stream2 = await waitForRequest();
 
     client.dispose();
-    await waitForDisconnect();
-    await waitForDisconnect();
+
+    expect(stream1.signal.aborted).toBeTruthy();
+    expect(stream2.signal.aborted).toBeTruthy();
   });
 });
 
 describe('retries', () => {
   it('should keep retrying network errors until the retry attempts are exceeded', async () => {
     let tried = 0;
-    const { url } = await startTServer({
-      authenticate: (_, res) => {
+    const { fetch } = createTFetch({
+      authenticate() {
         tried++;
-        res.writeHead(403).end();
+        return [null, { status: 403, statusText: 'Forbidden' }];
       },
     });
 
+    // non-lazy
+    tried = 0;
     await new Promise<void>((resolve) => {
-      // non-lazy
-
-      createClient({
+      const client = createClient({
         singleConnection: true,
-        url,
+        url: 'http://localhost',
         fetchFn: fetch,
         retryAttempts: 2,
         retry: () => Promise.resolve(),
         lazy: false,
         onNonLazyError: (err) => {
-          expect(err).toMatchSnapshot();
+          expect(err).toMatchInlineSnapshot(
+            `[NetworkError: Server responded with 403: Forbidden]`,
+          );
           expect(tried).toBe(3); // initial + 2 retries
           resolve();
+          client.dispose();
         },
       });
     });
 
-    await new Promise<void>((resolve) => {
-      // lazy
-
-      tried = 0;
-      const client = createClient({
-        singleConnection: true,
-        url,
-        fetchFn: fetch,
-        retryAttempts: 2,
-        retry: () => Promise.resolve(),
-      });
-
-      client.subscribe(
-        {
-          query: '{ getValue }',
-        },
-        {
-          next: noop,
-          error: (err) => {
-            expect(err).toMatchSnapshot();
-            expect(tried).toBe(3); // initial + 2 retries
-            resolve();
-          },
-          complete: noop,
-        },
-      );
+    // lazy
+    tried = 0;
+    let client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
     });
+    let sub = tsubscribe(client, { query: '{ getValue }' });
+    await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 403: Forbidden]`,
+    );
+    expect(tried).toBe(3); // initial + 2 retries
+    client.dispose();
 
-    await new Promise<void>((resolve) => {
-      // distinct connections mode
-
-      tried = 0;
-      const client = createClient({
-        singleConnection: false,
-        url,
-        fetchFn: fetch,
-        retryAttempts: 2,
-        retry: () => Promise.resolve(),
-      });
-
-      client.subscribe(
-        {
-          query: '{ getValue }',
-        },
-        {
-          next: noop,
-          error: (err) => {
-            expect(err).toMatchSnapshot();
-            expect(tried).toBe(3); // initial + 2 retries
-            resolve();
-          },
-          complete: noop,
-        },
-      );
+    // distinct connections mode
+    tried = 0;
+    client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
     });
+    sub = tsubscribe(client, { query: '{ getValue }' });
+    await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Server responded with 403: Forbidden]`,
+    );
+    expect(tried).toBe(3); // initial + 2 retries
+    client.dispose();
   });
 
-  it('should retry network errors even if they occur during event emission', async (done) => {
-    const server = await startTServer();
+  it('should retry network errors even if they occur during event emission', async () => {
+    const { fetch, dispose } = createTFetch();
 
+    const retryFn = jest.fn(async () => {
+      // noop
+    });
     const client = createClient({
-      url: server.url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 1,
-      retry: async () => {
-        client.dispose();
-        done();
-      },
+      retry: retryFn,
     });
 
     const sub = tsubscribe(client, {
@@ -588,22 +519,27 @@ describe('retries', () => {
 
     await sub.waitForNext();
 
-    await server.dispose();
+    await dispose();
+
+    expect(retryFn).toHaveBeenCalled();
+
+    client.dispose();
   });
 
-  it('should not retry fatal errors occurring during event emission', async (done) => {
-    const server = await startTServer();
+  it('should not retry fatal errors occurring during event emission', async () => {
+    const { fetch } = createTFetch();
 
     let msgsCount = 0;
     const fatalErr = new Error('Boom, I am fatal');
+    const retryFn = jest.fn(async () => {
+      // noop
+    });
 
     const client = createClient({
-      url: server.url,
+      url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 1,
-      retry: async () => {
-        done(new Error("Shouldnt've retried"));
-      },
+      retry: retryFn,
       onMessage: () => {
         // onMessage is in the middle of stream processing, throwing from it is considered fatal
         msgsCount++;
@@ -619,9 +555,8 @@ describe('retries', () => {
 
     await sub.waitForNext();
 
-    await sub.waitForError((err) => {
-      expect(err).toBe(fatalErr);
-      done();
-    });
+    await expect(sub.waitForError()).resolves.toBe(fatalErr);
+
+    expect(retryFn).not.toHaveBeenCalled();
   });
 });

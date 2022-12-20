@@ -1,6 +1,8 @@
-[graphql-sse](../README.md) / ClientOptions
+[graphql-sse](../README.md) / [client](../modules/client.md) / ClientOptions
 
 # Interface: ClientOptions<SingleConnection\>
+
+[client](../modules/client.md).ClientOptions
 
 ## Type parameters
 
@@ -12,21 +14,21 @@
 
 ### Properties
 
-- [abortControllerImpl](ClientOptions.md#abortcontrollerimpl)
-- [credentials](ClientOptions.md#credentials)
-- [fetchFn](ClientOptions.md#fetchfn)
-- [generateID](ClientOptions.md#generateid)
-- [headers](ClientOptions.md#headers)
-- [lazy](ClientOptions.md#lazy)
-- [lazyCloseTimeout](ClientOptions.md#lazyclosetimeout)
-- [onMessage](ClientOptions.md#onmessage)
-- [onNonLazyError](ClientOptions.md#onnonlazyerror)
-- [referrer](ClientOptions.md#referrer)
-- [referrerPolicy](ClientOptions.md#referrerpolicy)
-- [retry](ClientOptions.md#retry)
-- [retryAttempts](ClientOptions.md#retryattempts)
-- [singleConnection](ClientOptions.md#singleconnection)
-- [url](ClientOptions.md#url)
+- [abortControllerImpl](client.ClientOptions.md#abortcontrollerimpl)
+- [credentials](client.ClientOptions.md#credentials)
+- [fetchFn](client.ClientOptions.md#fetchfn)
+- [generateID](client.ClientOptions.md#generateid)
+- [headers](client.ClientOptions.md#headers)
+- [lazy](client.ClientOptions.md#lazy)
+- [lazyCloseTimeout](client.ClientOptions.md#lazyclosetimeout)
+- [onMessage](client.ClientOptions.md#onmessage)
+- [onNonLazyError](client.ClientOptions.md#onnonlazyerror)
+- [referrer](client.ClientOptions.md#referrer)
+- [referrerPolicy](client.ClientOptions.md#referrerpolicy)
+- [retry](client.ClientOptions.md#retry)
+- [retryAttempts](client.ClientOptions.md#retryattempts)
+- [singleConnection](client.ClientOptions.md#singleconnection)
+- [url](client.ClientOptions.md#url)
 
 ## Properties
 
@@ -46,7 +48,7 @@ ___
 
 ### credentials
 
-• `Optional` **credentials**: ``"omit"`` \| ``"same-origin"`` \| ``"include"``
+• `Optional` **credentials**: ``"include"`` \| ``"omit"`` \| ``"same-origin"``
 
 Indicates whether the user agent should send cookies from the other domain in the case
 of cross-origin requests.
@@ -153,7 +155,7 @@ ___
 
 ### onMessage
 
-• `Optional` **onMessage**: (`message`: [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\>) => `void`
+• `Optional` **onMessage**: (`message`: [`StreamMessage`](common.StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../modules/common.md#streamevent)\>) => `void`
 
 #### Type declaration
 
@@ -168,7 +170,7 @@ Use this function if you want to inspect valid messages received through the act
 
 | Name | Type |
 | :------ | :------ |
-| `message` | [`StreamMessage`](StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../README.md#streamevent)\> |
+| `message` | [`StreamMessage`](common.StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../modules/common.md#streamevent)\> |
 
 ##### Returns
 
@@ -208,7 +210,7 @@ ___
 
 ### referrerPolicy
 
-• `Optional` **referrerPolicy**: ``"same-origin"`` \| ``"no-referrer"`` \| ``"no-referrer-when-downgrade"`` \| ``"origin"`` \| ``"strict-origin"`` \| ``"origin-when-cross-origin"`` \| ``"strict-origin-when-cross-origin"`` \| ``"unsafe-url"``
+• `Optional` **referrerPolicy**: ``"origin"`` \| ``"same-origin"`` \| ``"no-referrer"`` \| ``"no-referrer-when-downgrade"`` \| ``"origin-when-cross-origin"`` \| ``"strict-origin"`` \| ``"strict-origin-when-cross-origin"`` \| ``"unsafe-url"``
 
 Specifies the referrer policy to use for the request.
 

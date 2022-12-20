@@ -4,8 +4,6 @@
  *
  */
 
-import type { IncomingMessage, ServerResponse } from 'http';
-import type { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import {
   ExecutionArgs,
   getOperationAST,
@@ -18,25 +16,102 @@ import {
 } from 'graphql';
 import { isObject } from './utils';
 import {
-  RequestParams,
-  StreamEvent,
-  StreamData,
-  StreamDataForID,
   ExecutionResult,
   ExecutionPatchResult,
+  RequestParams,
   TOKEN_HEADER_KEY,
   TOKEN_QUERY_KEY,
+  print,
+  isAsyncGenerator,
+  isAsyncIterable,
 } from './common';
 
 /**
+ * The incoming request headers the implementing server should provide.
+ *
  * @category Server
  */
-export type NodeRequest = IncomingMessage | Http2ServerRequest;
+export interface RequestHeaders {
+  get: (key: string) => string | null | undefined;
+}
 
 /**
+ * Server agnostic request interface containing the raw request
+ * which is server dependant.
+ *
  * @category Server
  */
-export type NodeResponse = ServerResponse | Http2ServerResponse;
+export interface Request<Raw = unknown, Context = unknown> {
+  readonly method: string;
+  readonly url: string;
+  readonly headers: RequestHeaders;
+  /**
+   * Parsed request body or a parser function.
+   *
+   * If the provided function throws, the error message "Unparsable JSON body" will
+   * be in the erroneous response.
+   */
+  readonly body:
+    | string
+    | Record<PropertyKey, unknown>
+    | null
+    | (() =>
+        | string
+        | Record<PropertyKey, unknown>
+        | null
+        | Promise<string | Record<PropertyKey, unknown> | null>);
+  /**
+   * The raw request itself from the implementing server.
+   */
+  readonly raw: Raw;
+  /**
+   * Context value about the incoming request, you're free to pass any information here.
+   *
+   * Intentionally not readonly because you're free to mutate it whenever you want.
+   */
+  context: Context;
+}
+
+/**
+ * The response headers that get returned from graphql-sse.
+ *
+ * @category Server
+ */
+export type ResponseHeaders = {
+  accept?: string;
+  allow?: string;
+  'content-type'?: string;
+} & Record<string, string>;
+
+/**
+ * Server agnostic response body returned from `graphql-sse` needing
+ * to be coerced to the server implementation in use.
+ *
+ * When the body is a string, it is NOT a GraphQL response.
+ *
+ * @category Server
+ */
+export type ResponseBody = string | AsyncGenerator<string, void, undefined>;
+
+/**
+ * Server agnostic response options (ex. status and headers) returned from
+ * `graphql-sse` needing to be coerced to the server implementation in use.
+ *
+ * @category Server
+ */
+export interface ResponseInit {
+  readonly status: number;
+  readonly statusText: string;
+  readonly headers?: ResponseHeaders;
+}
+
+/**
+ * Server agnostic response returned from `graphql-sse` containing the
+ * body and init options needing to be coerced to the server implementation in use.
+ *
+ * @category Server
+ */
+export type Response = readonly [body: ResponseBody | null, init: ResponseInit];
 
 /**
  * A concrete GraphQL execution context value type.
@@ -48,14 +123,18 @@ export type NodeResponse = ServerResponse | Http2ServerResponse;
  *
  * @category Server
  */
-export type ExecutionContext =
-  | object // you can literally pass "any" JS object as the context value
+export type OperationContext =
+  | Record<PropertyKey, unknown>
   | symbol
   | number
   | string
   | boolean
   | undefined
   | null;
+
+/** @category Server */
+export type OperationArgs<Context extends OperationContext = undefined> =
+  ExecutionArgs & { contextValue: Context };
 
 /** @category Server */
 export type OperationResult =
@@ -70,9 +149,25 @@ export type OperationResult =
 
 /** @category Server */
 export interface HandlerOptions<
-  Request extends NodeRequest = NodeRequest,
-  Response extends NodeResponse = NodeResponse,
+  RequestRaw = unknown,
+  RequestContext = unknown,
+  Context extends OperationContext = undefined,
 > {
+  /**
+   * A custom GraphQL validate function allowing you to apply your
+   * own validation rules.
+   */
+  validate?: typeof graphqlValidate;
+  /**
+   * Is the `execute` function from GraphQL which is
+   * used to execute the query and mutation operations.
+   */
+  execute?: (args: OperationArgs<Context>) => OperationResult;
+  /**
+   * Is the `subscribe` function from GraphQL which is
+   * used to execute the subscription operation.
+   */
+  subscribe?: (args: OperationArgs<Context>) => OperationResult;
   /**
    * The GraphQL schema on which the operations will
    * be executed and validated against.
@@ -88,9 +183,44 @@ export interface HandlerOptions<
   schema?:
     | GraphQLSchema
     | ((
-        req: Request,
-        args: Omit<ExecutionArgs, 'schema'>,
+        req: Request<RequestRaw, RequestContext>,
+        args: Pick<
+          OperationArgs<Context>,
+          'contextValue' | 'operationName' | 'document' | 'variableValues'
+        >,
       ) => Promise<GraphQLSchema> | GraphQLSchema);
+  /**
+   * Authenticate the client. Returning a string indicates that the client
+   * is authenticated and the request is ready to be processed.
+   *
+   * A distinct token of type string must be supplied to enable the "single connection mode".
+   *
+   * Providing `null` as the token will completely disable the "single connection mode"
+   * and all incoming requests will always use the "distinct connection mode".
+   *
+   * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
+   */
+  authenticate?: (
+    req: Request<RequestRaw, RequestContext>,
+  ) =>
+    | Promise<Response | string | undefined | null>
+    | Response
+    | string
+    | undefined
+    | null;
+  /**
+   * Called when a new event stream is connecting BEFORE it is accepted.
+   * By accepted, its meant the server processed the request and responded
+   * with a 200 (OK), alongside flushing the necessary event stream headers.
+   */
+  onConnect?: (
+    req: Request<RequestRaw, RequestContext>,
+  ) =>
+    | Promise<Response | null | undefined | void>
+    | Response
+    | null
+    | undefined
+    | void;
   /**
    * A value which is provided to every resolver and holds
    * important contextual information like the currently
@@ -100,60 +230,16 @@ export interface HandlerOptions<
    * Meaning, for subscriptions, only at the point of initialising the subscription;
    * not on every subscription event emission. Read more about the context lifecycle
    * in subscriptions here: https://github.com/graphql/graphql-js/issues/894.
+   *
+   * If you don't provide the context context field, but have a context - you're trusted to
+   * provide one in `onSubscribe`.
    */
   context?:
-    | ExecutionContext
+    | Context
     | ((
-        req: Request,
-        args: ExecutionArgs,
-      ) => Promise<ExecutionContext> | ExecutionContext);
-  /**
-   * A custom GraphQL validate function allowing you to apply your
-   * own validation rules.
-   */
-  validate?: typeof graphqlValidate;
-  /**
-   * Is the `execute` function from GraphQL which is
-   * used to execute the query and mutation operations.
-   */
-  execute?: (args: ExecutionArgs) => OperationResult;
-  /**
-   * Is the `subscribe` function from GraphQL which is
-   * used to execute the subscription operation.
-   */
-  subscribe?: (args: ExecutionArgs) => OperationResult;
-  /**
-   * Authenticate the client. Returning a string indicates that the client
-   * is authenticated and the request is ready to be processed.
-   *
-   * A token of type string MUST be supplied; if there is no token, you may
-   * return an empty string (`''`);
-   *
-   * If you want to respond to the client with a custom status or body,
-   * you should do so using the provided `res` argument which will stop
-   * further execution.
-   *
-   * @default 'req.headers["x-graphql-event-stream-token"] || req.url.searchParams["token"] || generateRandomUUID()' // https://gist.github.com/jed/982883
-   */
-  authenticate?: (
-    req: Request,
-    res: Response,
-  ) => Promise<string | undefined | void> | string | undefined | void;
-  /**
-   * Called when a new event stream is connecting BEFORE it is accepted.
-   * By accepted, its meant the server responded with a 200 (OK), alongside
-   * flushing the necessary event stream headers.
-   *
-   * If you want to respond to the client with a custom status or body,
-   * you should do so using the provided `res` argument which will stop
-   * further execution.
-   */
-  onConnecting?: (req: Request, res: Response) => Promise<void> | void;
-  /**
-   * Called when a new event stream has been succesfully connected and
-   * accepted, and after all pending messages have been flushed.
-   */
-  onConnected?: (req: Request) => Promise<void> | void;
+        req: Request<RequestRaw, RequestContext>,
+        params: RequestParams,
+      ) => Promise<Context> | Context);
   /**
    * The subscribe callback executed right after processing the request
    * before proceeding with the GraphQL operation execution.
@@ -174,10 +260,14 @@ export interface HandlerOptions<
    * and supply the appropriate GraphQL operation execution arguments.
    */
   onSubscribe?: (
-    req: Request,
-    res: Response,
+    req: Request<RequestRaw, RequestContext>,
     params: RequestParams,
-  ) => Promise<ExecutionArgs | void> | ExecutionArgs | void;
+  ) =>
+    | Promise<Response | OperationResult | OperationArgs<Context> | void>
+    | Response
+    | OperationResult
+    | OperationArgs<Context>
+    | void;
   /**
    * Executed after the operation call resolves. For streaming
    * operations, triggering this callback does not necessarely
@@ -188,19 +278,15 @@ export interface HandlerOptions<
    * The `OperationResult` argument is the result of operation
    * execution. It can be an iterator or already a value.
    *
-   * Use this callback to listen for GraphQL operations and
-   * execution result manipulation.
+   * If you want the single result and the events from a streaming
+   * operation, use the `onNext` callback.
    *
-   * If you want to respond to the client with a custom status or body,
-   * you should do so using the provided `res` argument which will stop
-   * further execution.
-   *
-   * First argument, the request, is always the GraphQL operation
-   * request.
+   * If `onSubscribe` returns an `OperationResult`, this hook
+   * will NOT be called.
    */
   onOperation?: (
-    req: Request,
-    res: Response,
+    ctx: Context,
+    req: Request<RequestRaw, RequestContext>,
     args: ExecutionArgs,
     result: OperationResult,
   ) => Promise<OperationResult | void> | OperationResult | void;
@@ -214,12 +300,11 @@ export interface HandlerOptions<
    * Use this callback if you want to format the execution result
    * before it reaches the client.
    *
-   * First argument, the request, is always the GraphQL operation
-   * request.
+   * @param req - Always the request that contains the GraphQL operation.
    */
   onNext?: (
-    req: Request,
-    args: ExecutionArgs,
+    ctx: Context,
+    req: Request<RequestRaw, RequestContext>,
     result: ExecutionResult | ExecutionPatchResult,
   ) =>
     | Promise<ExecutionResult | ExecutionPatchResult | void>
@@ -234,102 +319,30 @@ export interface HandlerOptions<
    * operations even after an abrupt closure, this callback
    * will always be called.
    *
-   * First argument, the request, is always the GraphQL operation
-   * request.
+   * @param req - Always the request that contains the GraphQL operation.
    */
-  onComplete?: (req: Request, args: ExecutionArgs) => Promise<void> | void;
-  /**
-   * Called when an event stream has disconnected right before the
-   * accepting the stream.
-   */
-  onDisconnect?: (req: Request) => Promise<void> | void;
+  onComplete?: (
+    ctx: Context,
+    req: Request<RequestRaw, RequestContext>,
+  ) => Promise<void> | void;
 }
 
 /**
- * The ready-to-use handler. Simply plug it in your favourite HTTP framework
- * and enjoy.
- *
- * Beware that the handler resolves only after the whole operation completes.
- * - If query/mutation, waits for result
- * - If subscription, waits for complete
+ * The ready-to-use handler. Simply plug it in your favourite fetch-enabled HTTP
+ * framework and enjoy.
  *
  * Errors thrown from **any** of the provided options or callbacks (or even due to
  * library misuse or potential bugs) will reject the handler's promise. They are
  * considered internal errors and you should take care of them accordingly.
  *
- * For production environments, its recommended not to transmit the exact internal
- * error details to the client, but instead report to an error logging tool or simply
- * the console. Roughly:
- *
- * ```ts
- * import http from 'http';
- * import { createHandler } from 'graphql-sse';
- *
- * const handler = createHandler({ ... });
- *
- * http.createServer(async (req, res) => {
- *   try {
- *     await handler(req, res);
- *   } catch (err) {
- *     console.error(err);
- *     // or
- *     Sentry.captureException(err);
- *
- *     if (!res.headersSent) {
- *       res.writeHead(500, 'Internal Server Error').end();
- *     }
- *   }
- * });
- * ```
- *
- * Note that some libraries, like fastify, parse the body before reaching the handler.
- * In such cases all request 'data' events are already consumed. Use this `body` argument
- * too pass in the read body and avoid listening for the 'data' events internally. Do
- * beware that the `body` argument will be consumed **only** if it's an object.
- *
  * @category Server
  */
-export type Handler<
-  Request extends NodeRequest = NodeRequest,
-  Response extends NodeResponse = NodeResponse,
-> = (req: Request, res: Response, body?: unknown) => Promise<void>;
-
-interface Stream<
-  Request extends NodeRequest = NodeRequest,
-  Response extends NodeResponse = NodeResponse,
-> {
-  /**
-   * Does the stream have an open connection to some client.
-   */
-  readonly open: boolean;
-  /**
-   * If the operation behind an ID is an `AsyncIterator` - the operation
-   * is streaming; on the contrary, if the operation is `null` - it is simply
-   * a reservation, meaning - the operation resolves to a single result or is still
-   * pending/being prepared.
-   */
-  ops: Record<string, AsyncGenerator<unknown> | AsyncIterable<unknown> | null>;
-  /**
-   * Use this connection for streaming.
-   */
-  use(req: Request, res: Response): Promise<void>;
-  /**
-   * Stream from provided execution result to used connection.
-   */
-  from(
-    operationReq: Request, // holding the operation request (not necessarily the event stream)
-    args: ExecutionArgs,
-    result:
-      | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
-      | AsyncIterable<ExecutionResult | ExecutionPatchResult>
-      | ExecutionResult
-      | ExecutionPatchResult,
-    opId?: string,
-  ): Promise<void>;
-}
+export type Handler<RequestRaw = unknown, RequestContext = unknown> = (
+  req: Request<RequestRaw, RequestContext>,
+) => Promise<Response>;
 
 /**
- * Makes a Protocol complient HTTP GraphQL server  handler. The handler can
+ * Makes a Protocol complient HTTP GraphQL server handler. The handler can
  * be used with your favourite server library.
  *
  * Read more about the Protocol in the PROTOCOL.md documentation file.
@@ -337,18 +350,19 @@ interface Stream<
  * @category Server
  */
 export function createHandler<
-  Request extends NodeRequest = NodeRequest,
-  Response extends NodeResponse = NodeResponse,
->(options: HandlerOptions<Request, Response>): Handler<Request, Response> {
+  RequestRaw = unknown,
+  RequestContext = unknown,
+  Context extends OperationContext = undefined,
+>(
+  options: HandlerOptions<RequestRaw, RequestContext, Context>,
+): Handler<RequestRaw, RequestContext> {
   const {
-    schema,
-    context,
     validate = graphqlValidate,
     execute = graphqlExecute,
     subscribe = graphqlSubscribe,
+    schema,
     authenticate = function extractOrCreateStreamToken(req) {
-      const headerToken =
-        req.headers[TOKEN_HEADER_KEY] || req.headers['x-graphql-stream-token']; // @deprecated >v1.0.0
+      const headerToken = req.headers.get(TOKEN_HEADER_KEY);
       if (headerToken)
         return Array.isArray(headerToken) ? headerToken.join('') : headerToken;
 
@@ -364,169 +378,227 @@ export function createHandler<
         return v.toString(16);
       });
     },
-    onConnecting,
-    onConnected,
+    onConnect,
+    context,
     onSubscribe,
     onOperation,
     onNext,
     onComplete,
-    onDisconnect,
   } = options;
 
-  const streams: Record<string, Stream<Request, Response>> = {};
-
-  function createStream(token: string | null): Stream<Request, Response> {
-    let request: Request | null = null,
-      response: Response | null = null,
-      pinger: ReturnType<typeof setInterval>,
-      disposed = false;
-    const pendingMsgs: string[] = [];
+  interface Stream {
+    /**
+     * Does the stream have an open connection to some client.
+     */
+    readonly open: boolean;
+    /**
+     * If the operation behind an ID is an `AsyncIterator` - the operation
+     * is streaming; on the contrary, if the operation is `null` - it is simply
+     * a reservation, meaning - the operation resolves to a single result or is still
+     * pending/being prepared.
+     */
+    ops: Record<
+      string,
+      AsyncGenerator<unknown> | AsyncIterable<unknown> | null
+    >;
+    /**
+     * Use this connection for streaming.
+     */
+    subscribe(): AsyncGenerator<string>;
+    /**
+     * Stream from provided execution result to used connection.
+     */
+    from(
+      ctx: Context,
+      req: Request<RequestRaw, RequestContext>,
+      result:
+        | AsyncGenerator<ExecutionResult | ExecutionPatchResult>
+        | AsyncIterable<ExecutionResult | ExecutionPatchResult>
+        | ExecutionResult
+        | ExecutionPatchResult,
+      opId: string | null,
+    ): void;
+  }
+  const streams: Record<string, Stream> = {};
+  function createStream(token: string | null): Stream {
     const ops: Record<
       string,
       AsyncGenerator<unknown> | AsyncIterable<unknown> | null
     > = {};
 
-    function write(msg: string) {
-      return new Promise<boolean>((resolve, reject) => {
-        if (disposed || !response || !response.writable) return resolve(false);
-        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
-        response.write(msg, 'utf-8', (err) => {
-          if (err) return reject(err);
-          resolve(true);
-        });
-      });
-    }
+    let pinger: ReturnType<typeof setInterval>;
+    const msgs = (() => {
+      const pending: string[] = [];
+      const deferred = {
+        done: false,
+        error: null as unknown,
+        resolve: () => {
+          // noop
+        },
+      };
 
-    async function emit<E extends StreamEvent>(
-      event: E,
-      data: StreamData<E> | StreamDataForID<E>,
-    ): Promise<void> {
-      let msg = `event: ${event}`;
-      if (data) msg += `\ndata: ${JSON.stringify(data)}`;
-      msg += '\n\n';
+      async function dispose() {
+        clearInterval(pinger);
 
-      const wrote = await write(msg);
-      if (!wrote) pendingMsgs.push(msg);
-    }
+        // make room for another potential stream while this one is being disposed
+        if (typeof token === 'string') delete streams[token];
 
-    async function dispose() {
-      if (disposed) return;
-      disposed = true;
-
-      // make room for another potential stream while this one is being disposed
-      if (typeof token === 'string') delete streams[token];
-
-      // complete all operations and flush messages queue before ending the stream
-      for (const op of Object.values(ops)) {
-        if (isAsyncGenerator(op)) await op.return(undefined);
-      }
-      while (pendingMsgs.length) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const msg = pendingMsgs.shift()!;
-        await write(msg);
+        // complete all operations and flush messages queue before ending the stream
+        for (const op of Object.values(ops)) {
+          if (isAsyncGenerator(op)) {
+            await op.return(undefined);
+          }
+        }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      response!.end(); // response must exist at this point
-      response = null;
-      clearInterval(pinger);
+      const iterator = (async function* iterator() {
+        for (;;) {
+          if (!pending.length) {
+            // only wait if there are no pending messages available
+            await new Promise<void>((resolve) => (deferred.resolve = resolve));
+          }
+          // first flush
+          while (pending.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            yield pending.shift()!;
+          }
+          // then error
+          if (deferred.error) {
+            throw deferred.error;
+          }
+          // or complete
+          if (deferred.done) {
+            return;
+          }
+        }
+      })();
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      onDisconnect?.(request!); // request must exist at this point
-      request = null;
-    }
+      iterator.throw = async (err) => {
+        if (!deferred.done) {
+          deferred.done = true;
+          deferred.error = err;
+          deferred.resolve();
+          await dispose();
+        }
+        return { done: true, value: undefined };
+      };
 
+      iterator.return = async () => {
+        if (!deferred.done) {
+          deferred.done = true;
+          deferred.resolve();
+          await dispose();
+        }
+        return { done: true, value: undefined };
+      };
+
+      return {
+        next(msg: string) {
+          pending.push(msg);
+          deferred.resolve();
+        },
+        iterator,
+      };
+    })();
+
+    let subscribed = false;
     return {
       get open() {
-        return disposed || Boolean(response);
+        return subscribed;
       },
       ops,
-      async use(req, res) {
-        request = req;
-        response = res;
-
-        req.socket.setTimeout(0);
-        req.socket.setNoDelay(true);
-        req.socket.setKeepAlive(true);
-
-        res.once('close', dispose);
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('X-Accel-Buffering', 'no');
-        if (req.httpVersionMajor < 2) res.setHeader('Connection', 'keep-alive');
-        if ('flushHeaders' in res) res.flushHeaders();
+      subscribe() {
+        subscribed = true;
 
         // write an empty message because some browsers (like Firefox and Safari)
         // dont accept the header flush
-        await write(':\n\n');
+        msgs.next(':\n\n');
 
         // ping client every 12 seconds to keep the connection alive
-        pinger = setInterval(() => write(':\n\n'), 12_000);
+        pinger = setInterval(() => msgs.next(':\n\n'), 12_000);
 
-        while (pendingMsgs.length) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const msg = pendingMsgs.shift()!;
-          const wrote = await write(msg);
-          if (!wrote) throw new Error('Unable to flush messages');
-        }
-
-        await onConnected?.(req);
+        return msgs.iterator;
       },
-      async from(operationReq, args, result, opId) {
-        if (isAsyncIterable(result)) {
-          /** multiple emitted results */
-          for await (let part of result) {
-            const maybeResult = await onNext?.(operationReq, args, part);
-            if (maybeResult) part = maybeResult;
-
-            await emit(
-              'next',
-              opId
-                ? {
-                    id: opId,
-                    payload: part,
-                  }
-                : part,
+      from(ctx, req, result, opId) {
+        (async () => {
+          if (isAsyncIterable(result)) {
+            /** multiple emitted results */
+            for await (let part of result) {
+              const maybeResult = await onNext?.(ctx, req, part);
+              if (maybeResult) part = maybeResult;
+              msgs.next(
+                print({
+                  event: 'next',
+                  data: opId
+                    ? {
+                        id: opId,
+                        payload: part,
+                      }
+                    : part,
+                }),
+              );
+            }
+          } else {
+            /** single emitted result */
+            const maybeResult = await onNext?.(ctx, req, result);
+            if (maybeResult) result = maybeResult;
+            msgs.next(
+              print({
+                event: 'next',
+                data: opId
+                  ? {
+                      id: opId,
+                      payload: result,
+                    }
+                  : result,
+              }),
             );
           }
-        } else {
-          /** single emitted result */
-          const maybeResult = await onNext?.(operationReq, args, result);
-          if (maybeResult) result = maybeResult;
 
-          await emit(
-            'next',
-            opId
-              ? {
-                  id: opId,
-                  payload: result,
-                }
-              : result,
+          msgs.next(
+            print({
+              event: 'complete',
+              data: opId ? { id: opId } : null,
+            }),
           );
-        }
 
-        await emit('complete', opId ? { id: opId } : null);
+          await onComplete?.(ctx, req);
 
-        // end on complete when no operation id is present
-        // because distinct event streams are used for each operation
-        if (!opId) await dispose();
-        else delete ops[opId];
-
-        await onComplete?.(operationReq, args);
+          if (!opId) {
+            // end on complete when no operation id is present
+            // because distinct event streams are used for each operation
+            await msgs.iterator.return();
+          } else {
+            delete ops[opId];
+          }
+        })().catch(msgs.iterator.throw);
       },
     };
   }
 
   async function prepare(
-    req: Request,
-    res: Response,
+    req: Request<RequestRaw, RequestContext>,
     params: RequestParams,
-  ): Promise<[args: ExecutionArgs, perform: () => OperationResult] | void> {
-    let args: ExecutionArgs, operation: OperationTypeNode;
+  ): Promise<Response | { ctx: Context; perform: () => OperationResult }> {
+    let args: OperationArgs<Context>;
 
-    const maybeExecArgs = await onSubscribe?.(req, res, params);
-    if (maybeExecArgs) args = maybeExecArgs;
+    const onSubscribeResult = await onSubscribe?.(req, params);
+    if (isResponse(onSubscribeResult)) return onSubscribeResult;
+    else if (
+      isExecutionResult(onSubscribeResult) ||
+      isAsyncIterable(onSubscribeResult)
+    )
+      return {
+        // even if the result is already available, use
+        // context because onNext and onComplete needs it
+        ctx: (typeof context === 'function'
+          ? await context(req, params)
+          : context) as Context,
+        perform() {
+          return onSubscribeResult;
+        },
+      };
+    else if (onSubscribeResult) args = onSubscribeResult;
     else {
       // you either provide a schema dynamically through
       // `onSubscribe` or you set one up during the server setup
@@ -538,9 +610,25 @@ export function createHandler<
       if (typeof query === 'string') {
         try {
           query = parse(query);
-        } catch {
-          res.writeHead(400, 'GraphQL query syntax error').end();
-          return;
+        } catch (err) {
+          return [
+            JSON.stringify({
+              errors: [
+                err instanceof Error
+                  ? {
+                      message: err.message,
+                      // TODO: stack might leak sensitive information
+                      // stack: err.stack,
+                    }
+                  : err,
+              ],
+            }),
+            {
+              status: 400,
+              statusText: 'Bad Request',
+              headers: { 'content-type': 'application/json; charset=utf-8' },
+            },
+          ];
         }
       }
 
@@ -548,6 +636,9 @@ export function createHandler<
         operationName,
         document: query,
         variableValues: variables,
+        contextValue: (typeof context === 'function'
+          ? await context(req, params)
+          : context) as Context,
       };
       args = {
         ...argsWithoutSchema,
@@ -558,319 +649,462 @@ export function createHandler<
       };
     }
 
+    let operation: OperationTypeNode;
     try {
       const ast = getOperationAST(args.document, args.operationName);
       if (!ast) throw null;
       operation = ast.operation;
     } catch {
-      res.writeHead(400, 'Unable to detect operation AST').end();
-      return;
+      return [
+        JSON.stringify({
+          errors: [{ message: 'Unable to detect operation AST' }],
+        }),
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        },
+      ];
     }
 
     // mutations cannot happen over GETs as per the spec
     // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#get
     if (operation === 'mutation' && req.method === 'GET') {
-      res
-        .writeHead(405, 'Cannot perform mutations over GET', {
-          Allow: 'POST',
-        })
-        .end();
-      return;
+      return [
+        JSON.stringify({
+          errors: [{ message: 'Cannot perform mutations over GET' }],
+        }),
+        {
+          status: 405,
+          statusText: 'Method Not Allowed',
+          headers: {
+            allow: 'POST',
+            'content-type': 'application/json; charset=utf-8',
+          },
+        },
+      ];
     }
-
-    if (!('contextValue' in args))
-      args.contextValue =
-        typeof context === 'function' ? await context(req, args) : context;
 
     // we validate after injecting the context because the process of
     // reporting the validation errors might need the supplied context value
     const validationErrs = validate(args.schema, args.document);
     if (validationErrs.length) {
-      if (req.headers.accept === 'text/event-stream') {
+      if (req.headers.get('accept') === 'text/event-stream') {
         // accept the request and emit the validation error in event streams,
         // promoting graceful GraphQL error reporting
         // Read more: https://www.w3.org/TR/eventsource/#processing-model
         // Read more: https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#document-validation
-        return [
-          args,
-          function perform() {
+        return {
+          ctx: args.contextValue,
+          perform() {
             return { errors: validationErrs };
           },
-        ];
+        };
       }
 
-      res
-        .writeHead(400, {
-          'Content-Type':
-            req.headers.accept === 'application/json'
-              ? 'application/json; charset=utf-8'
-              : 'application/graphql+json; charset=utf-8',
-        })
-        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
-        .write(JSON.stringify({ errors: validationErrs }));
-      res.end();
-      return;
+      return [
+        JSON.stringify({ errors: validationErrs }),
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        },
+      ];
     }
 
-    return [
-      args,
-      async function perform() {
-        let result =
-          operation === 'subscription' ? subscribe(args) : execute(args);
-
-        const maybeResult = await onOperation?.(req, res, args, result);
-        if (maybeResult) result = maybeResult;
-
+    return {
+      ctx: args.contextValue,
+      async perform() {
+        const result = await (operation === 'subscription'
+          ? subscribe(args)
+          : execute(args));
+        const maybeResult = await onOperation?.(
+          args.contextValue,
+          req,
+          args,
+          result,
+        );
+        if (maybeResult) return maybeResult;
         return result;
       },
-    ];
+    };
   }
 
-  return async function handler(req: Request, res: Response, body: unknown) {
-    // authenticate first and acquire unique identification token
-    const token = await authenticate(req, res);
-    if (res.writableEnded) return;
-    if (typeof token !== 'string') throw new Error('Token was not supplied');
+  return async function handler(req) {
+    const token = await authenticate(req);
+    if (isResponse(token)) return token;
 
-    const accept = req.headers.accept ?? '*/*';
+    // TODO: make accept detection more resilient
+    const accept = req.headers.get('accept') || '*/*';
 
-    const stream = streams[token];
+    const stream = typeof token === 'string' ? streams[token] : null;
 
     if (accept === 'text/event-stream') {
+      const maybeResponse = await onConnect?.(req);
+      if (isResponse(maybeResponse)) return maybeResponse;
+
       // if event stream is not registered, process it directly.
       // this means that distinct connections are used for graphql operations
       if (!stream) {
-        let params;
-        try {
-          params = await parseReq(req, body);
-        } catch (err) {
-          res.writeHead(400, err.message).end();
-          return;
-        }
+        const paramsOrResponse = await parseReq(req);
+        if (isResponse(paramsOrResponse)) return paramsOrResponse;
+        const params = paramsOrResponse;
 
         const distinctStream = createStream(null);
 
         // reserve space for the operation
         distinctStream.ops[''] = null;
 
-        const prepared = await prepare(req, res, params);
-        if (res.writableEnded) return;
-        if (!prepared)
-          throw new Error(
-            "Operation preparation didn't respond, yet it was not prepared",
-          );
-        const [args, perform] = prepared;
+        const prepared = await prepare(req, params);
+        if (isResponse(prepared)) return prepared;
 
-        const result = await perform();
-        if (res.writableEnded) {
-          if (isAsyncGenerator(result)) result.return(undefined);
-          return; // `onOperation` responded
-        }
-
+        const result = await prepared.perform();
         if (isAsyncIterable(result)) distinctStream.ops[''] = result;
 
-        await onConnecting?.(req, res);
-        if (res.writableEnded) return;
-        await distinctStream.use(req, res);
-        await distinctStream.from(req, args, result);
-        return;
+        distinctStream.from(prepared.ctx, req, result, null);
+        return [
+          distinctStream.subscribe(),
+          {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              connection: 'keep-alive',
+              'cache-control': 'no-cache',
+              'content-encoding': 'none',
+              'content-type': 'text/event-stream; charset=utf-8',
+            },
+          },
+        ];
       }
 
       // open stream cant exist, only one per token is allowed
       if (stream.open) {
-        res.writeHead(409, 'Stream already open').end();
-        return;
+        return [
+          JSON.stringify({ errors: [{ message: 'Stream already open' }] }),
+          {
+            status: 409,
+            statusText: 'Conflict',
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+            },
+          },
+        ];
       }
 
-      await onConnecting?.(req, res);
-      if (res.writableEnded) return;
-      await stream.use(req, res);
-      return;
+      return [
+        stream.subscribe(),
+        {
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            connection: 'keep-alive',
+            'cache-control': 'no-cache',
+            'content-encoding': 'none',
+            'content-type': 'text/event-stream; charset=utf-8',
+          },
+        },
+      ];
     }
 
-    if (req.method === 'PUT') {
-      // method PUT prepares a stream for future incoming connections.
+    // if there us no token supplied, exclusively use the "distinct connection mode"
+    if (typeof token !== 'string') {
+      return [null, { status: 404, statusText: 'Not Found' }];
+    }
 
+    // method PUT prepares a stream for future incoming connections
+    if (req.method === 'PUT') {
       if (!['*/*', 'text/plain'].includes(accept)) {
-        res.writeHead(406).end();
-        return;
+        return [null, { status: 406, statusText: 'Not Acceptable' }];
       }
 
       // streams mustnt exist if putting new one
       if (stream) {
-        res.writeHead(409, 'Stream already registered').end();
-        return;
+        return [
+          JSON.stringify({
+            errors: [{ message: 'Stream already registered' }],
+          }),
+          {
+            status: 409,
+            statusText: 'Conflict',
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+            },
+          },
+        ];
       }
 
       streams[token] = createStream(token);
-      res
-        .writeHead(201, { 'Content-Type': 'text/plain; charset=utf-8' })
-        // @ts-expect-error both ServerResponse and Http2ServerResponse have this write signature
-        .write(token);
-      res.end();
-      return;
+
+      return [
+        token,
+        {
+          status: 201,
+          statusText: 'Created',
+          headers: {
+            'content-type': 'text/plain; charset=utf-8',
+          },
+        },
+      ];
     } else if (req.method === 'DELETE') {
       // method DELETE completes an existing operation streaming in streams
 
       // streams must exist when completing operations
       if (!stream) {
-        res.writeHead(404, 'Stream not found').end();
-        return;
+        return [
+          JSON.stringify({
+            errors: [{ message: 'Stream not found' }],
+          }),
+          {
+            status: 404,
+            statusText: 'Not Found',
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+            },
+          },
+        ];
       }
 
       const opId = new URL(req.url ?? '', 'http://localhost/').searchParams.get(
         'operationId',
       );
       if (!opId) {
-        res.writeHead(400, 'Operation ID is missing').end();
-        return;
+        return [
+          JSON.stringify({
+            errors: [{ message: 'Operation ID is missing' }],
+          }),
+          {
+            status: 400,
+            statusText: 'Bad Request',
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+            },
+          },
+        ];
       }
 
       const op = stream.ops[opId];
       if (isAsyncGenerator(op)) op.return(undefined);
       delete stream.ops[opId]; // deleting the operation means no further activity should take place
 
-      res.writeHead(200).end();
-      return;
+      return [
+        null,
+        {
+          status: 200,
+          statusText: 'OK',
+        },
+      ];
     } else if (req.method !== 'GET' && req.method !== 'POST') {
       // only POSTs and GETs are accepted at this point
-      res.writeHead(405, { Allow: 'GET, POST, PUT, DELETE' }).end();
-      return;
+      return [
+        null,
+        {
+          status: 405,
+          statusText: 'Method Not Allowed',
+          headers: {
+            allow: 'GET, POST, PUT, DELETE',
+          },
+        },
+      ];
     } else if (!stream) {
       // for all other requests, streams must exist to attach the result onto
-      res.writeHead(404, 'Stream not found').end();
-      return;
+      return [
+        JSON.stringify({
+          errors: [{ message: 'Stream not found' }],
+        }),
+        {
+          status: 404,
+          statusText: 'Not Found',
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+          },
+        },
+      ];
     }
 
-    if (
-      !['*/*', 'application/graphql+json', 'application/json'].includes(accept)
-    ) {
-      res.writeHead(406).end();
-      return;
+    if (!['*/*', 'application/*', 'application/json'].includes(accept)) {
+      return [
+        null,
+        {
+          status: 406,
+          statusText: 'Not Acceptable',
+        },
+      ];
     }
 
-    let params;
-    try {
-      params = await parseReq(req, body);
-    } catch (err) {
-      res.writeHead(400, err.message).end();
-      return;
-    }
+    const paramsOrResponse = await parseReq(req);
+    if (isResponse(paramsOrResponse)) return paramsOrResponse;
+    const params = paramsOrResponse;
 
     const opId = String(params.extensions?.operationId ?? '');
     if (!opId) {
-      res.writeHead(400, 'Operation ID is missing').end();
-      return;
+      return [
+        JSON.stringify({
+          errors: [{ message: 'Operation ID is missing' }],
+        }),
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+          },
+        },
+      ];
     }
     if (opId in stream.ops) {
-      res.writeHead(409, 'Operation with ID already exists').end();
-      return;
+      return [
+        JSON.stringify({
+          errors: [{ message: 'Operation with ID already exists' }],
+        }),
+        {
+          status: 409,
+          statusText: 'Conflict',
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+          },
+        },
+      ];
     }
+
     // reserve space for the operation through ID
     stream.ops[opId] = null;
 
-    const prepared = await prepare(req, res, params);
-    if (res.writableEnded) return;
-    if (!prepared)
-      throw new Error(
-        "Operation preparation didn't respond, yet it was not prepared",
-      );
-    const [args, perform] = prepared;
+    const prepared = await prepare(req, params);
+    if (isResponse(prepared)) return prepared;
 
     // operation might have completed before prepared
     if (!(opId in stream.ops)) {
-      res.writeHead(204).end();
-      return;
+      return [
+        null,
+        {
+          status: 204,
+          statusText: 'No Content',
+        },
+      ];
     }
 
-    const result = await perform();
-    if (res.writableEnded) {
-      if (isAsyncGenerator(result)) result.return(undefined);
-      delete stream.ops[opId];
-      return; // `onOperation` responded
-    }
+    const result = await prepared.perform();
 
     // operation might have completed before performed
     if (!(opId in stream.ops)) {
       if (isAsyncGenerator(result)) result.return(undefined);
-      res.writeHead(204).end();
-      return;
+      if (!(opId in stream.ops)) {
+        return [
+          null,
+          {
+            status: 204,
+            statusText: 'No Content',
+          },
+        ];
+      }
     }
 
     if (isAsyncIterable(result)) stream.ops[opId] = result;
 
-    res.writeHead(202).end();
-
     // streaming to an empty reservation is ok (will be flushed on connect)
-    await stream.from(req, args, result, opId);
+    stream.from(prepared.ctx, req, result, opId);
+
+    return [null, { status: 202, statusText: 'Accepted' }];
   };
 }
 
-async function parseReq<Request extends NodeRequest>(
-  req: Request,
-  body: unknown,
-): Promise<RequestParams> {
+async function parseReq(
+  req: Request<unknown, unknown>,
+): Promise<Response | RequestParams> {
   const params: Partial<RequestParams> = {};
-
-  if (req.method === 'GET') {
-    await new Promise<void>((resolve, reject) => {
-      try {
-        const url = new URL(req.url ?? '', 'http://localhost/');
-        params.operationName =
-          url.searchParams.get('operationName') ?? undefined;
-        params.query = url.searchParams.get('query') ?? undefined;
-        const variables = url.searchParams.get('variables');
-        if (variables) params.variables = JSON.parse(variables);
-        const extensions = url.searchParams.get('extensions');
-        if (extensions) params.extensions = JSON.parse(extensions);
-        resolve();
-      } catch {
-        reject(new Error('Unparsable URL'));
-      }
-    });
-  } else if (req.method === 'POST') {
-    await new Promise<void>((resolve, reject) => {
-      const end = (body: Record<string, unknown> | string) => {
+  try {
+    switch (true) {
+      case req.method === 'GET': {
         try {
-          const data = typeof body === 'string' ? JSON.parse(body) : body;
-          params.operationName = data.operationName;
-          params.query = data.query;
-          params.variables = data.variables;
-          params.extensions = data.extensions;
-          resolve();
+          const [, search] = req.url.split('?');
+          const searchParams = new URLSearchParams(search);
+          params.operationName = searchParams.get('operationName') ?? undefined;
+          params.query = searchParams.get('query') ?? undefined;
+          const variables = searchParams.get('variables');
+          if (variables) params.variables = JSON.parse(variables);
+          const extensions = searchParams.get('extensions');
+          if (extensions) params.extensions = JSON.parse(extensions);
         } catch {
-          reject(new Error('Unparsable body'));
+          throw new Error('Unparsable URL');
         }
-      };
-      if (typeof body === 'string' || isObject(body)) end(body);
-      else {
-        let body = '';
-        req.on('data', (chunk) => (body += chunk));
-        req.on('end', () => end(body));
+        break;
       }
-    });
-  } else throw new Error(`Unsupported method ${req.method}`); // should never happen
+      case req.method === 'POST' &&
+        req.headers.get('content-type')?.includes('application/json'): {
+        if (!req.body) {
+          throw new Error('Missing body');
+        }
+        const body =
+          typeof req.body === 'function' ? await req.body() : req.body;
+        const data = typeof body === 'string' ? JSON.parse(body) : body;
+        if (!isObject(data)) {
+          throw new Error('JSON body must be an object');
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        params.operationName = data.operationName as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        params.query = data.query as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        params.variables = data.variables as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        params.extensions = data.extensions as any;
+        break;
+      }
+      default:
+        return [
+          null,
+          {
+            status: 415,
+            statusText: 'Unsupported Media Type',
+          },
+        ];
+    }
 
-  if (!params.query) throw new Error('Missing query');
-  if (params.variables && typeof params.variables !== 'object')
-    throw new Error('Invalid variables');
-  if (params.extensions && typeof params.extensions !== 'object')
-    throw new Error('Invalid extensions');
+    if (params.query == null) throw new Error('Missing query');
+    if (typeof params.query !== 'string') throw new Error('Invalid query');
+    if (
+      params.variables != null &&
+      (typeof params.variables !== 'object' || Array.isArray(params.variables))
+    ) {
+      throw new Error('Invalid variables');
+    }
+    if (
+      params.extensions != null &&
+      (typeof params.extensions !== 'object' ||
+        Array.isArray(params.extensions))
+    ) {
+      throw new Error('Invalid extensions');
+    }
 
-  return params as RequestParams;
+    // request parameters are checked and now complete
+    return params as RequestParams;
+  } catch (err) {
+    return [
+      JSON.stringify({
+        errors: [
+          err instanceof Error
+            ? {
+                message: err.message,
+                // TODO: stack might leak sensitive information
+                // stack: err.stack,
+              }
+            : err,
+        ],
+      }),
+      {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+      },
+    ];
+  }
 }
 
-function isAsyncIterable<T>(val: unknown): val is AsyncIterable<T> {
-  return typeof Object(val)[Symbol.asyncIterator] === 'function';
+function isResponse(val: unknown): val is Response {
+  // TODO: comprehensive check
+  return Array.isArray(val);
 }
 
-export function isAsyncGenerator<T>(val: unknown): val is AsyncGenerator<T> {
-  return (
-    isObject(val) &&
-    typeof Object(val)[Symbol.asyncIterator] === 'function' &&
-    typeof val.return === 'function'
-    // for lazy ones, we only need the return anyway
-    // typeof val.throw === 'function' &&
-    // typeof val.next === 'function'
-  );
+function isExecutionResult(val: unknown): val is ExecutionResult {
+  // TODO: comprehensive check
+  return isObject(val);
 }

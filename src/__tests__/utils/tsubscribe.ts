@@ -4,15 +4,10 @@ import { Client } from '../../client';
 import { RequestParams } from '../../common';
 
 interface TSubscribe<T> {
-  waitForNext: (
-    test?: (value: ExecutionResult<T, unknown>) => void,
-    expire?: number,
-  ) => Promise<void>;
-  waitForError: (
-    test?: (error: unknown) => void,
-    expire?: number,
-  ) => Promise<void>;
-  waitForComplete: (test?: () => void, expire?: number) => Promise<void>;
+  waitForNext: () => Promise<ExecutionResult<T, unknown>>;
+  waitForError: () => Promise<unknown>;
+  throwOnError: () => Promise<void>;
+  waitForComplete: () => Promise<void>;
   dispose: () => void;
 }
 
@@ -40,55 +35,49 @@ export function tsubscribe<T = unknown>(
       emitter.removeAllListeners();
     },
   });
-
-  return {
-    waitForNext: (test, expire) => {
-      return new Promise((resolve) => {
-        function done() {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const result = results.shift()!;
-          test?.(result);
-          resolve();
-        }
-        if (results.length > 0) return done();
-        emitter.once('next', done);
-        if (expire)
-          setTimeout(() => {
-            emitter.off('next', done); // expired
-            resolve();
-          }, expire);
-      });
-    },
-    waitForError: (test, expire) => {
-      return new Promise((resolve) => {
-        function done() {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          test?.(error);
-          resolve();
-        }
-        if (error) return done();
+  function waitForError() {
+    return new Promise((resolve) => {
+      function done() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        resolve(error);
+      }
+      if (error) {
+        done();
+      } else {
         emitter.once('err', done);
-        if (expire)
-          setTimeout(() => {
-            emitter.off('err', done); // expired
-            resolve();
-          }, expire);
-      });
-    },
-    waitForComplete: (test, expire) => {
+      }
+    });
+  }
+  return {
+    waitForNext() {
       return new Promise((resolve) => {
         function done() {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          test?.();
+          resolve(results.shift()!);
+        }
+        if (results.length) {
+          done();
+        } else {
+          emitter.once('next', done);
+        }
+      });
+    },
+    waitForError,
+    throwOnError: () =>
+      waitForError().then((err) => {
+        throw err;
+      }),
+    waitForComplete() {
+      return new Promise((resolve) => {
+        function done() {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           resolve();
         }
-        if (completed) return done();
-        emitter.once('complete', done);
-        if (expire)
-          setTimeout(() => {
-            emitter.off('complete', done); // expired
-            resolve();
-          }, expire);
+        if (completed) {
+          done();
+        } else {
+          emitter.once('complete', done);
+        }
       });
     },
     dispose,
