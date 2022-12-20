@@ -192,16 +192,11 @@ const handler = createHandler({ schema });
 export default {
   port: 4000, // Listening to port 4000
   async fetch(req) {
-    try {
-      const [path, _search] = req.url.split('?');
-      if (path.endsWith('/graphql/stream')) {
-        return await handler(req);
-      }
-      return new Response(null, { status: 404 });
-    } catch (err) {
-      console.error(err);
-      return new Response(null, { status: 500 });
+    const [path, _search] = req.url.split('?');
+    if (path.endsWith('/graphql/stream')) {
+      return await handler(req);
     }
+    return new Response(null, { status: 404 });
   },
 };
 ```
