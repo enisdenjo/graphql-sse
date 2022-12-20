@@ -52,7 +52,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [build, dry-run-release]
+    needs: [build, dry-run]
     environment: npm
     steps:
       - name: Checkout
