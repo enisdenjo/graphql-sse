@@ -74,20 +74,11 @@ import { schema } from './previous-step';
 const handler = createHandler({ schema });
 
 // Create an HTTP server using the handler on `/graphql/stream`
-const server = http.createServer(async (req, res) => {
-  try {
-    if (req.url.startsWith('/graphql/stream')) {
-      return await handler(req, res);
-    }
-    return res.writeHead(404).end();
-  } catch (err) {
-    console.error(err);
-    if (!res.headersSent) {
-      // could happen that some hook throws
-      // after the headers have been flushed
-      res.writeHead(500, 'Internal Server Error').end();
-    }
+const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/graphql/stream')) {
+    return handler(req, res);
   }
+  res.writeHead(404).end();
 });
 
 server.listen(4000);
@@ -113,20 +104,11 @@ import { schema } from './previous-step';
 const handler = createHandler({ schema });
 
 // Create an HTTP server using the handler on `/graphql/stream`
-const server = http.createServer(async (req, res) => {
-  try {
-    if (req.url.startsWith('/graphql/stream')) {
-      return await handler(req, res);
-    }
-    return res.writeHead(404).end();
-  } catch (err) {
-    console.error(err);
-    if (!res.headersSent) {
-      // could happen that some hook throws
-      // after the headers have been flushed
-      res.writeHead(500, 'Internal Server Error').end();
-    }
+const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/graphql/stream')) {
+    return handler(req, res);
   }
+  res.writeHead(404).end();
 });
 
 server.listen(4000);
@@ -147,21 +129,7 @@ const handler = createHandler({ schema });
 const app = express();
 
 // Serve all methods on `/graphql/stream`
-app.use('/graphql/stream', async (req, res) => {
-  try {
-    await handler(req, res);
-  } catch (err) {
-    console.error(err);
-    // or
-    Sentry.captureException(err);
-
-    if (!res.headersSent) {
-      // could happen that some hook throws
-      // after the headers have been flushed
-      res.writeHead(500, 'Internal Server Error').end();
-    }
-  }
-});
+app.use('/graphql/stream', handler);
 
 server.listen(4000);
 console.log('Listening to port 4000');
@@ -180,21 +148,7 @@ const handler = createHandler({ schema });
 const fastify = Fastify();
 
 // Serve all methods on `/graphql/stream`
-fastify.all('/graphql/stream', async (req, reply) => {
-  try {
-    await handler(req, reply);
-  } catch (err) {
-    console.error(err);
-    // or
-    Sentry.captureException(err);
-
-    if (!reply.raw.headersSent) {
-      // could happen that some hook throws
-      // after the headers have been flushed
-      reply.code(500).send();
-    }
-  }
-});
+fastify.all('/graphql/stream', handler);
 
 fastify.listen({ port: 4000 });
 console.log('Listening to port 4000');
@@ -213,16 +167,11 @@ const handler = createHandler({ schema });
 // Serve on `/graphql/stream` using the handler
 await serve(
   (req: Request) => {
-    try {
-      const [path, _search] = req.url.split('?');
-      if (path.endsWith('/graphql/stream')) {
-        return await handler(req);
-      }
-      return new Response(null, { status: 404 });
-    } catch (err) {
-      console.error(err);
-      return new Response(null, { status: 500 });
+    const [path, _search] = req.url.split('?');
+    if (path.endsWith('/graphql/stream')) {
+      return await handler(req);
     }
+    return new Response(null, { status: 404 });
   },
   {
     port: 4000, // Listening to port 4000

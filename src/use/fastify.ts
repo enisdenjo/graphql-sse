@@ -15,9 +15,10 @@ export interface RequestContext {
 /**
  * The ready-to-use handler for [fastify](https://www.fastify.io).
  *
- * Errors thrown from **any** of the provided options or callbacks (or even due to
- * library misuse or potential bugs) will reject the handler's promise. They are
- * considered internal errors and you should take care of them accordingly.
+ * Errors thrown from the provided options or callbacks (or even due to
+ * library misuse or potential bugs) will reject the handler or bubble to the
+ * returned iterator. They are considered internal errors and you should take care
+ * of them accordingly.
  *
  * For production environments, its recommended not to transmit the exact internal
  * error details to the client, but instead report to an error logging tool or simply
@@ -36,14 +37,7 @@ export interface RequestContext {
  *     await handler(req, reply);
  *   } catch (err) {
  *     console.error(err);
- *     // or
- *     Sentry.captureException(err);
- *
- *     if (!reply.raw.headersSent) {
- *       // could happen that some hook throws
- *       // after the headers have been flushed
- *       reply.code(500).send();
- *     }
+ *     reply.code(500).send();
  *   }
  * });
  *

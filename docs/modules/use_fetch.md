@@ -21,9 +21,10 @@
 The ready-to-use fetch handler. To be used with your favourite fetch
 framework, in a lambda function, or have deploy to the edge.
 
-Errors thrown from **any** of the provided options or callbacks (or even due to
-library misuse or potential bugs) will reject the handler's promise. They are
-considered internal errors and you should take care of them accordingly.
+Errors thrown from the provided options or callbacks (or even due to
+library misuse or potential bugs) will reject the handler or bubble to the
+returned iterator. They are considered internal errors and you should take care
+of them accordingly.
 
 For production environments, its recommended not to transmit the exact internal
 error details to the client, but instead report to an error logging tool or simply
@@ -40,9 +41,6 @@ export async function fetch(req: Request): Promise<Response> {
     return await handler(req);
   } catch (err) {
     console.error(err);
-    // or
-    Sentry.captureException(err);
-
     return new Response(null, { status: 500 });
   }
 }
