@@ -57,11 +57,15 @@ export function queue<T>(): {
   return {
     async next() {
       while (queue.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- There will be something.
         return queue.shift()!;
       }
       return new Promise((resolve) => {
         emitter.once(sy, () => {
-          resolve(queue.shift()!);
+          resolve(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- There will be something.
+            queue.shift()!,
+          );
         });
       });
     },
