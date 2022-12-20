@@ -1,3 +1,113 @@
+# [2.0.0](https://github.com/enisdenjo/graphql-sse/compare/v1.3.2...v2.0.0) (2022-12-20)
+
+
+### Features
+
+* **handler:** Server and environment agnostic handler ([#37](https://github.com/enisdenjo/graphql-sse/issues/37)) ([22cf03d](https://github.com/enisdenjo/graphql-sse/commit/22cf03d3c214019a3bf538742bbceac766c17353))
+
+
+### BREAKING CHANGES
+
+* **handler:** The handler is now server agnostic and can run _anywhere_
+
+- Core of `graphql-sse` is now server agnostic and as such offers a handler that implements a generic request/response model
+- Handler does not await for whole operation to complete anymore. Only the processing part (parsing, validating and executing)
+- GraphQL context is now typed
+- Hook arguments have been changed, they're not providing the Node native req/res anymore - they instead provide the generic request/response
+- `onSubscribe` hook can now return an execution result too (useful for caching for example)
+- Throwing in `onNext` and `onComplete` hooks will bubble the error to the returned iterator
+
+### Migration
+
+Even though the core of graphql-sse is now completely server agnostic, there are adapters to ease the integration with existing solutions. Migrating is actually not a headache!
+
+Beware that the adapters **don't** handle internal errors, it's your responsibility to take care of that and behave accordingly.
+
+#### [`http`](https://nodejs.org/api/http.html)
+
+```diff
+import http from 'http';
+- import { createHandler } from 'graphql-sse';
++ import { createHandler } from 'graphql-sse/lib/use/http';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create an HTTP server using the handler on `/graphql/stream`
+const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/graphql/stream')) {
+    return handler(req, res);
+  }
+  res.writeHead(404).end();
+});
+
+server.listen(4000);
+console.log('Listening to port 4000');
+```
+
+#### [`http2`](https://nodejs.org/api/http2.html)
+
+```diff
+import fs from 'fs';
+import http2 from 'http2';
+- import { createHandler } from 'graphql-sse';
++ import { createHandler } from 'graphql-sse/lib/use/http2';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create an HTTP server using the handler on `/graphql/stream`
+const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/graphql/stream')) {
+    return handler(req, res);
+  }
+  res.writeHead(404).end();
+});
+
+server.listen(4000);
+console.log('Listening to port 4000');
+```
+
+#### [`express`](https://expressjs.com/)
+
+```diff
+import express from 'express'; // yarn add express
+- import { createHandler } from 'graphql-sse';
++ import { createHandler } from 'graphql-sse/lib/use/express';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create an express app
+const app = express();
+
+// Serve all methods on `/graphql/stream`
+app.use('/graphql/stream', handler);
+
+server.listen(4000);
+console.log('Listening to port 4000');
+```
+
+#### [`fastify`](https://www.fastify.io/)
+
+```diff
+import Fastify from 'fastify'; // yarn add fastify
+- import { createHandler } from 'graphql-sse';
++ import { createHandler } from 'graphql-sse/lib/use/fastify';
+
+// Create the GraphQL over SSE handler
+const handler = createHandler({ schema });
+
+// Create a fastify app
+const fastify = Fastify();
+
+// Serve all methods on `/graphql/stream`
+fastify.all('/graphql/stream', handler);
+
+fastify.listen({ port: 4000 });
+console.log('Listening to port 4000');
+```
+
 ## [1.3.2](https://github.com/enisdenjo/graphql-sse/compare/v1.3.1...v1.3.2) (2022-12-06)
 
 
