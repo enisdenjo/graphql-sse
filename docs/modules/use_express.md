@@ -8,6 +8,10 @@
 
 - [RequestContext](../interfaces/use_express.RequestContext.md)
 
+### Type Aliases
+
+- [HandlerOptions](use_express.md#handleroptions)
+
 ### Functions
 
 - [createHandler](use_express.md#createhandler)
@@ -61,7 +65,7 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`<`ParamsDictionary`, `any`, `any`, `ParsedQs`, `Record`<`string`, `any`\>\>, [`RequestContext`](../interfaces/use_express.RequestContext.md), `Context`\> |
+| `options` | [`HandlerOptions`](use_express.md#handleroptions)<`Context`\> |
 
 #### Returns
 
@@ -79,3 +83,15 @@ console.log('Listening to port 4000');
 ##### Returns
 
 `Promise`<`void`\>
+
+## Server/fetch
+
+### HandlerOptions
+
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_express.RequestContext.md), `Context`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |

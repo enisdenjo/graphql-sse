@@ -1,7 +1,7 @@
 import type { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import {
   createHandler as createRawHandler,
-  HandlerOptions,
+  HandlerOptions as RawHandlerOptions,
   OperationContext,
 } from '../handler';
 
@@ -11,6 +11,12 @@ import {
 export interface RequestContext {
   res: Http2ServerResponse;
 }
+
+/**
+ * @category Server/fetch
+ */
+export type HandlerOptions<Context extends OperationContext = undefined> =
+  RawHandlerOptions<Http2ServerRequest, RequestContext, Context>;
 
 /**
  * The ready-to-use handler for Node's [http](https://nodejs.org/api/http2.html).
@@ -47,7 +53,7 @@ export interface RequestContext {
  * @category Server/http2
  */
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Http2ServerRequest, RequestContext, Context>,
+  options: HandlerOptions<Context>,
 ): (req: Http2ServerRequest, res: Http2ServerResponse) => Promise<void> {
   const handler = createRawHandler(options);
   return async function handleRequest(req, res) {

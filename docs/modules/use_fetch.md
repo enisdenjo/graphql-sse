@@ -8,11 +8,27 @@
 
 - [RequestContext](../interfaces/use_fetch.RequestContext.md)
 
+### Type Aliases
+
+- [HandlerOptions](use_fetch.md#handleroptions)
+
 ### Functions
 
 - [createHandler](use_fetch.md#createhandler)
 
 ## Server/fetch
+
+### HandlerOptions
+
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_fetch.RequestContext.md), `Context`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+
+___
 
 ### createHandler
 
@@ -56,7 +72,7 @@ export async function fetch(req: Request): Promise<Response> {
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_fetch.RequestContext.md), `Context`\> |
+| `options` | [`HandlerOptions`](use_fetch.md#handleroptions)<`Context`\> |
 | `reqCtx` | `Partial`<[`RequestContext`](../interfaces/use_fetch.RequestContext.md)\> |
 
 #### Returns

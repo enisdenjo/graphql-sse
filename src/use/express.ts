@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import {
   createHandler as createRawHandler,
-  HandlerOptions,
+  HandlerOptions as RawHandlerOptions,
   OperationContext,
 } from '../handler';
 
@@ -11,6 +11,12 @@ import {
 export interface RequestContext {
   res: Response;
 }
+
+/**
+ * @category Server/fetch
+ */
+export type HandlerOptions<Context extends OperationContext = undefined> =
+  RawHandlerOptions<Request, RequestContext, Context>;
 
 /**
  * The ready-to-use handler for [express](https://expressjs.com).
@@ -49,7 +55,7 @@ export interface RequestContext {
  * @category Server/express
  */
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Request, RequestContext, Context>,
+  options: HandlerOptions<Context>,
 ): (req: Request, res: Response) => Promise<void> {
   const handler = createRawHandler(options);
   return async function handleRequest(req, res) {

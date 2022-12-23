@@ -8,9 +8,25 @@
 
 - [RequestContext](../interfaces/use_http2.RequestContext.md)
 
+### Type Aliases
+
+- [HandlerOptions](use_http2.md#handleroptions)
+
 ### Functions
 
 - [createHandler](use_http2.md#createhandler)
+
+## Server/fetch
+
+### HandlerOptions
+
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Http2ServerRequest`, [`RequestContext`](../interfaces/use_http2.RequestContext.md), `Context`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
 
 ## Server/http2
 
@@ -59,7 +75,7 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Http2ServerRequest`, [`RequestContext`](../interfaces/use_http2.RequestContext.md), `Context`\> |
+| `options` | [`HandlerOptions`](use_http2.md#handleroptions)<`Context`\> |
 
 #### Returns
 

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import {
   createHandler as createRawHandler,
-  HandlerOptions,
+  HandlerOptions as RawHandlerOptions,
   OperationContext,
 } from '../handler';
 
@@ -11,6 +11,12 @@ import {
 export interface RequestContext {
   res: ServerResponse;
 }
+
+/**
+ * @category Server/fetch
+ */
+export type HandlerOptions<Context extends OperationContext = undefined> =
+  RawHandlerOptions<IncomingMessage, RequestContext, Context>;
 
 /**
  * The ready-to-use handler for Node's [http](https://nodejs.org/api/http.html).
@@ -47,7 +53,7 @@ export interface RequestContext {
  * @category Server/http
  */
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<IncomingMessage, RequestContext, Context>,
+  options: HandlerOptions<Context>,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   const handler = createRawHandler(options);
   return async function handleRequest(req, res) {

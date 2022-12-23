@@ -8,9 +8,25 @@
 
 - [RequestContext](../interfaces/use_http.RequestContext.md)
 
+### Type Aliases
+
+- [HandlerOptions](use_http.md#handleroptions)
+
 ### Functions
 
 - [createHandler](use_http.md#createhandler)
+
+## Server/fetch
+
+### HandlerOptions
+
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`IncomingMessage`, [`RequestContext`](../interfaces/use_http.RequestContext.md), `Context`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
 
 ## Server/http
 
@@ -59,7 +75,7 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`IncomingMessage`, [`RequestContext`](../interfaces/use_http.RequestContext.md), `Context`\> |
+| `options` | [`HandlerOptions`](use_http.md#handleroptions)<`Context`\> |
 
 #### Returns
 

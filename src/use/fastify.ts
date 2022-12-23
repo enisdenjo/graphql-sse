@@ -1,7 +1,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import {
   createHandler as createRawHandler,
-  HandlerOptions,
+  HandlerOptions as RawHandlerOptions,
   OperationContext,
 } from '../handler';
 
@@ -11,6 +11,12 @@ import {
 export interface RequestContext {
   reply: FastifyReply;
 }
+
+/**
+ * @category Server/fetch
+ */
+export type HandlerOptions<Context extends OperationContext = undefined> =
+  RawHandlerOptions<FastifyRequest, RequestContext, Context>;
 
 /**
  * The ready-to-use handler for [fastify](https://www.fastify.io).
@@ -48,7 +54,7 @@ export interface RequestContext {
  * @category Server/fastify
  */
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<FastifyRequest, RequestContext, Context>,
+  options: HandlerOptions<Context>,
 ): (req: FastifyRequest, reply: FastifyReply) => Promise<void> {
   const handler = createRawHandler(options);
   return async function handleRequest(req, reply) {

@@ -1,6 +1,6 @@
 import {
   createHandler as createRawHandler,
-  HandlerOptions,
+  HandlerOptions as RawHandlerOptions,
   OperationContext,
 } from '../handler';
 
@@ -12,6 +12,12 @@ export interface RequestContext {
   ReadableStream: typeof ReadableStream;
   TextEncoder: typeof TextEncoder;
 }
+
+/**
+ * @category Server/fetch
+ */
+export type HandlerOptions<Context extends OperationContext = undefined> =
+  RawHandlerOptions<Request, RequestContext, Context>;
 
 /**
  * The ready-to-use fetch handler. To be used with your favourite fetch
@@ -45,7 +51,7 @@ export interface RequestContext {
  * @category Server/fetch
  */
 export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Request, RequestContext, Context>,
+  options: HandlerOptions<Context>,
   reqCtx: Partial<RequestContext> = {},
 ): (req: Request) => Promise<Response> {
   const api: RequestContext = {

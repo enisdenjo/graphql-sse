@@ -8,6 +8,10 @@
 
 - [RequestContext](../interfaces/use_fastify.RequestContext.md)
 
+### Type Aliases
+
+- [HandlerOptions](use_fastify.md#handleroptions)
+
 ### Functions
 
 - [createHandler](use_fastify.md#createhandler)
@@ -60,7 +64,7 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`FastifyRequest`<`RouteGenericInterface`, `RawServerDefault`, `IncomingMessage`, `FastifySchema`, `FastifyTypeProviderDefault`, `unknown`, `FastifyBaseLogger`, `ResolveFastifyRequestType`<`FastifyTypeProviderDefault`, `FastifySchema`, `RouteGenericInterface`\>\>, [`RequestContext`](../interfaces/use_fastify.RequestContext.md), `Context`\> |
+| `options` | [`HandlerOptions`](use_fastify.md#handleroptions)<`Context`\> |
 
 #### Returns
 
@@ -78,3 +82,15 @@ console.log('Listening to port 4000');
 ##### Returns
 
 `Promise`<`void`\>
+
+## Server/fetch
+
+### HandlerOptions
+
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`FastifyRequest`, [`RequestContext`](../interfaces/use_fastify.RequestContext.md), `Context`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
