@@ -103,8 +103,8 @@ import { schema } from './previous-step';
 // Create the GraphQL over SSE handler
 const handler = createHandler({ schema });
 
-// Create an HTTP server using the handler on `/graphql/stream`
-const server = http.createServer((req, res) => {
+// Create an HTTP/2 server using the handler on `/graphql/stream`
+const server = http2.createServer((req, res) => {
   if (req.url.startsWith('/graphql/stream')) {
     return handler(req, res);
   }
