@@ -26,14 +26,14 @@ jobs:
             lib
             umd
 
-  preview:
-    name: Preview
+  changelog:
+    name: Changelog
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # necessary for correct CHANGELOGS
+          fetch-depth: 0 # necessary for correct changelog
       - name: Set up node
         uses: actions/setup-node@v3
         with:
@@ -46,13 +46,13 @@ jobs:
           yarn semantic-release \
             -p @semantic-release/release-notes-generator \
             --dry-run \
-            | tee preview.out
-          sed -n '/#/,$p' preview.out >> $GITHUB_STEP_SUMMARY
+            | tee changelog.out
+          sed -n '/#/,$p' changelog.out >> $GITHUB_STEP_SUMMARY
 
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [build, preview]
+    needs: [build, changelog]
     environment: npm
     steps:
       - name: Checkout
