@@ -41,7 +41,7 @@ jobs:
           cache: yarn
       - name: Install
         run: yarn install --immutable
-      - name: Preview
+      - name: Changelog
         run: |
           yarn semantic-release \
             -p @semantic-release/release-notes-generator \
