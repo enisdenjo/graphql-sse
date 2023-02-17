@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
     "checkJs": true
   },
   "include": [

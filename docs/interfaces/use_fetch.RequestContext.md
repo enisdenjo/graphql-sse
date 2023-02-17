@@ -20,7 +20,7 @@
 
 #### Type declaration
 
-• **new RequestContext**(`underlyingSource`, `strategy?`): `ReadableStream`<`Uint8Array`\>
+• **new ReadableStream**(`underlyingSource`, `strategy?`): `ReadableStream`<`Uint8Array`\>
 
 ##### Parameters
 
@@ -33,7 +33,7 @@
 
 `ReadableStream`<`Uint8Array`\>
 
-• **new RequestContext**<`R`\>(`underlyingSource`, `strategy?`): `ReadableStream`<`R`\>
+• **new ReadableStream**<`R`\>(`underlyingSource`, `strategy?`): `ReadableStream`<`R`\>
 
 ##### Type parameters
 
@@ -52,7 +52,7 @@
 
 `ReadableStream`<`R`\>
 
-• **new RequestContext**<`R`\>(`underlyingSource?`, `strategy?`): `ReadableStream`<`R`\>
+• **new ReadableStream**<`R`\>(`underlyingSource?`, `strategy?`): `ReadableStream`<`R`\>
 
 ##### Type parameters
 
@@ -79,7 +79,7 @@ ___
 
 #### Type declaration
 
-• **new RequestContext**(`body?`, `init?`): `Response`
+• **new Response**(`body?`, `init?`): `Response`
 
 ##### Parameters
 
@@ -100,7 +100,7 @@ ___
 
 #### Type declaration
 
-• **new RequestContext**(): `TextEncoder`
+• **new TextEncoder**(): `TextEncoder`
 
 ##### Returns
 

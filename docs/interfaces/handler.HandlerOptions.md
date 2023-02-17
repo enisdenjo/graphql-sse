@@ -265,7 +265,7 @@ ___
 
 ### schema
 
-• `Optional` **schema**: `GraphQLSchema` \| (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `Pick`<[`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>, ``"document"`` \| ``"contextValue"`` \| ``"operationName"`` \| ``"variableValues"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
+• `Optional` **schema**: `GraphQLSchema` \| (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `Pick`<[`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>, ``"contextValue"`` \| ``"operationName"`` \| ``"document"`` \| ``"variableValues"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
 
 The GraphQL schema on which the operations will
 be executed and validated against.
@@ -311,24 +311,8 @@ ___
 
 ▸ (`schema`, `documentAST`, `rules?`, `options?`, `typeInfo?`): `ReadonlyArray`<`GraphQLError`\>
 
-Implements the "Validation" section of the spec.
-
-Validation runs synchronously, returning an array of encountered errors, or
-an empty array if no errors were encountered and the document is valid.
-
-A list of specific validation rules may be provided. If not provided, the
-default list of rules defined by the GraphQL specification will be used.
-
-Each validation rules is a function which returns a visitor
-(see the language/visitor API). Visitor methods are expected to return
-GraphQLErrors, or Arrays of GraphQLErrors when invalid.
-
-Validate will stop validation after a `maxErrors` limit has been reached.
-Attackers can send pathologically invalid queries to induce a DoS attack,
-so by default `maxErrors` set to 100 errors.
-
-Optionally a custom TypeInfo instance may be provided. If not provided, one
-will be created from the provided schema.
+A custom GraphQL validate function allowing you to apply your
+own validation rules.
 
 ##### Parameters
 

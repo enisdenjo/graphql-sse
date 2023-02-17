@@ -4,7 +4,7 @@ import { createHandler, RequestContext } from '../../use/fetch';
 import { injectTestKit, queue, TestKit } from './testkit';
 
 export interface TFetch extends TestKit<Request, RequestContext> {
-  fetch: typeof fetch;
+  fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
   waitForRequest(): Promise<Request>;
   dispose(): Promise<void>;
 }
