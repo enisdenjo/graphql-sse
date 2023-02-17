@@ -45,7 +45,7 @@ jobs:
         run: |
           yarn semantic-release \
             -p @semantic-release/release-notes-generator \
-            --dry-run
+            --dry-run \
             | tee preview.out
           sed -n '/#/,$p' preview.out >> $GITHUB_STEP_SUMMARY
 
