@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/enisdenjo/graphql-sse/compare/v2.0.0...v2.1.0) (2023-02-17)
+
+
+### Bug Fixes
+
+* **use/express,use/fastify:** Resolve body if previously parsed ([6573e94](https://github.com/enisdenjo/graphql-sse/commit/6573e94cd20283e05bb7b3e890c0930bf1b72a16))
+
+
+### Features
+
+* **handler:** Export handler options type for each integration ([2a2e517](https://github.com/enisdenjo/graphql-sse/commit/2a2e51739db88d20ca9dc55236d6ae5c9a155b0f))
+
 # [2.0.0](https://github.com/enisdenjo/graphql-sse/compare/v1.3.2...v2.0.0) (2022-12-20)
 
 
