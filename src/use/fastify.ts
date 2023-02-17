@@ -71,7 +71,8 @@ export function createHandler<Context extends OperationContext = undefined>(
         new Promise((resolve, reject) => {
           if (req.body) {
             // body was parsed by middleware
-            return req.body;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- even if fastify incorrectly parsed the body, we cannot re-read it
+            return resolve(req.body as any);
           }
 
           let body = '';

@@ -72,7 +72,7 @@ export function createHandler<Context extends OperationContext = undefined>(
         new Promise((resolve, reject) => {
           if (req.body) {
             // body was parsed by middleware
-            return req.body;
+            return resolve(req.body);
           }
 
           let body = '';
