@@ -4938,6 +4938,7 @@ __metadata:
     jest: ^29.4.3
     prettier: ^2.8.4
     rollup: ^3.16.0
+    rollup-plugin-gzip: ^3.1.0
     semantic-release: ^20.1.0
     tslib: ^2.5.0
     typedoc: ^0.23.25
@@ -8259,6 +8260,15 @@ __metadata:
   bin:
     rimraf: bin.js
   checksum: 87f4164e396f0171b0a3386cc1877a817f572148ee13a7e113b238e48e8a9f2f31d009a92ec38a591ff1567d9662c6b67fd8818a2dbbaed74bc26a87a2a4a9a0
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-gzip@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "rollup-plugin-gzip@npm:3.1.0"
+  peerDependencies:
+    rollup: ">=2.0.0"
+  checksum: b6e9671639f50bd4fda586603d784597abe19925ceda81fd4d3aa44f538b3be45f4d4b29ea1e251c20b2f2c3c16f498e762fac266114751f827b324acfca8b4f
   languageName: node
   linkType: hard
 
