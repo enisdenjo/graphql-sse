@@ -7,8 +7,7 @@
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
-    "isolatedModules": true,
-    "jsx": "preserve"
+    "isolatedModules": true
   },
   "exclude": ["node_modules"]
 }
