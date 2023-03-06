@@ -1,0 +1,37 @@
+name: Website
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up environment
+        uses: the-guild-org/shared-config/setup@main
+        with:
+          nodeVersion: 18
+          packageManager: yarn
+      - name: Deploy
+        uses: the-guild-org/shared-config/website-cf@main
+        env:
+          NEXT_BASE_PATH: ${{ github.ref == 'refs/heads/main' && '/graphql/sse' || '' }}
+          SITE_URL: ${{ github.ref == 'refs/heads/main' && 'https://the-guild.dev/graphql/sse' || '' }}
+        with:
+          cloudflareApiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflareAccountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          projectName: graphql-sse
+          prId: ${{ github.event.pull_request.number }}
+          websiteDirectory: ./website
+          buildScript: yarn build
+          artifactDir: ./dist
