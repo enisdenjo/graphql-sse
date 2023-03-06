@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [common](../modules/common.md) / Sink
-
 # Interface: Sink<T\>
 
-[common](../modules/common.md).Sink
+[common](/docs/modules/common).Sink
 
 A representation of any set of values over any amount of time.
 
@@ -11,14 +9,6 @@ A representation of any set of values over any amount of time.
 | Name | Type |
 | :------ | :------ |
 | `T` | `unknown` |
-
-## Table of contents
-
-### Methods
-
-- [complete](common.Sink.md#complete)
-- [error](common.Sink.md#error)
-- [next](common.Sink.md#next)
 
 ## Methods
 

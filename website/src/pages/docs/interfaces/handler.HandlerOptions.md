@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [handler](../modules/handler.md) / HandlerOptions
-
 # Interface: HandlerOptions<RequestRaw, RequestContext, Context\>
 
-[handler](../modules/handler.md).HandlerOptions
+[handler](/docs/modules/handler).HandlerOptions
 
 ## Type parameters
 
@@ -10,33 +8,17 @@
 | :------ | :------ |
 | `RequestRaw` | `unknown` |
 | `RequestContext` | `unknown` |
-| `Context` | extends [`OperationContext`](../modules/handler.md#operationcontext) = `undefined` |
-
-## Table of contents
-
-### Properties
-
-- [authenticate](handler.HandlerOptions.md#authenticate)
-- [context](handler.HandlerOptions.md#context)
-- [execute](handler.HandlerOptions.md#execute)
-- [onComplete](handler.HandlerOptions.md#oncomplete)
-- [onConnect](handler.HandlerOptions.md#onconnect)
-- [onNext](handler.HandlerOptions.md#onnext)
-- [onOperation](handler.HandlerOptions.md#onoperation)
-- [onSubscribe](handler.HandlerOptions.md#onsubscribe)
-- [schema](handler.HandlerOptions.md#schema)
-- [subscribe](handler.HandlerOptions.md#subscribe)
-- [validate](handler.HandlerOptions.md#validate)
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 ## Properties
 
 ### authenticate
 
-• `Optional` **authenticate**: (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response)\>
+• `Optional` **authenticate**: (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response)\>
 
 #### Type declaration
 
-▸ (`req`): `undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response)\>
+▸ (`req`): `undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response)\>
 
 Authenticate the client. Returning a string indicates that the client
 is authenticated and the request is ready to be processed.
@@ -54,17 +36,17 @@ and all incoming requests will always use the "distinct connection mode".
 
 | Name | Type |
 | :------ | :------ |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> |
 
 ##### Returns
 
-`undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](../modules/handler.md#response)\>
+`undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `string` \| [`Response`](/docs/modules/handler.md#response)\>
 
 ___
 
 ### context
 
-• `Optional` **context**: `Context` \| (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](common.RequestParams.md)) => `Context` \| `Promise`<`Context`\>
+• `Optional` **context**: `Context` \| (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](/docs/interfaces/common.RequestParams)) => `Context` \| `Promise`<`Context`\>
 
 A value which is provided to every resolver and holds
 important contextual information like the currently
@@ -82,11 +64,11 @@ ___
 
 ### execute
 
-• `Optional` **execute**: (`args`: [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>) => [`OperationResult`](../modules/handler.md#operationresult)
+• `Optional` **execute**: (`args`: [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>) => [`OperationResult`](/docs/modules/handler.md#operationresult)
 
 #### Type declaration
 
-▸ (`args`): [`OperationResult`](../modules/handler.md#operationresult)
+▸ (`args`): [`OperationResult`](/docs/modules/handler.md#operationresult)
 
 Is the `execute` function from GraphQL which is
 used to execute the query and mutation operations.
@@ -95,17 +77,17 @@ used to execute the query and mutation operations.
 
 | Name | Type |
 | :------ | :------ |
-| `args` | [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\> |
+| `args` | [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\> |
 
 ##### Returns
 
-[`OperationResult`](../modules/handler.md#operationresult)
+[`OperationResult`](/docs/modules/handler.md#operationresult)
 
 ___
 
 ### onComplete
 
-• `Optional` **onComplete**: (`ctx`: `Context`, `req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>) => `void` \| `Promise`<`void`\>
+• `Optional` **onComplete**: (`ctx`: `Context`, `req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>) => `void` \| `Promise`<`void`\>
 
 #### Type declaration
 
@@ -123,7 +105,7 @@ will always be called.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `ctx` | `Context` | - |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
 
 ##### Returns
 
@@ -133,11 +115,11 @@ ___
 
 ### onConnect
 
-• `Optional` **onConnect**: (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response)\>
+• `Optional` **onConnect**: (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>) => `undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response)\>
 
 #### Type declaration
 
-▸ (`req`): `undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response)\>
+▸ (`req`): `undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response)\>
 
 Called when a new event stream is connecting BEFORE it is accepted.
 By accepted, its meant the server processed the request and responded
@@ -147,21 +129,21 @@ with a 200 (OK), alongside flushing the necessary event stream headers.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> |
 
 ##### Returns
 
-`undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](../modules/handler.md#response)\>
+`undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response) \| `Promise`<`undefined` \| ``null`` \| `void` \| [`Response`](/docs/modules/handler.md#response)\>
 
 ___
 
 ### onNext
 
-• `Optional` **onNext**: (`ctx`: `Context`, `req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `result`: [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>) => `void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+• `Optional` **onNext**: (`ctx`: `Context`, `req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>, `result`: [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\>) => `void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 #### Type declaration
 
-▸ (`ctx`, `req`, `result`): `void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+▸ (`ctx`, `req`, `result`): `void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 Executed after an operation has emitted a result right before
 that result has been sent to the client.
@@ -177,22 +159,22 @@ before it reaches the client.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `ctx` | `Context` | - |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
-| `result` | [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> | - |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> | Always the request that contains the GraphQL operation. |
+| `result` | [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\> | - |
 
 ##### Returns
 
-`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](common.ExecutionResult.md)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](common.ExecutionPatchResult.md)<`unknown`, `Record`<`string`, `unknown`\>\>\>
+`void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\> \| `Promise`<`void` \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)<`Record`<`string`, `unknown`\>, `Record`<`string`, `unknown`\>\> \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)<`unknown`, `Record`<`string`, `unknown`\>\>\>
 
 ___
 
 ### onOperation
 
-• `Optional` **onOperation**: (`ctx`: `Context`, `req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `ExecutionArgs`, `result`: [`OperationResult`](../modules/handler.md#operationresult)) => `void` \| [`OperationResult`](../modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../modules/handler.md#operationresult)\>
+• `Optional` **onOperation**: (`ctx`: `Context`, `req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>, `args`: `ExecutionArgs`, `result`: [`OperationResult`](/docs/modules/handler.md#operationresult)) => `void` \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](/docs/modules/handler.md#operationresult)\>
 
 #### Type declaration
 
-▸ (`ctx`, `req`, `args`, `result`): `void` \| [`OperationResult`](../modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../modules/handler.md#operationresult)\>
+▸ (`ctx`, `req`, `args`, `result`): `void` \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](/docs/modules/handler.md#operationresult)\>
 
 Executed after the operation call resolves. For streaming
 operations, triggering this callback does not necessarely
@@ -214,23 +196,23 @@ will NOT be called.
 | Name | Type |
 | :------ | :------ |
 | `ctx` | `Context` |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> |
 | `args` | `ExecutionArgs` |
-| `result` | [`OperationResult`](../modules/handler.md#operationresult) |
+| `result` | [`OperationResult`](/docs/modules/handler.md#operationresult) |
 
 ##### Returns
 
-`void` \| [`OperationResult`](../modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](../modules/handler.md#operationresult)\>
+`void` \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| `Promise`<`void` \| [`OperationResult`](/docs/modules/handler.md#operationresult)\>
 
 ___
 
 ### onSubscribe
 
-• `Optional` **onSubscribe**: (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](common.RequestParams.md)) => `void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>\>
+• `Optional` **onSubscribe**: (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>, `params`: [`RequestParams`](/docs/interfaces/common.RequestParams)) => `void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>\>
 
 #### Type declaration
 
-▸ (`req`, `params`): `void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>\>
+▸ (`req`, `params`): `void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>\>
 
 The subscribe callback executed right after processing the request
 before proceeding with the GraphQL operation execution.
@@ -254,18 +236,18 @@ and supply the appropriate GraphQL operation execution arguments.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\> |
-| `params` | [`RequestParams`](common.RequestParams.md) |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> |
+| `params` | [`RequestParams`](/docs/interfaces/common.RequestParams) |
 
 ##### Returns
 
-`void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](../modules/handler.md#response) \| [`OperationResult`](../modules/handler.md#operationresult) \| [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>\>
+`void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\> \| `Promise`<`void` \| [`Response`](/docs/modules/handler.md#response) \| [`OperationResult`](/docs/modules/handler.md#operationresult) \| [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>\>
 
 ___
 
 ### schema
 
-• `Optional` **schema**: `GraphQLSchema` \| (`req`: [`Request`](handler.Request.md)<`RequestRaw`, `RequestContext`\>, `args`: `Pick`<[`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>, ``"contextValue"`` \| ``"operationName"`` \| ``"document"`` \| ``"variableValues"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
+• `Optional` **schema**: `GraphQLSchema` \| (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>, `args`: `Pick`<[`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>, ``"contextValue"`` \| ``"operationName"`` \| ``"document"`` \| ``"variableValues"``\>) => `GraphQLSchema` \| `Promise`<`GraphQLSchema`\>
 
 The GraphQL schema on which the operations will
 be executed and validated against.
@@ -282,11 +264,11 @@ ___
 
 ### subscribe
 
-• `Optional` **subscribe**: (`args`: [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\>) => [`OperationResult`](../modules/handler.md#operationresult)
+• `Optional` **subscribe**: (`args`: [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\>) => [`OperationResult`](/docs/modules/handler.md#operationresult)
 
 #### Type declaration
 
-▸ (`args`): [`OperationResult`](../modules/handler.md#operationresult)
+▸ (`args`): [`OperationResult`](/docs/modules/handler.md#operationresult)
 
 Is the `subscribe` function from GraphQL which is
 used to execute the subscription operation.
@@ -295,11 +277,11 @@ used to execute the subscription operation.
 
 | Name | Type |
 | :------ | :------ |
-| `args` | [`OperationArgs`](../modules/handler.md#operationargs)<`Context`\> |
+| `args` | [`OperationArgs`](/docs/modules/handler.md#operationargs)<`Context`\> |
 
 ##### Returns
 
-[`OperationResult`](../modules/handler.md#operationresult)
+[`OperationResult`](/docs/modules/handler.md#operationresult)
 
 ___
 

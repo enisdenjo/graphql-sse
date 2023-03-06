@@ -1,14 +1,6 @@
-[graphql-sse](../README.md) / [use/express](../modules/use_express.md) / RequestContext
-
 # Interface: RequestContext
 
-[use/express](../modules/use_express.md).RequestContext
-
-## Table of contents
-
-### Properties
-
-- [res](use_express.RequestContext.md#res)
+[use/express](/docs/modules/use_express).RequestContext
 
 ## Properties
 

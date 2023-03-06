@@ -1,34 +1,12 @@
-[graphql-sse](../README.md) / [client](../modules/client.md) / ClientOptions
-
 # Interface: ClientOptions<SingleConnection\>
 
-[client](../modules/client.md).ClientOptions
+[client](/docs/modules/client).ClientOptions
 
 ## Type parameters
 
 | Name | Type |
 | :------ | :------ |
 | `SingleConnection` | extends `boolean` = ``false`` |
-
-## Table of contents
-
-### Properties
-
-- [abortControllerImpl](client.ClientOptions.md#abortcontrollerimpl)
-- [credentials](client.ClientOptions.md#credentials)
-- [fetchFn](client.ClientOptions.md#fetchfn)
-- [generateID](client.ClientOptions.md#generateid)
-- [headers](client.ClientOptions.md#headers)
-- [lazy](client.ClientOptions.md#lazy)
-- [lazyCloseTimeout](client.ClientOptions.md#lazyclosetimeout)
-- [onMessage](client.ClientOptions.md#onmessage)
-- [onNonLazyError](client.ClientOptions.md#onnonlazyerror)
-- [referrer](client.ClientOptions.md#referrer)
-- [referrerPolicy](client.ClientOptions.md#referrerpolicy)
-- [retry](client.ClientOptions.md#retry)
-- [retryAttempts](client.ClientOptions.md#retryattempts)
-- [singleConnection](client.ClientOptions.md#singleconnection)
-- [url](client.ClientOptions.md#url)
 
 ## Properties
 
@@ -155,7 +133,7 @@ ___
 
 ### onMessage
 
-• `Optional` **onMessage**: (`message`: [`StreamMessage`](common.StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../modules/common.md#streamevent)\>) => `void`
+• `Optional` **onMessage**: (`message`: [`StreamMessage`](/docs/interfaces/common.StreamMessage)<`SingleConnection`, [`StreamEvent`](/docs/modules/common.md#streamevent)\>) => `void`
 
 #### Type declaration
 
@@ -170,7 +148,7 @@ Use this function if you want to inspect valid messages received through the act
 
 | Name | Type |
 | :------ | :------ |
-| `message` | [`StreamMessage`](common.StreamMessage.md)<`SingleConnection`, [`StreamEvent`](../modules/common.md#streamevent)\> |
+| `message` | [`StreamMessage`](/docs/interfaces/common.StreamMessage)<`SingleConnection`, [`StreamEvent`](/docs/modules/common.md#streamevent)\> |
 
 ##### Returns
 

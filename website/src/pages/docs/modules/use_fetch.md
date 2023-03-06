@@ -1,32 +1,20 @@
-[graphql-sse](../README.md) / use/fetch
-
 # Module: use/fetch
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [RequestContext](../interfaces/use_fetch.RequestContext.md)
-
-### Type Aliases
-
-- [HandlerOptions](use_fetch.md#handleroptions)
-
-### Functions
-
-- [createHandler](use_fetch.md#createhandler)
+- [RequestContext](/docs/interfaces/use_fetch.RequestContext)
 
 ## Server/fetch
 
 ### HandlerOptions
 
-Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_fetch.RequestContext.md), `Context`\>
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](/docs/interfaces/handler.HandlerOptions)<`Request`, [`RequestContext`](/docs/interfaces/use_fetch.RequestContext), `Context`\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 ___
 
@@ -66,14 +54,14 @@ export async function fetch(req: Request): Promise<Response> {
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](use_fetch.md#handleroptions)<`Context`\> |
-| `reqCtx` | `Partial`<[`RequestContext`](../interfaces/use_fetch.RequestContext.md)\> |
+| `options` | [`HandlerOptions`](/docs/modules/use_fetch.md#handleroptions)<`Context`\> |
+| `reqCtx` | `Partial`<[`RequestContext`](/docs/interfaces/use_fetch.RequestContext)\> |
 
 #### Returns
 

@@ -1,20 +1,8 @@
-[graphql-sse](../README.md) / use/express
-
 # Module: use/express
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [RequestContext](../interfaces/use_express.RequestContext.md)
-
-### Type Aliases
-
-- [HandlerOptions](use_express.md#handleroptions)
-
-### Functions
-
-- [createHandler](use_express.md#createhandler)
+- [RequestContext](/docs/interfaces/use_express.RequestContext)
 
 ## Server/express
 
@@ -59,13 +47,13 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](use_express.md#handleroptions)<`Context`\> |
+| `options` | [`HandlerOptions`](/docs/modules/use_express.md#handleroptions)<`Context`\> |
 
 #### Returns
 
@@ -88,10 +76,10 @@ console.log('Listening to port 4000');
 
 ### HandlerOptions
 
-Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`Request`, [`RequestContext`](../interfaces/use_express.RequestContext.md), `Context`\>
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](/docs/interfaces/handler.HandlerOptions)<`Request`, [`RequestContext`](/docs/interfaces/use_express.RequestContext), `Context`\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |

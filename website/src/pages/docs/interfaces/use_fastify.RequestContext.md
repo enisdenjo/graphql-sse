@@ -1,14 +1,6 @@
-[graphql-sse](../README.md) / [use/fastify](../modules/use_fastify.md) / RequestContext
-
 # Interface: RequestContext
 
-[use/fastify](../modules/use_fastify.md).RequestContext
-
-## Table of contents
-
-### Properties
-
-- [reply](use_fastify.RequestContext.md#reply)
+[use/fastify](/docs/modules/use_fastify).RequestContext
 
 ## Properties
 

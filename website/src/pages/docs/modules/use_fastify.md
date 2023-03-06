@@ -1,20 +1,8 @@
-[graphql-sse](../README.md) / use/fastify
-
 # Module: use/fastify
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [RequestContext](../interfaces/use_fastify.RequestContext.md)
-
-### Type Aliases
-
-- [HandlerOptions](use_fastify.md#handleroptions)
-
-### Functions
-
-- [createHandler](use_fastify.md#createhandler)
+- [RequestContext](/docs/interfaces/use_fastify.RequestContext)
 
 ## Server/fastify
 
@@ -58,13 +46,13 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](use_fastify.md#handleroptions)<`Context`\> |
+| `options` | [`HandlerOptions`](/docs/modules/use_fastify.md#handleroptions)<`Context`\> |
 
 #### Returns
 
@@ -87,10 +75,10 @@ console.log('Listening to port 4000');
 
 ### HandlerOptions
 
-Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`FastifyRequest`, [`RequestContext`](../interfaces/use_fastify.RequestContext.md), `Context`\>
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](/docs/interfaces/handler.HandlerOptions)<`FastifyRequest`, [`RequestContext`](/docs/interfaces/use_fastify.RequestContext), `Context`\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |

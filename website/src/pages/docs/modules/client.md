@@ -1,45 +1,19 @@
-[graphql-sse](../README.md) / client
-
 # Module: client
 
-## Table of contents
+## Classes
 
-### References
+- [NetworkError](/docs/classes/client.NetworkError)
 
-- [ExecutionPatchResult](client.md#executionpatchresult)
-- [ExecutionResult](client.md#executionresult)
-- [RequestParams](client.md#requestparams)
-- [Sink](client.md#sink)
-- [StreamData](client.md#streamdata)
-- [StreamDataForID](client.md#streamdataforid)
-- [StreamEvent](client.md#streamevent)
-- [StreamMessage](client.md#streammessage)
-- [TOKEN\_HEADER\_KEY](client.md#token_header_key)
-- [TOKEN\_QUERY\_KEY](client.md#token_query_key)
-- [isAsyncGenerator](client.md#isasyncgenerator)
-- [isAsyncIterable](client.md#isasynciterable)
-- [parseStreamData](client.md#parsestreamdata)
-- [print](client.md#print)
-- [validateStreamEvent](client.md#validatestreamevent)
+## Interfaces
 
-### Classes
-
-- [NetworkError](../classes/client.NetworkError.md)
-
-### Interfaces
-
-- [Client](../interfaces/client.Client.md)
-- [ClientOptions](../interfaces/client.ClientOptions.md)
-
-### Functions
-
-- [createClient](client.md#createclient)
+- [Client](/docs/interfaces/client.Client)
+- [ClientOptions](/docs/interfaces/client.ClientOptions)
 
 ## Client
 
 ### createClient
 
-▸ **createClient**<`SingleConnection`\>(`options`): [`Client`](../interfaces/client.Client.md)
+▸ **createClient**<`SingleConnection`\>(`options`): [`Client`](/docs/interfaces/client.Client)
 
 Creates a disposable GraphQL over SSE client to transmit
 GraphQL operation results.
@@ -62,98 +36,98 @@ use only one SSE connection.
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`ClientOptions`](../interfaces/client.ClientOptions.md)<`SingleConnection`\> |
+| `options` | [`ClientOptions`](/docs/interfaces/client.ClientOptions)<`SingleConnection`\> |
 
 #### Returns
 
-[`Client`](../interfaces/client.Client.md)
+[`Client`](/docs/interfaces/client.Client)
 
 ## Other
 
 ### ExecutionPatchResult
 
-Re-exports [ExecutionPatchResult](../interfaces/common.ExecutionPatchResult.md)
+Re-exports [ExecutionPatchResult](/docs/interfaces/common.ExecutionPatchResult)
 
 ___
 
 ### ExecutionResult
 
-Re-exports [ExecutionResult](../interfaces/common.ExecutionResult.md)
+Re-exports [ExecutionResult](/docs/interfaces/common.ExecutionResult)
 
 ___
 
 ### RequestParams
 
-Re-exports [RequestParams](../interfaces/common.RequestParams.md)
+Re-exports [RequestParams](/docs/interfaces/common.RequestParams)
 
 ___
 
 ### Sink
 
-Re-exports [Sink](../interfaces/common.Sink.md)
+Re-exports [Sink](/docs/interfaces/common.Sink)
 
 ___
 
 ### StreamData
 
-Re-exports [StreamData](common.md#streamdata)
+Re-exports [StreamData](/docs/modules/common.md#streamdata)
 
 ___
 
 ### StreamDataForID
 
-Re-exports [StreamDataForID](common.md#streamdataforid)
+Re-exports [StreamDataForID](/docs/modules/common.md#streamdataforid)
 
 ___
 
 ### StreamEvent
 
-Re-exports [StreamEvent](common.md#streamevent)
+Re-exports [StreamEvent](/docs/modules/common.md#streamevent)
 
 ___
 
 ### StreamMessage
 
-Re-exports [StreamMessage](../interfaces/common.StreamMessage.md)
+Re-exports [StreamMessage](/docs/interfaces/common.StreamMessage)
 
 ___
 
 ### TOKEN\_HEADER\_KEY
 
-Re-exports [TOKEN_HEADER_KEY](common.md#token_header_key)
+Re-exports [TOKEN_HEADER_KEY](/docs/modules/common.md#token_header_key)
 
 ___
 
 ### TOKEN\_QUERY\_KEY
 
-Re-exports [TOKEN_QUERY_KEY](common.md#token_query_key)
+Re-exports [TOKEN_QUERY_KEY](/docs/modules/common.md#token_query_key)
 
 ___
 
 ### isAsyncGenerator
 
-Re-exports [isAsyncGenerator](common.md#isasyncgenerator)
+Re-exports [isAsyncGenerator](/docs/modules/common.md#isasyncgenerator)
 
 ___
 
 ### isAsyncIterable
 
-Re-exports [isAsyncIterable](common.md#isasynciterable)
+Re-exports [isAsyncIterable](/docs/modules/common.md#isasynciterable)
 
 ___
 
 ### parseStreamData
 
-Re-exports [parseStreamData](common.md#parsestreamdata)
+Re-exports [parseStreamData](/docs/modules/common.md#parsestreamdata)
 
 ___
 
 ### print
 
-Re-exports [print](common.md#print)
+Re-exports [print](/docs/modules/common.md#print)
 
 ___
 
 ### validateStreamEvent
 
-Re-exports [validateStreamEvent](common.md#validatestreamevent)
+Re-exports [validateStreamEvent](/docs/modules/common.md#validatestreamevent)

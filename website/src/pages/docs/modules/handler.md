@@ -1,35 +1,17 @@
-[graphql-sse](../README.md) / handler
-
 # Module: handler
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [HandlerOptions](../interfaces/handler.HandlerOptions.md)
-- [Request](../interfaces/handler.Request.md)
-- [RequestHeaders](../interfaces/handler.RequestHeaders.md)
-- [ResponseInit](../interfaces/handler.ResponseInit.md)
-
-### Type Aliases
-
-- [Handler](handler.md#handler)
-- [OperationArgs](handler.md#operationargs)
-- [OperationContext](handler.md#operationcontext)
-- [OperationResult](handler.md#operationresult)
-- [Response](handler.md#response)
-- [ResponseBody](handler.md#responsebody)
-- [ResponseHeaders](handler.md#responseheaders)
-
-### Functions
-
-- [createHandler](handler.md#createhandler)
+- [HandlerOptions](/docs/interfaces/handler.HandlerOptions)
+- [Request](/docs/interfaces/handler.Request)
+- [RequestHeaders](/docs/interfaces/handler.RequestHeaders)
+- [ResponseInit](/docs/interfaces/handler.ResponseInit)
 
 ## Server
 
 ### Handler
 
-Ƭ **Handler**<`RequestRaw`, `RequestContext`\>: (`req`: [`Request`](../interfaces/handler.Request.md)<`RequestRaw`, `RequestContext`\>) => `Promise`<[`Response`](handler.md#response)\>
+Ƭ **Handler**<`RequestRaw`, `RequestContext`\>: (`req`: [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\>) => `Promise`<[`Response`](/docs/modules/handler.md#response)\>
 
 #### Type parameters
 
@@ -40,7 +22,7 @@
 
 #### Type declaration
 
-▸ (`req`): `Promise`<[`Response`](handler.md#response)\>
+▸ (`req`): `Promise`<[`Response`](/docs/modules/handler.md#response)\>
 
 The ready-to-use handler. Simply plug it in your favourite fetch-enabled HTTP
 framework and enjoy.
@@ -53,11 +35,11 @@ considered internal errors and you should take care of them accordingly.
 
 | Name | Type |
 | :------ | :------ |
-| `req` | [`Request`](../interfaces/handler.Request.md)<`RequestRaw`, `RequestContext`\> |
+| `req` | [`Request`](/docs/interfaces/handler.Request)<`RequestRaw`, `RequestContext`\> |
 
 ##### Returns
 
-`Promise`<[`Response`](handler.md#response)\>
+`Promise`<[`Response`](/docs/modules/handler.md#response)\>
 
 ___
 
@@ -69,7 +51,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 ___
 
@@ -88,7 +70,7 @@ ___
 
 ### OperationResult
 
-Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)\> \| `AsyncGenerator`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| `AsyncIterable`<[`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)\> \| [`ExecutionResult`](../interfaces/common.ExecutionResult.md)
+Ƭ **OperationResult**: `Promise`<`AsyncGenerator`<[`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)\> \| `AsyncIterable`<[`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)\> \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)\> \| `AsyncGenerator`<[`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)\> \| `AsyncIterable`<[`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)\> \| [`ExecutionResult`](/docs/interfaces/common.ExecutionResult)
 
 ___
 
@@ -122,7 +104,7 @@ ___
 
 ### createHandler
 
-▸ **createHandler**<`RequestRaw`, `RequestContext`, `Context`\>(`options`): [`Handler`](handler.md#handler)<`RequestRaw`, `RequestContext`\>
+▸ **createHandler**<`RequestRaw`, `RequestContext`, `Context`\>(`options`): [`Handler`](/docs/modules/handler.md#handler)<`RequestRaw`, `RequestContext`\>
 
 Makes a Protocol complient HTTP GraphQL server handler. The handler can
 be used with your favourite server library.
@@ -135,14 +117,14 @@ Read more about the Protocol in the PROTOCOL.md documentation file.
 | :------ | :------ |
 | `RequestRaw` | `unknown` |
 | `RequestContext` | `unknown` |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`RequestRaw`, `RequestContext`, `Context`\> |
+| `options` | [`HandlerOptions`](/docs/interfaces/handler.HandlerOptions)<`RequestRaw`, `RequestContext`, `Context`\> |
 
 #### Returns
 
-[`Handler`](handler.md#handler)<`RequestRaw`, `RequestContext`\>
+[`Handler`](/docs/modules/handler.md#handler)<`RequestRaw`, `RequestContext`\>

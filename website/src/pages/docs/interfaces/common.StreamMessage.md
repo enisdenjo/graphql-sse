@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [common](../modules/common.md) / StreamMessage
-
 # Interface: StreamMessage<ForID, E\>
 
-[common](../modules/common.md).StreamMessage
+[common](/docs/modules/common).StreamMessage
 
 Represents a message in an event stream.
 
@@ -13,20 +11,13 @@ Read more: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/U
 | Name | Type |
 | :------ | :------ |
 | `ForID` | extends `boolean` |
-| `E` | extends [`StreamEvent`](../modules/common.md#streamevent) |
-
-## Table of contents
-
-### Properties
-
-- [data](common.StreamMessage.md#data)
-- [event](common.StreamMessage.md#event)
+| `E` | extends [`StreamEvent`](/docs/modules/common.md#streamevent) |
 
 ## Properties
 
 ### data
 
-• **data**: `ForID` extends ``true`` ? [`StreamDataForID`](../modules/common.md#streamdataforid)<`E`\> : [`StreamData`](../modules/common.md#streamdata)<`E`\>
+• **data**: `ForID` extends ``true`` ? [`StreamDataForID`](/docs/modules/common.md#streamdataforid)<`E`\> : [`StreamData`](/docs/modules/common.md#streamdata)<`E`\>
 
 ___
 

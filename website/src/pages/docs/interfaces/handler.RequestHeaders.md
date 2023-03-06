@@ -1,16 +1,8 @@
-[graphql-sse](../README.md) / [handler](../modules/handler.md) / RequestHeaders
-
 # Interface: RequestHeaders
 
-[handler](../modules/handler.md).RequestHeaders
+[handler](/docs/modules/handler).RequestHeaders
 
 The incoming request headers the implementing server should provide.
-
-## Table of contents
-
-### Properties
-
-- [get](handler.RequestHeaders.md#get)
 
 ## Properties
 

@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [common](../modules/common.md) / ExecutionResult
-
 # Interface: ExecutionResult<Data, Extensions\>
 
-[common](../modules/common.md).ExecutionResult
+[common](/docs/modules/common).ExecutionResult
 
 ## Type parameters
 
@@ -10,15 +8,6 @@
 | :------ | :------ |
 | `Data` | `Record`<`string`, `unknown`\> |
 | `Extensions` | `Record`<`string`, `unknown`\> |
-
-## Table of contents
-
-### Properties
-
-- [data](common.ExecutionResult.md#data)
-- [errors](common.ExecutionResult.md#errors)
-- [extensions](common.ExecutionResult.md#extensions)
-- [hasNext](common.ExecutionResult.md#hasnext)
 
 ## Properties
 

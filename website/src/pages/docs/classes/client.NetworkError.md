@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [client](../modules/client.md) / NetworkError
-
 # Class: NetworkError<Response\>
 
-[client](../modules/client.md).NetworkError
+[client](/docs/modules/client).NetworkError
 
 A network error caused by the client or an unexpected response from the server.
 
@@ -23,16 +21,6 @@ you should supply the `Response` generic depending on your Fetch implementation.
 - `Error`
 
   ↳ **`NetworkError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](client.NetworkError.md#constructor)
-
-### Properties
-
-- [response](client.NetworkError.md#response)
 
 ## Constructors
 

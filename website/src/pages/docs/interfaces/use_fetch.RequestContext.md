@@ -1,16 +1,6 @@
-[graphql-sse](../README.md) / [use/fetch](../modules/use_fetch.md) / RequestContext
-
 # Interface: RequestContext
 
-[use/fetch](../modules/use_fetch.md).RequestContext
-
-## Table of contents
-
-### Properties
-
-- [ReadableStream](use_fetch.RequestContext.md#readablestream)
-- [Response](use_fetch.RequestContext.md#response)
-- [TextEncoder](use_fetch.RequestContext.md#textencoder)
+[use/fetch](/docs/modules/use_fetch).RequestContext
 
 ## Properties
 

@@ -1,59 +1,36 @@
-[graphql-sse](../README.md) / common
-
 # Module: common
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [ExecutionPatchResult](../interfaces/common.ExecutionPatchResult.md)
-- [ExecutionResult](../interfaces/common.ExecutionResult.md)
-- [RequestParams](../interfaces/common.RequestParams.md)
-- [Sink](../interfaces/common.Sink.md)
-- [StreamMessage](../interfaces/common.StreamMessage.md)
-
-### Type Aliases
-
-- [StreamData](common.md#streamdata)
-- [StreamDataForID](common.md#streamdataforid)
-- [StreamEvent](common.md#streamevent)
-
-### Variables
-
-- [TOKEN\_HEADER\_KEY](common.md#token_header_key)
-- [TOKEN\_QUERY\_KEY](common.md#token_query_key)
-
-### Functions
-
-- [isAsyncGenerator](common.md#isasyncgenerator)
-- [isAsyncIterable](common.md#isasynciterable)
-- [parseStreamData](common.md#parsestreamdata)
-- [print](common.md#print)
-- [validateStreamEvent](common.md#validatestreamevent)
+- [ExecutionPatchResult](/docs/interfaces/common.ExecutionPatchResult)
+- [ExecutionResult](/docs/interfaces/common.ExecutionResult)
+- [RequestParams](/docs/interfaces/common.RequestParams)
+- [Sink](/docs/interfaces/common.Sink)
+- [StreamMessage](/docs/interfaces/common.StreamMessage)
 
 ## Common
 
 ### StreamData
 
-Ƭ **StreamData**<`E`\>: `E` extends ``"next"`` ? [`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md) : `E` extends ``"complete"`` ? ``null`` : `never`
+Ƭ **StreamData**<`E`\>: `E` extends ``"next"`` ? [`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult) : `E` extends ``"complete"`` ? ``null`` : `never`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends [`StreamEvent`](common.md#streamevent) |
+| `E` | extends [`StreamEvent`](/docs/modules/common.md#streamevent) |
 
 ___
 
 ### StreamDataForID
 
-Ƭ **StreamDataForID**<`E`\>: `E` extends ``"next"`` ? { `id`: `string` ; `payload`: [`ExecutionResult`](../interfaces/common.ExecutionResult.md) \| [`ExecutionPatchResult`](../interfaces/common.ExecutionPatchResult.md)  } : `E` extends ``"complete"`` ? { `id`: `string`  } : `never`
+Ƭ **StreamDataForID**<`E`\>: `E` extends ``"next"`` ? { `id`: `string` ; `payload`: [`ExecutionResult`](/docs/interfaces/common.ExecutionResult) \| [`ExecutionPatchResult`](/docs/interfaces/common.ExecutionPatchResult)  } : `E` extends ``"complete"`` ? { `id`: `string`  } : `never`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends [`StreamEvent`](common.md#streamevent) |
+| `E` | extends [`StreamEvent`](/docs/modules/common.md#streamevent) |
 
 ___
 
@@ -135,14 +112,14 @@ ___
 
 ### parseStreamData
 
-▸ **parseStreamData**<`ForID`, `E`\>(`e`, `data`): `ForID` extends ``true`` ? [`StreamDataForID`](common.md#streamdataforid)<`E`\> : [`StreamData`](common.md#streamdata)<`E`\>
+▸ **parseStreamData**<`ForID`, `E`\>(`e`, `data`): `ForID` extends ``true`` ? [`StreamDataForID`](/docs/modules/common.md#streamdataforid)<`E`\> : [`StreamData`](/docs/modules/common.md#streamdata)<`E`\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
 | `ForID` | extends `boolean` |
-| `E` | extends [`StreamEvent`](common.md#streamevent) |
+| `E` | extends [`StreamEvent`](/docs/modules/common.md#streamevent) |
 
 #### Parameters
 
@@ -153,7 +130,7 @@ ___
 
 #### Returns
 
-`ForID` extends ``true`` ? [`StreamDataForID`](common.md#streamdataforid)<`E`\> : [`StreamData`](common.md#streamdata)<`E`\>
+`ForID` extends ``true`` ? [`StreamDataForID`](/docs/modules/common.md#streamdataforid)<`E`\> : [`StreamData`](/docs/modules/common.md#streamdata)<`E`\>
 
 ___
 
@@ -166,13 +143,13 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `ForID` | extends `boolean` |
-| `E` | extends [`StreamEvent`](common.md#streamevent) |
+| `E` | extends [`StreamEvent`](/docs/modules/common.md#streamevent) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `msg` | [`StreamMessage`](../interfaces/common.StreamMessage.md)<`ForID`, `E`\> |
+| `msg` | [`StreamMessage`](/docs/interfaces/common.StreamMessage)<`ForID`, `E`\> |
 
 #### Returns
 
@@ -182,7 +159,7 @@ ___
 
 ### validateStreamEvent
 
-▸ **validateStreamEvent**(`e`): [`StreamEvent`](common.md#streamevent)
+▸ **validateStreamEvent**(`e`): [`StreamEvent`](/docs/modules/common.md#streamevent)
 
 #### Parameters
 
@@ -192,4 +169,4 @@ ___
 
 #### Returns
 
-[`StreamEvent`](common.md#streamevent)
+[`StreamEvent`](/docs/modules/common.md#streamevent)

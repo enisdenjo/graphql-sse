@@ -1,5 +1,5 @@
 /**
- * @type {Partial<import('typedoc').TypeDocOptions>}
+ * @type {Partial<import('typedoc').TypeDocOptions> & Partial<import('typedoc-plugin-markdown').MarkdownTheme>}
  */
 const opts = {
   entryPointStrategy: 'expand',
@@ -12,5 +12,9 @@ const opts = {
   categorizeByGroup: false, // removes redundant category names in matching modules
   githubPages: false,
   exclude: ['**/index.ts', '**/utils.ts', '**/parser.ts', '**/__tests__/**/*'],
+  entryDocument: 'index.md',
+  hideInPageTOC: true,
+  publicPath: '/docs/',
+  hideBreadcrumbs: true,
 };
 module.exports = opts;

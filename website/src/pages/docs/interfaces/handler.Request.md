@@ -1,8 +1,6 @@
-[graphql-sse](../README.md) / [handler](../modules/handler.md) / Request
-
 # Interface: Request<Raw, Context\>
 
-[handler](../modules/handler.md).Request
+[handler](/docs/modules/handler).Request
 
 Server agnostic request interface containing the raw request
 which is server dependant.
@@ -13,17 +11,6 @@ which is server dependant.
 | :------ | :------ |
 | `Raw` | `unknown` |
 | `Context` | `unknown` |
-
-## Table of contents
-
-### Properties
-
-- [body](handler.Request.md#body)
-- [context](handler.Request.md#context)
-- [headers](handler.Request.md#headers)
-- [method](handler.Request.md#method)
-- [raw](handler.Request.md#raw)
-- [url](handler.Request.md#url)
 
 ## Properties
 
@@ -50,7 +37,7 @@ ___
 
 ### headers
 
-• `Readonly` **headers**: [`RequestHeaders`](handler.RequestHeaders.md)
+• `Readonly` **headers**: [`RequestHeaders`](/docs/interfaces/handler.RequestHeaders)
 
 ___
 

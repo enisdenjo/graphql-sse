@@ -1,32 +1,20 @@
-[graphql-sse](../README.md) / use/http
-
 # Module: use/http
 
-## Table of contents
+## Interfaces
 
-### Interfaces
-
-- [RequestContext](../interfaces/use_http.RequestContext.md)
-
-### Type Aliases
-
-- [HandlerOptions](use_http.md#handleroptions)
-
-### Functions
-
-- [createHandler](use_http.md#createhandler)
+- [RequestContext](/docs/interfaces/use_http.RequestContext)
 
 ## Server/fetch
 
 ### HandlerOptions
 
-Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](../interfaces/handler.HandlerOptions.md)<`IncomingMessage`, [`RequestContext`](../interfaces/use_http.RequestContext.md), `Context`\>
+Ƭ **HandlerOptions**<`Context`\>: [`HandlerOptions`](/docs/interfaces/handler.HandlerOptions)<`IncomingMessage`, [`RequestContext`](/docs/interfaces/use_http.RequestContext), `Context`\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 ## Server/http
 
@@ -69,13 +57,13 @@ console.log('Listening to port 4000');
 
 | Name | Type |
 | :------ | :------ |
-| `Context` | extends [`OperationContext`](handler.md#operationcontext) = `undefined` |
+| `Context` | extends [`OperationContext`](/docs/modules/handler.md#operationcontext) = `undefined` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | [`HandlerOptions`](use_http.md#handleroptions)<`Context`\> |
+| `options` | [`HandlerOptions`](/docs/modules/use_http.md#handleroptions)<`Context`\> |
 
 #### Returns
 
