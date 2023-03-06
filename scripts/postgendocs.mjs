@@ -24,7 +24,7 @@ async function fixLinksInDir(dirPath) {
 }
 
 (async function main() {
-  await fixLinksInDir(path.join('website', 'src'));
+  await fixLinksInDir(path.join('website', 'src', 'pages', 'docs'));
 })().catch((err) => {
   console.error(err);
   process.exit(1);
