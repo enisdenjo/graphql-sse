@@ -869,7 +869,7 @@ const client = createClient({
 
 ## [Documentation](docs/)
 
-Check the [docs folder](docs/) out for [TypeDoc](https://typedoc.org) generated documentation.
+Check the [website docs folder](website/src/pages/docs) out for [TypeDoc](https://typedoc.org) generated documentation and the [website for the render](https://the-guild.dev/graphql/sse/docs).
 
 ## [How does it work?](PROTOCOL.md)
 

@@ -3,7 +3,7 @@
  */
 const opts = {
   entryPointStrategy: 'expand',
-  out: './docs',
+  out: './website/src/pages/docs',
   readme: 'none',
   plugin: ['typedoc-plugin-markdown'],
   excludeExternals: true,
