@@ -179,7 +179,7 @@ await serve(
 );
 ```
 
-##### With [`Bun`](https://bun.sh/)
+##### With [`Bun@>=0.5.7`](https://bun.sh/)
 
 ```js
 import { createHandler } from 'graphql-sse/lib/use/fetch'; // bun install graphql-sse
