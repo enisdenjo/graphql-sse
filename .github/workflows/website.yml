@@ -16,11 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up environment
-        uses: the-guild-org/shared-config/setup@main
+      - name: Set up node
+        uses: actions/setup-node@v3
         with:
-          nodeVersion: 18
-          packageManager: yarn
+          node-version: 18
+          cache: yarn
+      - name: Install
+        run: yarn install --immutable
       - name: Deploy
         uses: the-guild-org/shared-config/website-cf@main
         env:
