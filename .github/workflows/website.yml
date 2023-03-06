@@ -34,6 +34,6 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           projectName: graphql-sse
           prId: ${{ github.event.pull_request.number }}
-          websiteDirectory: ./website
+          websiteDirectory: website
           buildScript: yarn build
-          artifactDir: ./dist
+          artifactDir: dist
