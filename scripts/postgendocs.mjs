@@ -29,7 +29,7 @@ async function fixLinksInDir(dirPath) {
     }
     const contents = await fsp.readFile(filePath);
     const src = contents.toString();
-    await fsp.writeFile(filePath, src.replaceAll('.md)', ')'));
+    await fsp.writeFile(filePath, src.replaceAll('.md', ''));
   }
 }
 
