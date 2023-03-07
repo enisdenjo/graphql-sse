@@ -1,5 +1,7 @@
 .yarn
 lib
 umd
+dist
 website/src/pages/docs/**/*.md
 CHANGELOG.md
+.next
