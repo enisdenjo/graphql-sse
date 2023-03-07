@@ -12,7 +12,7 @@
   <br />
 </div>
 
-## Getting started
+## Get started
 
 #### Install
 
