@@ -1,6 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import { FiGithub, FiPlay } from 'react-icons/fi';
+import { TbChefHat } from 'react-icons/tb';
 import { Anchor } from '@theguild/components';
 
 const classes = {
@@ -26,6 +27,12 @@ export function Index() {
             href="/get-started"
           >
             <FiPlay /> Get Started
+          </Anchor>
+          <Anchor
+            className={clsx(classes.button, 'flex flex-row gap-2 items-center')}
+            href="/recipes"
+          >
+            <TbChefHat /> Recipes
           </Anchor>
           <Anchor
             className={clsx(classes.button, 'flex flex-row gap-2 items-center')}
