@@ -1,12 +1,12 @@
+import { PackageCmd, Callout } from '@theguild/components';
+
 # Get Started
 
 Zero-dependency, HTTP/1 safe, simple, <a href="PROTOCOL.md">GraphQL over Server-Sent Events spec</a> server and client.
 
 ## Install
 
-```shell
-yarn add graphql-sse
-```
+<PackageCmd packages={['graphql-sse']} />
 
 ## Create a GraphQL schema
 
@@ -75,7 +75,11 @@ console.log('Listening to port 4000');
 
 ### With [`http2`](https://nodejs.org/api/http2.html)
 
-_Browsers might complain about self-signed SSL/TLS certificates. [Help can be found on StackOverflow.](https://stackoverflow.com/questions/7580508/getting-chrome-to-accept-self-signed-localhost-certificate)_
+<Callout>
+  Browsers might complain about self-signed SSL/TLS certificates. [Help can be
+  found on
+  StackOverflow.](https://stackoverflow.com/questions/7580508/getting-chrome-to-accept-self-signed-localhost-certificate)
+</Callout>
 
 ```shell
 $ openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
@@ -169,7 +173,10 @@ await serve(
 
 ### With [`Bun@>=0.5.7`](https://bun.sh/)
 
-[⚠️ Bun's fetch does not support streaming.](https://github.com/oven-sh/bun/issues/2103#issuecomment-1435652020)
+<Callout>
+  Bun's fetch does not support streaming ([see
+  issue](https://github.com/oven-sh/bun/issues/2103#issuecomment-1435652020)).
+</Callout>
 
 ```js
 import { createHandler } from 'graphql-sse/lib/use/fetch'; // bun install graphql-sse
