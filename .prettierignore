@@ -1,5 +1,5 @@
 .yarn
 lib
 umd
-docs
+website/src/pages/docs/**/*.md
 CHANGELOG.md
