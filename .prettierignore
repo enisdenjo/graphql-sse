@@ -2,6 +2,6 @@
 lib
 umd
 dist
-website/src/pages/docs/**/*.md
+website/src/pages/docs
 CHANGELOG.md
 .next
