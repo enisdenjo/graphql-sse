@@ -67,6 +67,6 @@ async function createRecursiveMetaFiles(dirPath) {
 
   await fsp.writeFile(
     path.join(dirPath, '_meta.json'),
-    JSON.stringify(meta, null, '  '),
+    JSON.stringify(meta, null, '  ') + '\n',
   );
 }
