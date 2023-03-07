@@ -1,0 +1,18 @@
+{
+  "client.Client": "client.Client",
+  "client.ClientOptions": "client.ClientOptions",
+  "common.ExecutionPatchResult": "common.ExecutionPatchResult",
+  "common.ExecutionResult": "common.ExecutionResult",
+  "common.RequestParams": "common.RequestParams",
+  "common.Sink": "common.Sink",
+  "common.StreamMessage": "common.StreamMessage",
+  "handler.HandlerOptions": "handler.HandlerOptions",
+  "handler.Request": "handler.Request",
+  "handler.RequestHeaders": "handler.RequestHeaders",
+  "handler.ResponseInit": "handler.ResponseInit",
+  "use_express.RequestContext": "use/express.RequestContext",
+  "use_fastify.RequestContext": "use/fastify.RequestContext",
+  "use_fetch.RequestContext": "use/fetch.RequestContext",
+  "use_http.RequestContext": "use/http.RequestContext",
+  "use_http2.RequestContext": "use/http2.RequestContext"
+}
