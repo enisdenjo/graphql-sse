@@ -44,7 +44,7 @@ export function Index() {
           </h1>
           <p className="max-w-screen-sm mx-auto mt-6 text-2xl text-gray-600 text-center dark:text-gray-400">
             Zero-dependency, HTTP/1 safe, simple, spec compliant server and
-            client.
+            client
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Anchor
@@ -94,7 +94,6 @@ export function Index() {
                 >
                   GraphQL over SSE (Server-Sent Events) spec
                 </Link>
-                .
               </p>
             </div>
             <div className="flex flex-col gap-y-12">
@@ -135,8 +134,7 @@ export function Index() {
             <div className="flex flex-col gap-y-12">
               <div>
                 <p>
-                  Single library, but both the server and the client is
-                  included.
+                  Single library, but both the server and the client is included
                 </p>
               </div>
               <div className="flex flex-col gap-y-12">
@@ -185,7 +183,7 @@ export function Index() {
             <div>
               <p className="text-center">
                 Short and concise code snippets for starting with common
-                use-cases.
+                use-cases
               </p>
             </div>
             <div className="flex flex-col gap-y-12">
