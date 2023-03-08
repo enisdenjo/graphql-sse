@@ -10,6 +10,7 @@ import {
   TbServer,
 } from 'react-icons/tb';
 import { BsBoxSeam } from 'react-icons/bs';
+import { FaCreativeCommonsZero } from 'react-icons/fa';
 import { Anchor, Image } from '@theguild/components';
 import Link from 'next/link';
 
@@ -143,6 +144,11 @@ export function Index() {
                 <FeatureHighlights
                   textColor={gradients[1][0]}
                   highlights={[
+                    {
+                      icon: <FaCreativeCommonsZero size={36} />,
+                      title: 'Zero-dependency',
+                      description: 'Library contains everything it needs',
+                    },
                     {
                       link: 'https://bundlephobia.com/package/graphql-sse',
                       icon: <BsBoxSeam size={36} />,
