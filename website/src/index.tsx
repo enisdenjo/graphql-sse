@@ -130,7 +130,7 @@ export function Index() {
           flipped
           gradient={1}
           image="TODO"
-          title="Server and client"
+          title="Server and Client"
           description={
             <div className="flex flex-col gap-y-12">
               <div>
