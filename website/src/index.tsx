@@ -21,10 +21,9 @@ const classes = {
 };
 
 const gradients: [string, string][] = [
-  ['#8b5cf6', '#6d28d9'], // violet
   ['#06b6d4', '#0e7490'], // cyan
-  ['#f59e0b', '#d97706'], // amber
-  ['#ec4899', '#db2777'], // pink
+  ['#f97316', '#c2410c'], // orange
+  ['#10b981', '#047857'], // emerald
 ];
 
 function pickGradient(i: number) {
@@ -195,7 +194,7 @@ export function Index() {
                   <Link
                     className={clsx(
                       classes.link,
-                      'text-amber-600 dark:text-amber-300',
+                      'text-emerald-600 dark:text-emerald-300',
                     )}
                     href="/recipes#client-usage-with-async-iterator"
                   >
@@ -206,7 +205,7 @@ export function Index() {
                   <Link
                     className={clsx(
                       classes.link,
-                      'text-amber-600 dark:text-amber-300',
+                      'text-emerald-600 dark:text-emerald-300',
                     )}
                     href="/recipes#client-usage-with-relay"
                   >
@@ -217,7 +216,7 @@ export function Index() {
                   <Link
                     className={clsx(
                       classes.link,
-                      'text-amber-600 dark:text-amber-300',
+                      'text-emerald-600 dark:text-emerald-300',
                     )}
                     href="/recipes#server-handler-usage-with-custom-context-value"
                   >
@@ -228,7 +227,7 @@ export function Index() {
                   <Link
                     className={clsx(
                       classes.link,
-                      'text-amber-600 dark:text-amber-300',
+                      'text-emerald-600 dark:text-emerald-300',
                     )}
                     href="/recipes#server-handler-and-client-usage-with-persisted-queries"
                   >
@@ -239,15 +238,13 @@ export function Index() {
                   <Anchor
                     className={clsx(
                       classes.button,
-                      'bg-amber-200 text-amber-600 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-300 dark:hover:bg-amber-700',
+                      'bg-emerald-200 text-emerald-600 hover:bg-emerald-300 dark:bg-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-700',
                       'flex flex-row gap-2 items-center',
                     )}
                     href="/recipes"
                   >
                     And many more...
                   </Anchor>
-                  {/* <div className="flex">
-                  </div> */}
                 </li>
               </ul>
             </div>
