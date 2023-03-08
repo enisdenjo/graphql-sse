@@ -234,7 +234,7 @@ export function Index() {
                     Server handler and client usage with persisted queries
                   </Link>
                 </li>
-                <li className="flex mt-6">
+                <li className="flex mt-2">
                   <Anchor
                     className={clsx(
                       classes.button,
