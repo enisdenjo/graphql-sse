@@ -90,18 +90,16 @@ export function Index() {
           title="Spec Compliant"
           description={
             <div className="flex flex-col gap-y-12">
-              <div>
-                <p>
-                  As a reference implementation, the library is fully compliant
-                  with the{' '}
-                  <Link
-                    href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md"
-                    className={classes.link.blue}
-                  >
-                    GraphQL over SSE (Server-Sent Events) spec
-                  </Link>
-                </p>
-              </div>
+              <p className="text-center mb-6">
+                As a reference implementation, the library is fully compliant
+                with the{' '}
+                <Link
+                  href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md"
+                  className={classes.link.blue}
+                >
+                  GraphQL over SSE (Server-Sent Events) spec
+                </Link>
+              </p>
               <div className="flex flex-col gap-y-12">
                 <FeatureHighlights
                   textColor={gradients[0][0]}
@@ -138,11 +136,9 @@ export function Index() {
           title="Server and Client"
           description={
             <div className="flex flex-col gap-y-12">
-              <div>
-                <p>
-                  Single library, but both the server and the client is included
-                </p>
-              </div>
+              <p className="text-center mb-6">
+                Single library, but both the server and the client is included
+              </p>
               <div className="flex flex-col gap-y-12">
                 <FeatureHighlights
                   textColor={gradients[1][0]}
@@ -186,14 +182,12 @@ export function Index() {
           title="Recipes"
           description={
             <div className="flex flex-col gap-y-12">
-              <div>
-                <p className="text-center">
-                  Short and concise code snippets for starting with common
-                  use-cases
-                </p>
-              </div>
+              <p className="text-center mb-6">
+                Short and concise code snippets for starting with common
+                use-cases
+              </p>
               <div className="flex flex-col gap-y-12">
-                <ul>
+                <ul className="my-0">
                   <li>
                     <Link
                       className={classes.link.emerald}
