@@ -181,7 +181,6 @@ export function Index() {
 
       <Wrapper>
         <Feature
-          flipped
           gradient={2}
           icon={<TbChefHat />}
           title="Recipes"
