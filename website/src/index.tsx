@@ -15,9 +15,15 @@ import { Anchor, Image } from '@theguild/components';
 import Link from 'next/link';
 
 const classes = {
-  button:
-    'inline-block bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 text-gray-600 px-6 py-3 rounded-lg font-medium shadow-sm',
-  link: 'text-primary-500',
+  button: {
+    gray: 'inline-block bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 text-gray-600 px-6 py-3 rounded-lg font-medium shadow-sm',
+    emerald:
+      'inline-block bg-emerald-200 hover:bg-emerald-300 dark:bg-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-700 text-emerald-600 px-6 py-3 rounded-lg font-medium shadow-sm',
+  },
+  link: {
+    blue: 'text-blue-600 dark:text-blue-300',
+    emerald: 'text-emerald-600 dark:text-emerald-300',
+  },
 };
 
 const gradients: [string, string][] = [
@@ -49,7 +55,7 @@ export function Index() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Anchor
               className={clsx(
-                classes.button,
+                classes.button.gray,
                 'flex flex-row gap-2 items-center',
               )}
               href="/get-started"
@@ -58,7 +64,7 @@ export function Index() {
             </Anchor>
             <Anchor
               className={clsx(
-                classes.button,
+                classes.button.gray,
                 'flex flex-row gap-2 items-center',
               )}
               href="/recipes"
@@ -67,7 +73,7 @@ export function Index() {
             </Anchor>
             <Anchor
               className={clsx(
-                classes.button,
+                classes.button.gray,
                 'flex flex-row gap-2 items-center',
               )}
               href="https://github.com/enisdenjo/graphql-sse"
@@ -90,7 +96,7 @@ export function Index() {
                 with the{' '}
                 <Link
                   href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md"
-                  className={classes.link}
+                  className={classes.link.blue}
                 >
                   GraphQL over SSE (Server-Sent Events) spec
                 </Link>
@@ -190,10 +196,7 @@ export function Index() {
               <ul>
                 <li>
                   <Link
-                    className={clsx(
-                      classes.link,
-                      'text-emerald-600 dark:text-emerald-300',
-                    )}
+                    className={classes.link.emerald}
                     href="/recipes#client-usage-with-async-iterator"
                   >
                     Client usage with AsyncIterator
@@ -201,10 +204,7 @@ export function Index() {
                 </li>
                 <li>
                   <Link
-                    className={clsx(
-                      classes.link,
-                      'text-emerald-600 dark:text-emerald-300',
-                    )}
+                    className={classes.link.emerald}
                     href="/recipes#client-usage-with-relay"
                   >
                     Client usage with Relay
@@ -212,10 +212,7 @@ export function Index() {
                 </li>
                 <li>
                   <Link
-                    className={clsx(
-                      classes.link,
-                      'text-emerald-600 dark:text-emerald-300',
-                    )}
+                    className={classes.link.emerald}
                     href="/recipes#server-handler-usage-with-custom-context-value"
                   >
                     Server handler usage with custom context value
@@ -223,10 +220,7 @@ export function Index() {
                 </li>
                 <li>
                   <Link
-                    className={clsx(
-                      classes.link,
-                      'text-emerald-600 dark:text-emerald-300',
-                    )}
+                    className={classes.link.emerald}
                     href="/recipes#server-handler-and-client-usage-with-persisted-queries"
                   >
                     Server handler and client usage with persisted queries
@@ -235,8 +229,7 @@ export function Index() {
                 <li className="flex mt-2">
                   <Anchor
                     className={clsx(
-                      classes.button,
-                      'bg-emerald-200 text-emerald-600 hover:bg-emerald-300 dark:bg-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-700',
+                      classes.button.emerald,
                       'flex flex-row gap-2 items-center',
                     )}
                     href="/recipes"
