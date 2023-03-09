@@ -43,7 +43,7 @@ function pickGradient(i: number) {
 export function Index() {
   return (
     <>
-      <AltBackground>
+      <Wrapper>
         <div className="container py-20 sm:py-24 lg:py-32">
           <h1 className="max-w-screen-md mx-auto font-extrabold text-5xl sm:text-5xl lg:text-6xl text-center bg-gradient-to-r from-blue-700 to-red-400 dark:from-blue-700 dark:to-red-400 bg-clip-text text-transparent !leading-tight">
             GraphQL SSE
@@ -82,59 +82,59 @@ export function Index() {
             </Anchor>
           </div>
         </div>
-      </AltBackground>
+      </Wrapper>
 
-      <Feature
-        gradient={0}
-        image="TODO"
-        title="Spec Compliant"
-        description={
-          <div className="flex flex-col gap-y-12">
-            <div>
-              <p>
-                As a reference implementation, the library is fully compliant
-                with the{' '}
-                <Link
-                  href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md"
-                  className={classes.link.blue}
-                >
-                  GraphQL over SSE (Server-Sent Events) spec
-                </Link>
-              </p>
-            </div>
-            <div className="flex flex-col gap-y-12">
-              <FeatureHighlights
-                textColor={gradients[0][0]}
-                highlights={[
-                  {
-                    icon: <TbArrowMergeBoth size={36} />,
-                    title: 'Single connection mode',
-                    description:
-                      'Safe for HTTP/1 servers and subscription heavy apps',
-                  },
-                  {
-                    icon: <TbPlugConnected size={36} />,
-                    title: 'Distinct connection mode',
-                    description: 'Each connection is a subscription on its own',
-                  },
-                  {
-                    icon: <TbArrowUpCircle size={36} />,
-                    title: 'Upgrade over regular SSE',
-                    description:
-                      'Contains improvements for clarity and stability',
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        }
-      />
-
-      <AltBackground>
+      <Wrapper>
         <Feature
-          flipped
+          gradient={0}
+          title="Spec Compliant"
+          description={
+            <div className="flex flex-col gap-y-12">
+              <div>
+                <p>
+                  As a reference implementation, the library is fully compliant
+                  with the{' '}
+                  <Link
+                    href="https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md"
+                    className={classes.link.blue}
+                  >
+                    GraphQL over SSE (Server-Sent Events) spec
+                  </Link>
+                </p>
+              </div>
+              <div className="flex flex-col gap-y-12">
+                <FeatureHighlights
+                  textColor={gradients[0][0]}
+                  highlights={[
+                    {
+                      icon: <TbArrowMergeBoth size={36} />,
+                      title: 'Single connection mode',
+                      description:
+                        'Safe for HTTP/1 servers and subscription heavy apps',
+                    },
+                    {
+                      icon: <TbPlugConnected size={36} />,
+                      title: 'Distinct connection mode',
+                      description:
+                        'Each connection is a subscription on its own',
+                    },
+                    {
+                      icon: <TbArrowUpCircle size={36} />,
+                      title: 'Upgrade over regular SSE',
+                      description:
+                        'Contains improvements for clarity and stability',
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+          }
+        />
+      </Wrapper>
+
+      <Wrapper>
+        <Feature
           gradient={1}
-          image="TODO"
           title="Server and Client"
           description={
             <div className="flex flex-col gap-y-12">
@@ -177,85 +177,88 @@ export function Index() {
             </div>
           }
         />
-      </AltBackground>
+      </Wrapper>
 
-      <Feature
-        flipped
-        gradient={2}
-        icon={<TbChefHat />}
-        title="Recipes"
-        description={
-          <div className="flex flex-col gap-y-12">
-            <div>
-              <p className="text-center">
-                Short and concise code snippets for starting with common
-                use-cases
-              </p>
-            </div>
+      <Wrapper>
+        <Feature
+          flipped
+          gradient={2}
+          icon={<TbChefHat />}
+          title="Recipes"
+          description={
             <div className="flex flex-col gap-y-12">
-              <ul>
-                <li>
-                  <Link
-                    className={classes.link.emerald}
-                    href="/recipes#client-usage-with-async-iterator"
-                  >
-                    Client usage with AsyncIterator
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={classes.link.emerald}
-                    href="/recipes#client-usage-with-relay"
-                  >
-                    Client usage with Relay
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={classes.link.emerald}
-                    href="/recipes#server-handler-usage-with-custom-context-value"
-                  >
-                    Server handler usage with custom context value
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={classes.link.emerald}
-                    href="/recipes#server-handler-and-client-usage-with-persisted-queries"
-                  >
-                    Server handler and client usage with persisted queries
-                  </Link>
-                </li>
-                <li className="flex mt-2">
-                  <Anchor
-                    className={clsx(
-                      classes.button.emerald,
-                      'flex flex-row gap-2 items-center',
-                    )}
-                    href="/recipes"
-                  >
-                    And many more...
-                  </Anchor>
-                </li>
-              </ul>
+              <div>
+                <p className="text-center">
+                  Short and concise code snippets for starting with common
+                  use-cases
+                </p>
+              </div>
+              <div className="flex flex-col gap-y-12">
+                <ul>
+                  <li>
+                    <Link
+                      className={classes.link.emerald}
+                      href="/recipes#client-usage-with-async-iterator"
+                    >
+                      Client usage with AsyncIterator
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      className={classes.link.emerald}
+                      href="/recipes#client-usage-with-relay"
+                    >
+                      Client usage with Relay
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      className={classes.link.emerald}
+                      href="/recipes#server-handler-usage-with-custom-context-value"
+                    >
+                      Server handler usage with custom context value
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      className={classes.link.emerald}
+                      href="/recipes#server-handler-and-client-usage-with-persisted-queries"
+                    >
+                      Server handler and client usage with persisted queries
+                    </Link>
+                  </li>
+                  <li className="flex mt-2">
+                    <Anchor
+                      className={clsx(
+                        classes.button.emerald,
+                        'flex flex-row gap-2 items-center',
+                      )}
+                      href="/recipes"
+                    >
+                      And many more...
+                    </Anchor>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
-        }
-      />
+          }
+        />
+      </Wrapper>
     </>
   );
 }
 
-function AltBackground({ children }: { children: React.ReactNode }) {
+function Wrapper({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`
-        w-full py-24
-        odd:bg-gray-50
-        odd:dark:bg-gray-900
-        even:bg-white
-        even:dark:bg-black
-      `}
+      className={clsx(
+        'w-full',
+        'py-24',
+        'odd:bg-gray-50',
+        'odd:dark:bg-gray-900',
+        'even:bg-white',
+        'even:dark:bg-black',
+      )}
     >
       {children}
     </div>
@@ -287,60 +290,58 @@ function Feature({
   const [start, end] = pickGradient(gradient);
 
   return (
-    <AltBackground>
-      <div className="container box-border px-6 mx-auto flex flex-col gap-y-24">
+    <div className="container box-border px-6 mx-auto flex flex-col gap-y-24">
+      <div
+        className={clsx(
+          'flex flex-col gap-24 md:gap-12 lg:gap-24 justify-center items-stretch',
+          flipped ? 'md:flex-row-reverse' : 'md:flex-row',
+        )}
+      >
         <div
           className={clsx(
-            'flex flex-col gap-24 md:gap-12 lg:gap-24 justify-center items-stretch',
-            flipped ? 'md:flex-row-reverse' : 'md:flex-row',
+            'flex flex-col gap-4 w-full md:w-3/5 lg:w-2/5 flex-shrink-0',
+            !image && 'items-center',
           )}
         >
-          <div
-            className={clsx(
-              'flex flex-col gap-4 w-full md:w-3/5 lg:w-2/5 flex-shrink-0',
-              !image && 'items-center',
-            )}
-          >
-            {icon && (
-              <div className="text-5xl" style={{ color: start }}>
-                {icon}
-              </div>
-            )}
-            <h2
-              className={clsx(
-                'font-semibold text-5xl bg-clip-text text-transparent dark:text-transparent leading-normal',
-                !image && 'text-center',
-              )}
-              style={{
-                backgroundImage: `linear-gradient(-70deg, ${end}, ${start})`,
-              }}
-            >
-              {title}
-            </h2>
-            <div className="text-lg text-gray-600 dark:text-gray-400 leading-7">
-              {description}
-            </div>
-          </div>
-          {image && (
-            <div
-              className="rounded-3xl overflow-hidden p-8 flex-grow flex flex-col justify-center items-stretch relative"
-              style={{
-                backgroundImage: `linear-gradient(70deg, ${start}, ${end})`,
-              }}
-            >
-              <Image
-                src={image}
-                fill
-                className="rounded-xl mx-auto"
-                placeholder="empty"
-                alt={title}
-              />
+          {icon && (
+            <div className="text-5xl" style={{ color: start }}>
+              {icon}
             </div>
           )}
+          <h2
+            className={clsx(
+              'font-semibold text-5xl bg-clip-text text-transparent dark:text-transparent leading-normal',
+              !image && 'text-center',
+            )}
+            style={{
+              backgroundImage: `linear-gradient(-70deg, ${end}, ${start})`,
+            }}
+          >
+            {title}
+          </h2>
+          <div className="text-lg text-gray-600 dark:text-gray-400 leading-7">
+            {description}
+          </div>
         </div>
-        {children}
+        {image && (
+          <div
+            className="rounded-3xl overflow-hidden p-8 flex-grow flex flex-col justify-center items-stretch relative"
+            style={{
+              backgroundImage: `linear-gradient(70deg, ${start}, ${end})`,
+            }}
+          >
+            <Image
+              src={image}
+              fill
+              className="rounded-xl mx-auto"
+              placeholder="empty"
+              alt={title}
+            />
+          </div>
+        )}
       </div>
-    </AltBackground>
+      {children}
+    </div>
   );
 }
 
