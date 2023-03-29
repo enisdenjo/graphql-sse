@@ -46,7 +46,7 @@ export function Index() {
     <>
       <Wrapper>
         <div className="container py-20 sm:py-24 lg:py-32">
-          <h1 className="max-w-screen-md mx-auto font-extrabold text-5xl sm:text-5xl lg:text-6xl text-center bg-gradient-to-r from-blue-700 to-red-400 dark:from-blue-700 dark:to-red-400 bg-clip-text text-transparent !leading-tight">
+          <h1 className="max-w-screen-md mx-auto font-extrabold text-5xl sm:text-5xl lg:text-6xl text-center bg-gradient-to-r from-green-700 to-emerald-400 dark:from-green-700 dark:to-emerald-400 bg-clip-text text-transparent !leading-tight">
             GraphQL SSE
           </h1>
           <p className="max-w-screen-sm mx-auto mt-6 text-2xl text-gray-600 text-center dark:text-gray-400">
