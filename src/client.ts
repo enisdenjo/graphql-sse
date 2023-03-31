@@ -789,10 +789,7 @@ async function connect<SingleConnection extends boolean>(
           }
 
           const operationId =
-            msg.data &&
-            'id' in
-              // @ts-expect-error https://github.com/microsoft/TypeScript/issues/51501
-              msg.data
+            msg.data && 'id' in msg.data
               ? msg.data.id // StreamDataForID
               : ''; // StreamData
 
