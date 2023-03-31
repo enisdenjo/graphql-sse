@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/enisdenjo/graphql-sse/compare/v2.1.0...v2.1.1) (2023-03-31)
+
+
+### Bug Fixes
+
+* Add file extensions to imports/exports in ESM type definitions ([bbf23b1](https://github.com/enisdenjo/graphql-sse/commit/bbf23b175412d7bf91c7dd9ad0fb290e53916f1d))
+
 # [2.1.0](https://github.com/enisdenjo/graphql-sse/compare/v2.0.0...v2.1.0) (2023-02-17)
 
 
