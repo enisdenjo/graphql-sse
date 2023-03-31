@@ -1,8 +1,5 @@
 .yarn
 lib
 umd
-dist
-website/src/pages/docs
-website/algolia-lockfile.json
+docs
 CHANGELOG.md
-.next

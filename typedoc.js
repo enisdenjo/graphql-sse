@@ -1,19 +1,16 @@
 /**
- * @type {Partial<import('typedoc').TypeDocOptions> & Partial<import('typedoc-plugin-markdown').MarkdownTheme>}
+ * @type {Partial<import('typedoc').TypeDocOptions>}
  */
 const opts = {
   entryPointStrategy: 'expand',
-  out: './website/src/pages/docs',
+  out: './docs',
   readme: 'none',
   plugin: ['typedoc-plugin-markdown'],
   excludeExternals: true,
   excludePrivate: true,
+  disableSources: true,
   categorizeByGroup: false, // removes redundant category names in matching modules
   githubPages: false,
   exclude: ['**/index.ts', '**/utils.ts', '**/parser.ts', '**/__tests__/**/*'],
-  entryDocument: 'index.md',
-  hideInPageTOC: true,
-  publicPath: '/docs/',
-  hideBreadcrumbs: true,
 };
 module.exports = opts;

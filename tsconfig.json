@@ -9,8 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
-    "checkJs": true,
-    "jsx": "preserve"
+    "checkJs": true
   },
   "include": [
     "src",
