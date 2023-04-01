@@ -30,5 +30,8 @@ jobs:
           ALGOLIA_INDEX_NAME: ${{ secrets.ALGOLIA_INDEX_NAME }}
           # trailing forward slash is required for algolia links to work
           SITE_URL: https://the-guild.dev/graphql/sse/
-      - name: Summary
-        run: echo -e '# algolia-lockfile.json\n```json\n' $(yarn prettier --ignore-path=noignore website/algolia-lockfile.json) '\n```' >> $GITHUB_STEP_SUMMARY
+      - name: Upload lockfile
+        uses: actions/upload-artifact@v3
+        with:
+          name: algolia-lockfile
+          path: website/algolia-lockfile.json
