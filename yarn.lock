@@ -3168,9 +3168,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@theguild/components@npm:^4.5.7":
-  version: 4.5.7
-  resolution: "@theguild/components@npm:4.5.7"
+"@theguild/components@npm:^4.5.8":
+  version: 4.5.8
+  resolution: "@theguild/components@npm:4.5.8"
   dependencies:
     "@algolia/autocomplete-js": 1.8.3
     "@algolia/autocomplete-plugin-algolia-insights": 1.8.3
@@ -3185,10 +3185,10 @@ __metadata:
     fuzzy: ^0.1.3
     mermaid: 10.0.2
     next-videos: 1.5.0
-    nextra: 2.2.20
-    nextra-theme-docs: 2.2.20
+    nextra: 2.3.0
+    nextra-theme-docs: 2.3.0
     react-instantsearch-dom: 6.39.1
-    react-paginate: 8.1.4
+    react-paginate: 8.1.5
     react-player: 2.12.0
     remark-mdx-disable-explicit-jsx: 0.1.0
     search-insights: 2.4.0
@@ -3199,7 +3199,7 @@ __metadata:
     next: ^12.3.1 || ^13.0.0
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: b38ee19f09d347d9ccd040186ddea4ee8e2e14f3fd886115b663e8e4c04f1be1cbaeda4d88a72f0d24a58e0265567c9cd781655797c4881bbbcf4dc5401e82d7
+  checksum: 6ed79ceeb2f25244b072ee834dd0d32dbdb86bd7043043318f96ca7d6ab613d783cffa884146d262c1bfa47a7220e189b291ad601926ccd6c5ebf32083feb223
   languageName: node
   linkType: hard
 
@@ -10417,9 +10417,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nextra-theme-docs@npm:2.2.20":
-  version: 2.2.20
-  resolution: "nextra-theme-docs@npm:2.2.20"
+"nextra-theme-docs@npm:2.3.0":
+  version: 2.3.0
+  resolution: "nextra-theme-docs@npm:2.3.0"
   dependencies:
     "@headlessui/react": ^1.7.10
     "@popperjs/core": ^2.11.6
@@ -10435,16 +10435,16 @@ __metadata:
     zod: ^3.20.2
   peerDependencies:
     next: ">=9.5.3"
-    nextra: 2.2.20
+    nextra: 2.3.0
     react: ">=16.13.1"
     react-dom: ">=16.13.1"
-  checksum: 53577ec0670c2e0553b647fd2a8eece46292985ec92642198ca462b564e67deeadbd17d6059b5c8d0104326232a9e6781fe78465ec9fc0d34c11bfa8a46d04e1
+  checksum: bd3101555433aed83d3a52c8b82420f119ed9372153ab6eab91cb89feec2a29abe94c3af86354af2bce7e1a743c007b8206e2058d53da33bfc3bf9127c2c35dd
   languageName: node
   linkType: hard
 
-"nextra@npm:2.2.20":
-  version: 2.2.20
-  resolution: "nextra@npm:2.2.20"
+"nextra@npm:2.3.0":
+  version: 2.3.0
+  resolution: "nextra@npm:2.3.0"
   dependencies:
     "@mdx-js/mdx": ^2.3.0
     "@mdx-js/react": ^2.3.0
@@ -10471,7 +10471,7 @@ __metadata:
     next: ">=9.5.3"
     react: ">=16.13.1"
     react-dom: ">=16.13.1"
-  checksum: 87f932d7679ba310dd1a8fd73734f6ed670f372fe5bfb38ea1fa671eba3adde3ff281cd60bc694df4eb9cd6e902f54c43a5965f4dbdfdecbab16eeb44ae79631
+  checksum: c11eff2ef4c5802f0cd31e15b251757c0764376fc6845b01f0761e49e6db27b289c97632dd9efa021cb3361da27f26f7ac983e6988ad8879f71c8f1f556ac6b9
   languageName: node
   linkType: hard
 
@@ -12167,14 +12167,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-paginate@npm:8.1.4":
-  version: 8.1.4
-  resolution: "react-paginate@npm:8.1.4"
+"react-paginate@npm:8.1.5":
+  version: 8.1.5
+  resolution: "react-paginate@npm:8.1.5"
   dependencies:
     prop-types: ^15
   peerDependencies:
     react: ^16 || ^17 || ^18
-  checksum: 0e733ca70a828b4f5bcb955fa1d175b74f8f22d8c1dd9b733255e1d263b2cb88316df9398ad0723ff02dca162b374ef48bed3993cb65a0f4e11333a1a0ca191e
+  checksum: c808ab046e036605f37c12ef3b06b41fa882a2bc1e27fe29f9db968d7018887aa0573941c23f7e5e41cde9344fb70e6ee686c047d12c9bf89f353a75dbb47a8f
   languageName: node
   linkType: hard
 
@@ -14512,7 +14512,7 @@ __metadata:
   resolution: "website@workspace:website"
   dependencies:
     "@theguild/algolia": ^1.1.5
-    "@theguild/components": ^4.5.7
+    "@theguild/components": ^4.5.8
     "@theguild/tailwind-config": ^0.2.1
     "@types/react": ^18.0.31
     clsx: ^1.2.1
