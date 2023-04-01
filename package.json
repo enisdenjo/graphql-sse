@@ -127,7 +127,7 @@
     "prettier": "^2.8.7",
     "rollup": "^3.20.2",
     "rollup-plugin-gzip": "^3.1.0",
-    "semantic-release": "^21.0.0",
+    "semantic-release": "^21.0.1",
     "tslib": "^2.5.0",
     "typedoc": "^0.23.28",
     "typedoc-plugin-markdown": "^3.14.0",
