@@ -1,3 +1,15 @@
+## [2.1.2](https://github.com/enisdenjo/graphql-sse/compare/v2.1.1...v2.1.2) (2023-05-10)
+
+
+### Bug Fixes
+
+* **client:** Respect retry attempts when server goes away after connecting ([#57](https://github.com/enisdenjo/graphql-sse/issues/57)) ([75c9f17](https://github.com/enisdenjo/graphql-sse/commit/75c9f17040c0f0242247ac722cde2e9032a878e3)), closes [#55](https://github.com/enisdenjo/graphql-sse/issues/55)
+
+
+### Reverts
+
+* Revert "Revert "docs: website (#50)"" ([0e4f4b5](https://github.com/enisdenjo/graphql-sse/commit/0e4f4b5655e1c8bf518b9a400734ec7ee5d5578b)), closes [#50](https://github.com/enisdenjo/graphql-sse/issues/50)
+
 ## [2.1.1](https://github.com/enisdenjo/graphql-sse/compare/v2.1.0...v2.1.1) (2023-03-31)
 
 
