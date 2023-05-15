@@ -367,15 +367,21 @@ describe('single connection mode', () => {
     });
 
     // start
-    await waitForRequest();
+    await waitForRequest(); // reservation
+    await waitForRequest(); // connect
+    await waitForRequest(); // operation
     await dispose();
 
     // 1st retry
-    await waitForRequest();
+    await waitForRequest(); // reservation
+    await waitForRequest(); // connect
+    await waitForRequest(); // operation
     await dispose();
 
     // 2nd retry
-    await waitForRequest();
+    await waitForRequest(); // reservation
+    await waitForRequest(); // connect
+    await waitForRequest(); // operation
     await dispose();
 
     // no more retries
