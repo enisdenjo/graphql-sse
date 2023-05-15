@@ -376,8 +376,6 @@ export function createClient<SingleConnection extends boolean = false>(
             fetchFn,
             onMessage,
           });
-          retryingErr = null; // future connects are not retries
-          retries = 0; // reset the retries on connect
 
           connected.waitForThrow().catch(() => (conn = undefined));
 
@@ -577,6 +575,14 @@ export function createClient<SingleConnection extends boolean = false>(
               signal: control.signal,
               operationId,
             })) {
+              // only after receiving results are future connects not considered retries.
+              // this is because a client might successfully connect, but the server
+              // ends up terminating the connection afterwards before streaming anything.
+              // of course, if the client completes the subscription, this loop will
+              // break and therefore stop the stream (it wont reconnect)
+              retryingErr = null;
+              retries = 0;
+
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sink.next(result as any);
             }
