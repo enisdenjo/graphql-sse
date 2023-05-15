@@ -350,6 +350,41 @@ describe('single connection mode', () => {
       expect(stream.signal.aborted).toBeTruthy();
     });
   });
+
+  it('should respect retry attempts when server goes away after connecting', async () => {
+    const { fetch, waitForRequest, dispose } = createTFetch();
+
+    const client = createClient({
+      singleConnection: true,
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+
+    // start
+    await waitForRequest();
+    await dispose();
+
+    // 1st retry
+    await waitForRequest();
+    await dispose();
+
+    // 2nd retry
+    await waitForRequest();
+    await dispose();
+
+    // no more retries
+    await expect(
+      Promise.race([waitForRequest(), sub.waitForError()]),
+    ).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Connection closed while having active streams]`,
+    );
+  });
 });
 
 describe('distinct connections mode', () => {
