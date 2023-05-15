@@ -1,8 +1,11 @@
+import { jest } from '@jest/globals';
+import { parse, execute } from 'graphql';
 import {
   createTHandler,
   assertString,
   assertAsyncGenerator,
 } from './utils/thandler';
+import { schema } from './fixtures/simple';
 import { TOKEN_HEADER_KEY } from '../common';
 
 it('should only accept valid accept headers', async () => {
@@ -126,6 +129,43 @@ it('should bubble onNext errors to the response body iterator even if late', asy
       }
     })(),
   ).rejects.toBe(err);
+});
+
+it('should detect execution args in onSubscribe return value', async () => {
+  const executeFn = jest.fn(execute);
+  const executionArgs = {
+    schema,
+    document: parse('{ getValue }'),
+    contextValue: undefined,
+  };
+  const { handler } = createTHandler({
+    execute: executeFn,
+    onSubscribe() {
+      return executionArgs;
+    },
+  });
+
+  const [stream, init] = await handler('POST', {
+    headers: {
+      accept: 'text/event-stream',
+    },
+    body: { query: 'subscription { greetings }' },
+  });
+  expect(init.status).toBe(200);
+  assertAsyncGenerator(stream);
+
+  await stream.next(); // ping
+  expect(stream.next()).resolves.toMatchInlineSnapshot(`
+    {
+      "done": false,
+      "value": "event: next
+    data: {"data":{"getValue":"value"}}
+
+    ",
+    }
+  `);
+
+  expect(executeFn).toHaveBeenCalledWith(executionArgs);
 });
 
 describe('single connection mode', () => {

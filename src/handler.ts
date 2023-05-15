@@ -1104,7 +1104,9 @@ function isResponse(val: unknown): val is Response {
   return Array.isArray(val);
 }
 
-function isExecutionResult(val: unknown): val is ExecutionResult {
-  // TODO: comprehensive check
-  return isObject(val);
+export function isExecutionResult(val: unknown): val is ExecutionResult {
+  return (
+    isObject(val) &&
+    ('data' in val || ('data' in val && val.data == null && 'errors' in val))
+  );
 }
