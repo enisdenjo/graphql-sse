@@ -155,40 +155,6 @@ it('should report error to sink if server goes away', async () => {
   );
 });
 
-it('should respect retry attempts when server goes away after connecting', async () => {
-  const { fetch, waitForRequest, dispose } = createTFetch();
-
-  const client = createClient({
-    fetchFn: fetch,
-    url: 'http://localhost',
-    retryAttempts: 2,
-    retry: () => Promise.resolve(),
-  });
-
-  const sub = tsubscribe(client, {
-    query: `subscription { ping(key: "${Math.random()}") }`,
-  });
-
-  // start
-  await waitForRequest();
-  await dispose();
-
-  // 1st retry
-  await waitForRequest();
-  await dispose();
-
-  // 2nd retry
-  await waitForRequest();
-  await dispose();
-
-  // no more retries
-  await expect(
-    Promise.race([waitForRequest(), sub.waitForError()]),
-  ).resolves.toMatchInlineSnapshot(
-    `[NetworkError: Connection closed while having active streams]`,
-  );
-});
-
 it('should report error to sink if server goes away during generator emission', async () => {
   const { fetch, dispose } = createTFetch();
 
@@ -467,6 +433,41 @@ describe('distinct connections mode', () => {
 
     expect(stream1.signal.aborted).toBeTruthy();
     expect(stream2.signal.aborted).toBeTruthy();
+  });
+
+  it('should respect retry attempts when server goes away after connecting', async () => {
+    const { fetch, waitForRequest, dispose } = createTFetch();
+
+    const client = createClient({
+      singleConnection: false,
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 2,
+      retry: () => Promise.resolve(),
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+
+    // start
+    await waitForRequest();
+    await dispose();
+
+    // 1st retry
+    await waitForRequest();
+    await dispose();
+
+    // 2nd retry
+    await waitForRequest();
+    await dispose();
+
+    // no more retries
+    await expect(
+      Promise.race([waitForRequest(), sub.waitForError()]),
+    ).resolves.toMatchInlineSnapshot(
+      `[NetworkError: Connection closed while having active streams]`,
+    );
   });
 });
 
