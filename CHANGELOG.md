@@ -1,3 +1,11 @@
+## [2.1.3](https://github.com/enisdenjo/graphql-sse/compare/v2.1.2...v2.1.3) (2023-05-15)
+
+
+### Bug Fixes
+
+* **client:** Respect retry attempts when server goes away after connecting in single connection mode ([#59](https://github.com/enisdenjo/graphql-sse/issues/59)) ([e895c5b](https://github.com/enisdenjo/graphql-sse/commit/e895c5bedc868fcae344acd60b25d89ba5a7eda4)), closes [#55](https://github.com/enisdenjo/graphql-sse/issues/55)
+* **handler:** Detect `ExecutionArgs` in `onSubscribe` return value ([a16b921](https://github.com/enisdenjo/graphql-sse/commit/a16b921682523c6f102471ab29f347c14483de5c)), closes [#58](https://github.com/enisdenjo/graphql-sse/issues/58)
+
 ## [2.1.2](https://github.com/enisdenjo/graphql-sse/compare/v2.1.1...v2.1.2) (2023-05-10)
 
 
