@@ -1,4 +1,4 @@
-import { defineConfig, useTheme } from '@theguild/components';
+import { defineConfig } from '@theguild/components';
 
 export default defineConfig({
   siteName: 'SSE',
