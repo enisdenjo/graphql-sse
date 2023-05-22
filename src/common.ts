@@ -35,10 +35,10 @@ export const TOKEN_QUERY_KEY = 'token' as const;
  * @category Common
  */
 export interface RequestParams {
-  operationName?: string | undefined;
+  operationName?: string;
   query: DocumentNode | string;
-  variables?: Record<string, unknown> | undefined;
-  extensions?: Record<string, unknown> | undefined;
+  variables?: Record<string, unknown>;
+  extensions?: Record<string, unknown>;
 }
 
 /**
