@@ -1,12 +1,13 @@
-**/.DS_Store
-node_modules
+.DS_Store
+node_modules/
 lib
 umd
-dist
+dist/
 .vscode
 .yarn/*
 !.yarn/releases
 !.yarn/plugins
-.next
+.next/
+.idea/
 website/src/pages/docs
 website/algolia-lockfile.json

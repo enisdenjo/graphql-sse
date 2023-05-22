@@ -89,7 +89,6 @@ $ openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
 ```
 
 ```js
-import fs from 'fs';
 import http2 from 'http2';
 import { createHandler } from 'graphql-sse/lib/use/http2';
 import { schema } from './previous-step';
@@ -163,7 +162,7 @@ await serve(
   (req: Request) => {
     const [path, _search] = req.url.split('?');
     if (path.endsWith('/graphql/stream')) {
-      return await handler(req);
+      return handler(req);
     }
     return new Response(null, { status: 404 });
   },
@@ -175,7 +174,7 @@ await serve(
 
 ### With [`Bun@>=0.5.7`](https://bun.sh/)
 
-<Callout>
+<Callout type="warning">
   Bun's fetch does not support streaming ([see
   issue](https://github.com/oven-sh/bun/issues/2103#issuecomment-1435652020)).
 </Callout>
