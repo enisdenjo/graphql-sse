@@ -85,7 +85,7 @@
     "gendocs": "typedoc --options typedoc.js src/ && node scripts/post-gendocs.mjs",
     "lint:eslint": "eslint src",
     "lint:prettier": "prettier --check .",
-    "format": "prettier --write --list-different .",
+    "format": "yarn lint:prettier --write",
     "lint": "yarn lint:eslint && yarn lint:prettier",
     "type-check": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
