@@ -2,7 +2,9 @@
 
 Short and concise code snippets for starting with common use-cases.
 
-## Client usage with [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+## Client Usage
+
+### With [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 
 ```ts
 import { createClient, RequestParams } from 'graphql-sse';
@@ -36,7 +38,7 @@ export async function execute<T>(payload: RequestParams) {
 })();
 ```
 
-## Client usage with [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+### With [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 
 ```js
 import { createClient, RequestParams } from 'graphql-sse';
@@ -105,7 +107,7 @@ export function subscribe(payload) {
 })();
 ```
 
-## Client usage with [Observable](https://github.com/tc39/proposal-observable)
+### With [Observable](https://github.com/tc39/proposal-observable)
 
 ```js
 import { Observable } from 'relay-runtime';
@@ -144,10 +146,9 @@ const subscription = observable.subscribe({
 subscription.unsubscribe();
 ```
 
-## Client usage with [Relay](https://relay.dev)
+### With [Relay](https://relay.dev)
 
 ```js
-import { GraphQLError } from 'graphql';
 import {
   Network,
   Observable,
@@ -187,7 +188,7 @@ function fetchOrSubscribe(operation: RequestParameters, variables: Variables) {
 export const network = Network.create(fetchOrSubscribe, fetchOrSubscribe);
 ```
 
-## Client usage with [urql](https://formidable.com/open-source/urql/)
+### With [urql](https://formidable.com/open-source/urql/)
 
 ```js
 import { createClient, defaultExchanges, subscriptionExchange } from 'urql';
@@ -217,7 +218,7 @@ export const client = createClient({
 });
 ```
 
-## Client usage with [Apollo](https://www.apollographql.com)
+### With [Apollo](https://www.apollographql.com)
 
 ```ts
 import {
@@ -263,7 +264,7 @@ export const link = new SSELink({
 });
 ```
 
-## Client usage for HTTP/1 (aka. [single connection mode](https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode))
+### For HTTP/1 (aka. [single connection mode](https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode))
 
 ```js
 import { createClient } from 'graphql-sse';
@@ -280,7 +281,7 @@ export const client = createClient({
 // while separate HTTP requests will be issued to dictate the behaviour.
 ```
 
-## Client usage with custom retry timeout strategy
+### With Custom Retry Timeout Strategy
 
 ```js
 import { createClient } from 'graphql-sse';
@@ -304,9 +305,14 @@ export const client = createClient({
 });
 ```
 
-## Client usage with logging of incoming messages
+### With Logging of Incoming Messages
 
-[⚠️ Browsers don't show them in the DevTools.](https://github.com/enisdenjo/graphql-sse/issues/20)
+import { Callout } from '@theguild/components';
+
+<Callout type="warning">
+  Browsers don't show them in the DevTools. [Read
+  more](https://github.com/enisdenjo/graphql-sse/issues/20).
+</Callout>
 
 ```js
 import { createClient } from 'graphql-sse';
@@ -317,7 +323,7 @@ export const client = createClient({
 });
 ```
 
-## Client usage in browser
+### In Browser
 
 ```html
 <!DOCTYPE html>
@@ -342,7 +348,7 @@ export const client = createClient({
 </html>
 ```
 
-## Client usage in Node
+### In Node.js
 
 ```js
 const ws = require('ws'); // yarn add ws
@@ -366,7 +372,9 @@ export const client = createClient({
 });
 ```
 
-## Server handler usage with custom authentication
+## Server Handler Usage
+
+### With Custom Authentication
 
 ```js
 import { createHandler } from 'graphql-sse';
@@ -434,7 +442,7 @@ export const handler = createHandler({
 });
 ```
 
-## Server handler usage with dynamic schema
+### With Dynamic Schema
 
 ```js
 import { createHandler } from 'graphql-sse';
@@ -452,7 +460,7 @@ export const handler = createHandler({
 });
 ```
 
-## Server handler usage with custom context value
+### With Custom Context Value
 
 ```js
 import { createHandler } from 'graphql-sse';
@@ -467,7 +475,7 @@ export const handler = createHandler({
 });
 ```
 
-## Server handler usage with custom execution arguments
+### With Custom Execution Arguments
 
 ```js
 import { parse } from 'graphql';
@@ -489,11 +497,11 @@ export const handler = createHandler({
 });
 ```
 
-## Server handler and client usage with persisted queries
+## Server Handler and Client Usage
 
-```ts
-// 🛸 server
+### With Persisted Queries
 
+```ts filename="🛸 server"
 import { parse, ExecutionArgs } from 'graphql';
 import { createHandler } from 'graphql-sse';
 import { schema } from './my-graphql';
@@ -528,9 +536,7 @@ export const handler = createHandler({
 });
 ```
 
-```ts
-// 📺 client
-
+```ts filename="📺 client"
 import { createClient } from 'graphql-sse';
 
 const client = createClient({
