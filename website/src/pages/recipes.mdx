@@ -47,55 +47,8 @@ const client = createClient({
   url: 'http://iterators.ftw:4000/graphql/stream',
 });
 
-export function subscribe(payload) {
-  let deferred = null;
-  const pending = [];
-  let throwMe = null,
-    done = false;
-  const dispose = client.subscribe(payload, {
-    next: (data) => {
-      pending.push(data);
-      deferred?.resolve(false);
-    },
-    error: (err) => {
-      throwMe = err;
-      deferred?.reject(throwMe);
-    },
-    complete: () => {
-      done = true;
-      deferred?.resolve(true);
-    },
-  });
-  return {
-    [Symbol.asyncIterator]() {
-      return this;
-    },
-    async next() {
-      if (done) return { done: true, value: undefined };
-      if (throwMe) throw throwMe;
-      if (pending.length) return { value: pending.shift() };
-      return (await new Promise(
-        (resolve, reject) => (deferred = { resolve, reject }),
-      ))
-        ? { done: true, value: undefined }
-        : { value: pending.shift() };
-    },
-    async throw(err) {
-      throwMe = err;
-      deferred?.reject(throwMe);
-      return { done: true, value: undefined };
-    },
-    async return() {
-      done = true;
-      deferred?.resolve(true);
-      dispose();
-      return { done: true, value: undefined };
-    },
-  };
-}
-
 (async () => {
-  const subscription = subscribe({
+  const subscription = client.iterate({
     query: 'subscription { greetings }',
   });
   // subscription.return() to dispose

@@ -213,21 +213,11 @@ const client = createClient({
 
 // query
 (async () => {
-  const result = await new Promise((resolve, reject) => {
-    let result;
-    client.subscribe(
-      {
-        query: '{ hello }',
-      },
-      {
-        next: (data) => (result = data),
-        error: reject,
-        complete: () => resolve(result),
-      },
-    );
-  });
-
-  expect(result).toEqual({ hello: 'world' });
+  for await (const result of client.iterate({
+    query: '{ hello }',
+  })) {
+    expect(result).toEqual({ hello: 'world' });
+  }
 })();
 
 // subscription
@@ -240,19 +230,14 @@ const client = createClient({
     /* complete the subscription */
   };
 
-  await new Promise((resolve, reject) => {
-    unsubscribe = client.subscribe(
-      {
-        query: 'subscription { greetings }',
-      },
-      {
-        next: onNext,
-        error: reject,
-        complete: resolve,
-      },
-    );
+  const subscription = client.iterate({
+    query: 'subscription { greetings }',
   });
+
+  await expect(subscription.next()).resolves.toEqual({ greetings: 'Hi' });
 
   expect(onNext).toBeCalledTimes(5); // we say "Hi" in 5 languages
 })();
+
+// or using the observable pattern
 ```
