@@ -437,6 +437,54 @@ describe('single connection mode', () => {
     ).resolves.toBeUndefined();
     stream.return();
   });
+
+  it('should report subscription errors to the stream', async () => {
+    const { handler } = createTHandler();
+
+    const [token] = await handler('PUT');
+    assertString(token);
+
+    const search = new URLSearchParams();
+    search.set('token', token);
+    const [stream] = await handler('GET', {
+      search,
+      headers: {
+        accept: 'text/event-stream',
+      },
+    });
+    assertAsyncGenerator(stream);
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": ":
+
+      ",
+      }
+    `); // ping
+
+    const [, init] = await handler('POST', {
+      headers: {
+        [TOKEN_HEADER_KEY]: token,
+      },
+      body: {
+        query: 'subscription { throwing }',
+        extensions: { operationId: '1' },
+      },
+    });
+    expect(init.status).toBe(202);
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": "event: next
+      data: {"id":"1","payload":{"errors":[{"message":"Kaboom!","locations":[{"line":1,"column":16}],"path":["throwing"]}]}}
+
+      ",
+      }
+    `);
+
+    stream.return();
+  });
 });
 
 describe('distinct connections mode', () => {
