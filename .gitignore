@@ -4,7 +4,7 @@ lib/
 umd/
 dist/
 .vscode/
-.yarn/
+.yarn/*
 !.yarn/releases
 !.yarn/plugins
 .next/
