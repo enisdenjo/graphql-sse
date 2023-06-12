@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/enisdenjo/graphql-sse/compare/v2.1.3...v2.1.4) (2023-06-12)
+
+
+### Bug Fixes
+
+* Request parameters `query` field can only be a string ([16c9600](https://github.com/enisdenjo/graphql-sse/commit/16c9600b37ca21d6cfa3fa745bd41887b98589fd)), closes [#65](https://github.com/enisdenjo/graphql-sse/issues/65)
+
 ## [2.1.3](https://github.com/enisdenjo/graphql-sse/compare/v2.1.2...v2.1.3) (2023-05-15)
 
 
