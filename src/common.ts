@@ -4,7 +4,7 @@
  *
  */
 
-import type { DocumentNode, GraphQLError } from 'graphql';
+import type { GraphQLError } from 'graphql';
 import { isObject } from './utils';
 
 /**
@@ -36,7 +36,7 @@ export const TOKEN_QUERY_KEY = 'token' as const;
  */
 export interface RequestParams {
   operationName?: string;
-  query: DocumentNode | string;
+  query: string;
   variables?: Record<string, unknown>;
   extensions?: Record<string, unknown>;
 }

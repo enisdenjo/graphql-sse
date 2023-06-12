@@ -13,6 +13,7 @@ import {
   validate as graphqlValidate,
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
+  DocumentNode,
 } from 'graphql';
 import { isObject } from './utils';
 import {
@@ -605,31 +606,29 @@ export function createHandler<
       if (!schema) throw new Error('The GraphQL schema is not provided');
 
       const { operationName, variables } = params;
-      let { query } = params;
+      let query: DocumentNode;
 
-      if (typeof query === 'string') {
-        try {
-          query = parse(query);
-        } catch (err) {
-          return [
-            JSON.stringify({
-              errors: [
-                err instanceof Error
-                  ? {
-                      message: err.message,
-                      // TODO: stack might leak sensitive information
-                      // stack: err.stack,
-                    }
-                  : err,
-              ],
-            }),
-            {
-              status: 400,
-              statusText: 'Bad Request',
-              headers: { 'content-type': 'application/json; charset=utf-8' },
-            },
-          ];
-        }
+      try {
+        query = parse(params.query);
+      } catch (err) {
+        return [
+          JSON.stringify({
+            errors: [
+              err instanceof Error
+                ? {
+                    message: err.message,
+                    // TODO: stack might leak sensitive information
+                    // stack: err.stack,
+                  }
+                : err,
+            ],
+          }),
+          {
+            status: 400,
+            statusText: 'Bad Request',
+            headers: { 'content-type': 'application/json; charset=utf-8' },
+          },
+        ];
       }
 
       const argsWithoutSchema = {
