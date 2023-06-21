@@ -19,9 +19,9 @@ const client = createClient({
   });
 
   try {
-    const result = await query.next();
+    const { value } = await query.next();
+    // next = value = { data: { hello: 'Hello World!' } }
     // complete
-    // next = result = { data: { hello: 'Hello World!' } }
   } catch (err) {
     // error
   }
