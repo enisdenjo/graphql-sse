@@ -213,31 +213,26 @@ const client = createClient({
 
 // query
 (async () => {
-  for await (const result of client.iterate({
+  const query = client.iterate({
     query: '{ hello }',
-  })) {
+  });
+
+  for await (const result of query) {
     expect(result).toEqual({ hello: 'world' });
   }
 })();
 
 // subscription
 (async () => {
-  const onNext = () => {
-    /* handle incoming values */
-  };
-
-  let unsubscribe = () => {
-    /* complete the subscription */
-  };
-
   const subscription = client.iterate({
     query: 'subscription { greetings }',
   });
 
-  await expect(subscription.next()).resolves.toEqual({ greetings: 'Hi' });
+  for await (const event of subscription) {
+    expect(event).toEqual({ greetings: 'Hi' });
 
-  expect(onNext).toBeCalledTimes(5); // we say "Hi" in 5 languages
+    // to complete a running subscription, simply break the iterator loop
+    break;
+  }
 })();
-
-// or using the observable pattern
 ```
