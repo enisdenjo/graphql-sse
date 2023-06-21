@@ -231,7 +231,7 @@ const client = createClient({
   for await (const event of subscription) {
     expect(event).toEqual({ greetings: 'Hi' });
 
-    // to complete a running subscription, simply break the iterator loop
+    // complete a running subscription by breaking the iterator loop
     break;
   }
 })();
