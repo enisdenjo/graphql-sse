@@ -13,23 +13,13 @@ const client = createClient({
   url: 'http://hey.there:4000/graphql/stream',
 });
 
-export async function execute<T>(payload: RequestParams) {
-  return new Promise<T>((resolve, reject) => {
-    let result: T;
-    client.subscribe<T>(payload, {
-      next: (data) => (result = data),
-      error: reject,
-      complete: () => resolve(result),
-    });
-  });
-}
-
-// use
 (async () => {
+  const query = client.iterate({
+    query: '{ hello }',
+  });
+
   try {
-    const result = await execute({
-      query: '{ hello }',
-    });
+    const result = await query.next();
     // complete
     // next = result = { data: { hello: 'Hello World!' } }
   } catch (err) {
@@ -51,10 +41,11 @@ const client = createClient({
   const subscription = client.iterate({
     query: 'subscription { greetings }',
   });
-  // subscription.return() to dispose
+  // "subscription.return()" to dispose
 
   for await (const result of subscription) {
     // next = result = { data: { greetings: 5x } }
+    // "break" to dispose
   }
   // complete
 })();
