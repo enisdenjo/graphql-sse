@@ -207,7 +207,7 @@ export default {
 import { createClient } from 'graphql-sse';
 
 const client = createClient({
-  // singleConnection: true, preferred for HTTP/1 enabled servers. read more below
+  // singleConnection: true, preferred for HTTP/1 enabled servers and subscription heavy apps
   url: 'http://localhost:4000/graphql/stream',
 });
 
