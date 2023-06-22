@@ -712,7 +712,7 @@ describe('iterate', () => {
     });
 
     const iterator = client.iterate({
-      query: '{ throw }',
+      query: 'subscription { throwing }',
     });
 
     await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
@@ -723,11 +723,14 @@ describe('iterate', () => {
             {
               "locations": [
                 {
-                  "column": 3,
+                  "column": 16,
                   "line": 1,
                 },
               ],
-              "message": "Cannot query field "throw" on type "Query".",
+              "message": "Kaboom!",
+              "path": [
+                "throwing",
+              ],
             },
           ],
         },
