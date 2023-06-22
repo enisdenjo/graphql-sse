@@ -636,3 +636,263 @@ describe('retries', () => {
     expect(retryFn).not.toHaveBeenCalled();
   });
 });
+
+describe('iterate', () => {
+  it('should iterate a single result query', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const iterator = client.iterate({
+      query: '{ getValue }',
+    });
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": {
+          "data": {
+            "getValue": "value",
+          },
+        },
+      }
+    `);
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+  });
+
+  it('should iterate over subscription events', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const iterator = client.iterate({
+      query: 'subscription { greetings }',
+    });
+
+    // Hi
+    await expect(iterator.next()).resolves.toBeDefined();
+    // Bonjour
+    await expect(iterator.next()).resolves.toBeDefined();
+    // Hola
+    await expect(iterator.next()).resolves.toBeDefined();
+    // Ciao
+    await expect(iterator.next()).resolves.toBeDefined();
+    // Zdravo
+    await expect(iterator.next()).resolves.toBeDefined();
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+  });
+
+  it('should report execution errors to iterator', async () => {
+    const { fetch } = createTFetch();
+
+    const client = createClient({
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const iterator = client.iterate({
+      query: 'subscription { throwing }',
+    });
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": {
+          "errors": [
+            {
+              "locations": [
+                {
+                  "column": 16,
+                  "line": 1,
+                },
+              ],
+              "message": "Kaboom!",
+              "path": [
+                "throwing",
+              ],
+            },
+          ],
+        },
+      }
+    `);
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+  });
+
+  it('should throw in iterator connection errors', async () => {
+    const { fetch, dispose } = createTFetch();
+
+    const client = createClient({
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 0,
+    });
+
+    const pingKey = Math.random().toString();
+    const iterator = client.iterate({
+      query: `subscription { ping(key: "${pingKey}") }`,
+    });
+
+    pong(pingKey);
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": {
+          "data": {
+            "ping": "pong",
+          },
+        },
+      }
+    `);
+
+    await dispose();
+
+    await expect(iterator.next()).rejects.toMatchInlineSnapshot(
+      `[NetworkError: Connection closed while having active streams]`,
+    );
+  });
+
+  it('should complete subscription when iterator loop breaks', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 0,
+    });
+
+    const pingKey = Math.random().toString();
+    const iterator = client.iterate({
+      query: `subscription { ping(key: "${pingKey}") }`,
+    });
+    iterator.return = jest.fn(iterator.return);
+
+    const req = await waitForRequest();
+
+    setTimeout(() => pong(pingKey), 0);
+
+    for await (const val of iterator) {
+      expect(val).toMatchInlineSnapshot(`
+        {
+          "data": {
+            "ping": "pong",
+          },
+        }
+      `);
+      break;
+    }
+
+    expect(iterator.return).toHaveBeenCalled();
+
+    expect(req.signal.aborted).toBeTruthy();
+  });
+
+  it('should complete subscription when iterator loop throws', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 0,
+    });
+
+    const pingKey = Math.random().toString();
+    const iterator = client.iterate({
+      query: `subscription { ping(key: "${pingKey}") }`,
+    });
+    iterator.return = jest.fn(iterator.return);
+
+    const req = await waitForRequest();
+
+    setTimeout(() => pong(pingKey), 0);
+
+    await expect(async () => {
+      for await (const val of iterator) {
+        expect(val).toMatchInlineSnapshot(`
+          {
+            "data": {
+              "ping": "pong",
+            },
+          }
+        `);
+        throw new Error(':)');
+      }
+    }).rejects.toBeDefined();
+
+    expect(iterator.return).toHaveBeenCalled();
+
+    expect(req.signal.aborted).toBeTruthy();
+  });
+
+  it('should complete subscription when calling return directly on iterator', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      fetchFn: fetch,
+      url: 'http://localhost',
+      retryAttempts: 0,
+    });
+
+    const pingKey = Math.random().toString();
+    const iterator = client.iterate({
+      query: `subscription { ping(key: "${pingKey}") }`,
+    });
+
+    const req = await waitForRequest();
+
+    pong(pingKey);
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
+        "value": {
+          "data": {
+            "ping": "pong",
+          },
+        },
+      }
+    `);
+
+    await expect(iterator.return?.()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+
+    await expect(iterator.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "value": undefined,
+      }
+    `);
+
+    expect(req.signal.aborted).toBeTruthy();
+  });
+});
