@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/enisdenjo/graphql-sse/compare/v2.1.4...v2.2.0) (2023-06-22)
+
+
+### Features
+
+* **client:** Async iterator for subscriptions ([#66](https://github.com/enisdenjo/graphql-sse/issues/66)) ([fb8bf11](https://github.com/enisdenjo/graphql-sse/commit/fb8bf1145943feb8ef808f52a022e2f67e49e577))
+
 ## [2.1.4](https://github.com/enisdenjo/graphql-sse/compare/v2.1.3...v2.1.4) (2023-06-12)
 
 
