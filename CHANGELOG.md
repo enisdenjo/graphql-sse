@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/enisdenjo/graphql-sse/compare/v2.2.0...v2.2.1) (2023-07-31)
+
+
+### Bug Fixes
+
+* **handler:** Always include the `data` field in stream messages ([#71](https://github.com/enisdenjo/graphql-sse/issues/71)) ([4643c9a](https://github.com/enisdenjo/graphql-sse/commit/4643c9a093345db5ddc4fcf082e1d8ff5bfc3ec0))
+
 # [2.2.0](https://github.com/enisdenjo/graphql-sse/compare/v2.1.4...v2.2.0) (2023-06-22)
 
 
