@@ -584,6 +584,7 @@ describe('distinct connections mode', () => {
       {
         "done": false,
         "value": "event: complete
+      data:
 
       ",
       }
@@ -664,6 +665,7 @@ describe('distinct connections mode', () => {
       {
         "done": false,
         "value": "event: complete
+      data:
 
       ",
       }

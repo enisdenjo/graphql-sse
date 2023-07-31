@@ -15,6 +15,7 @@ data: {"data":{"getValue":"value"}}
 
 exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 3`] = `
 "event: complete
+data:
 
 "
 `;
@@ -34,6 +35,7 @@ data: {"data":{"getValue":"value"}}
 
 exports[`distinct connections mode should stream query operations to connected event stream and then disconnect 6`] = `
 "event: complete
+data:
 
 "
 `;
@@ -81,6 +83,7 @@ data: {"data":{"greetings":"Zdravo"}}
 
 exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 7`] = `
 "event: complete
+data:
 
 "
 `;
@@ -128,6 +131,7 @@ data: {"data":{"greetings":"Zdravo"}}
 
 exports[`distinct connections mode should stream subscription operations to connected event stream and then disconnect 14`] = `
 "event: complete
+data:
 
 "
 `;
