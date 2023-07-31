@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import net from 'net';
 import http from 'http';
 import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
