@@ -6697,6 +6697,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventsource@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "eventsource@npm:2.0.2"
+  checksum: c0072d972753e10c705d9b2285b559184bf29d011bc208973dde9c8b6b8b7b6fdad4ef0846cecb249f7b1585e860fdf324cbd2ac854a76bc53649e797496e99a
+  languageName: node
+  linkType: hard
+
 "execa@npm:^0.8.0":
   version: 0.8.0
   resolution: "execa@npm:0.8.0"
@@ -7548,6 +7555,7 @@ __metadata:
     babel-jest: ^29.5.0
     eslint: ^8.43.0
     eslint-config-prettier: ^8.8.0
+    eventsource: ^2.0.2
     express: ^4.18.2
     fastify: ^4.18.0
     glob: ^10.2.7

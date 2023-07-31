@@ -70,8 +70,11 @@ export function validateStreamEvent(e: unknown): StreamEvent {
 export function print<ForID extends boolean, E extends StreamEvent>(
   msg: StreamMessage<ForID, E>,
 ): string {
-  let str = `event: ${msg.event}`;
-  if (msg.data) str += `\ndata: ${JSON.stringify(msg.data)}`;
+  let str = `event: ${msg.event}\ndata:`;
+  if (msg.data) {
+    str += ' ';
+    str += JSON.stringify(msg.data);
+  }
   str += '\n\n';
   return str;
 }

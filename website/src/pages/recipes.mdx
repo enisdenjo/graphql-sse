@@ -4,6 +4,34 @@ Short and concise code snippets for starting with common use-cases.
 
 ## Client Usage
 
+### With [EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource) (distinct connections mode)
+
+The following example doesn't use the `graphql-sse` client and works only for the ["distinct connections mode" of the GraphQL over SSE spec](https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#distinct-connections-mode). This mode is the client default and should suffice for most of the use-cases.
+
+```js
+const url = new URL('http://localhost:4000/graphql/stream');
+url.searchParams.append('query', 'subscription { greetings }');
+
+const source = new EventSource(url);
+
+source.addEventListener('next', ({ data }) => {
+  console.log(data);
+  // {"data":{"greetings":"Hi"}}
+  // {"data":{"greetings":"Bonjour"}}
+  // {"data":{"greetings":"Hola"}}
+  // {"data":{"greetings":"Ciao"}}
+  // {"data":{"greetings":"Zdravo"}}
+});
+
+source.addEventListener('error', (e) => {
+  console.error(e);
+});
+
+source.addEventListener('complete', () => {
+  source.close();
+});
+```
+
 ### With [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 
 ```ts

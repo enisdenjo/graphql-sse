@@ -1,9 +1,14 @@
 import { jest } from '@jest/globals';
+import http from 'http';
 import { createClient, StreamMessage, StreamEvent } from '../client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
 import { pong } from './fixtures/simple';
 import { sleep } from './utils/testkit';
+import { createHandler } from '../use/http';
+import { schema } from './fixtures/simple';
+import EventSource from 'eventsource';
+import { startDisposableServer } from './utils/tserver';
 
 function noop() {
   // do nothing
@@ -895,4 +900,38 @@ describe('iterate', () => {
 
     expect(req.signal.aborted).toBeTruthy();
   });
+});
+
+it('should support distinct connections mode with EventSource', async () => {
+  const [serverUrl] = startDisposableServer(
+    http.createServer(createHandler({ schema })),
+  );
+
+  const url = new URL(serverUrl);
+  url.searchParams.set('query', 'subscription { greetings }');
+
+  const source = new EventSource(url.toString());
+
+  await expect(
+    new Promise((resolve, reject) => {
+      const msgs: unknown[] = [];
+      source.addEventListener('next', ({ data }) => msgs.push(data));
+      source.addEventListener('error', (e) => {
+        source.close();
+        reject(e);
+      });
+      source.addEventListener('complete', () => {
+        source.close();
+        resolve(msgs);
+      });
+    }),
+  ).resolves.toMatchInlineSnapshot(`
+    [
+      "{"data":{"greetings":"Hi"}}",
+      "{"data":{"greetings":"Bonjour"}}",
+      "{"data":{"greetings":"Hola"}}",
+      "{"data":{"greetings":"Ciao"}}",
+      "{"data":{"greetings":"Zdravo"}}",
+    ]
+  `);
 });
