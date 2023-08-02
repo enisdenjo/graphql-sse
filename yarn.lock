@@ -3678,9 +3678,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@theguild/components@npm:^5.1.1":
-  version: 5.1.1
-  resolution: "@theguild/components@npm:5.1.1"
+"@theguild/components@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "@theguild/components@npm:5.2.0"
   dependencies:
     "@algolia/autocomplete-js": 1.10.0
     "@algolia/autocomplete-plugin-algolia-insights": 1.10.0
@@ -3708,7 +3708,7 @@ __metadata:
     next: ^12.3.1 || ^13.0.0
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: dcf5c4a2cd43f99f4c6b43fdf56353ea2eb3cf1fef764d29a446d43c6dd2537798cd555cc1930230fb5f4192262da4c46ce9eea6147d9824475b8944ac10913c
+  checksum: 79663fcd35465a3bc834f79278be33902f55e743c5a0844de1ded4ba7fed32f191a3af3ca05cdea2eaf6ed55ef3e21b3ed821b3fc8509d3993a92c23832e6e51
   languageName: node
   linkType: hard
 
@@ -15472,7 +15472,7 @@ __metadata:
   resolution: "website@workspace:website"
   dependencies:
     "@theguild/algolia": ^1.1.9
-    "@theguild/components": ^5.1.1
+    "@theguild/components": ^5.2.0
     "@theguild/tailwind-config": ^0.3.0
     "@types/react": ^18.2.17
     clsx: ^2.0.0
