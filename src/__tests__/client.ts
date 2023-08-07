@@ -515,6 +515,27 @@ describe('distinct connections mode', () => {
       `[NetworkError: Connection closed while having active streams]`,
     );
   });
+
+  it('should disconnect on unsubscribe even if no events are emitted', async () => {
+    const { fetch, waitForRequest } = createTFetch();
+
+    const client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+
+    const req = await waitForRequest();
+
+    sub.dispose();
+
+    expect(req.signal.aborted).toBeTruthy();
+  });
 });
 
 describe('retries', () => {
