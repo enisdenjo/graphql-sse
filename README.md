@@ -1,4 +1,4 @@
-[![GraphQLConf 2023](https://github.com/enisdenjo/graphql-sse/assets/11807600/cdc9f45a-505e-4048-b086-c59ace390cd4)](https://graphql.org/conf/)
+[![GraphQL Conf 2023](/GraphQLConf-2023-Banner.png)](https://graphql.org/conf/)
 
 <div align="center">
   <br />
