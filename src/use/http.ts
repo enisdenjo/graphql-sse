@@ -90,6 +90,10 @@ export function createHandler<Context extends OperationContext = undefined>(
 
     res.once('close', body.return);
     for await (const value of body) {
+      if (res.closed) {
+        // for cases where the "close" event is late
+        break;
+      }
       await new Promise<void>((resolve, reject) =>
         res.write(value, (err) => (err ? reject(err) : resolve())),
       );
