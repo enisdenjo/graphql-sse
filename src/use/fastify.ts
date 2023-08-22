@@ -97,13 +97,17 @@ export function createHandler<Context extends OperationContext = undefined>(
 
     reply.raw.once('close', body.return);
     for await (const value of body) {
-      if (reply.raw.closed) {
-        // response's close event might be late
+      const closed = await new Promise((resolve, reject) => {
+        if (reply.raw.closed) {
+          // response's close event might be late
+          resolve(true);
+        } else {
+          reply.raw.write(value, (err) => (err ? reject(err) : resolve(false)));
+        }
+      });
+      if (closed) {
         break;
       }
-      await new Promise<void>((resolve, reject) =>
-        reply.raw.write(value, (err) => (err ? reject(err) : resolve())),
-      );
     }
     reply.raw.off('close', body.return);
     return new Promise((resolve) => reply.raw.end(resolve));
