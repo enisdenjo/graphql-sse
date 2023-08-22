@@ -1,3 +1,10 @@
+## [2.2.2](https://github.com/enisdenjo/graphql-sse/compare/v2.2.1...v2.2.2) (2023-08-22)
+
+
+### Bug Fixes
+
+* **use/http,use/http2,use/express,use/fastify:** Handle cases where response's `close` event is late ([#75](https://github.com/enisdenjo/graphql-sse/issues/75)) ([4457cba](https://github.com/enisdenjo/graphql-sse/commit/4457cba74ab0f4474b648b2b3d75f88edcb1fe9b)), closes [#69](https://github.com/enisdenjo/graphql-sse/issues/69)
+
 ## [2.2.1](https://github.com/enisdenjo/graphql-sse/compare/v2.2.0...v2.2.1) (2023-07-31)
 
 
