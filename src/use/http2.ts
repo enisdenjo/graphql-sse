@@ -93,7 +93,7 @@ export function createHandler<Context extends OperationContext = undefined>(
     res.once('close', body.return);
     for await (const value of body) {
       const closed = await new Promise((resolve, reject) => {
-        if (res.closed) {
+        if (!res.writable) {
           // response's close event might be late
           resolve(true);
         } else {
