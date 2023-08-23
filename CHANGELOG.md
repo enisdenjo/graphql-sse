@@ -1,3 +1,10 @@
+## [2.2.3](https://github.com/enisdenjo/graphql-sse/compare/v2.2.2...v2.2.3) (2023-08-23)
+
+
+### Bug Fixes
+
+* **use/http,use/http2,use/express,use/fastify:** Check `writable` instead of `closed` before writing to response ([3c71f69](https://github.com/enisdenjo/graphql-sse/commit/3c71f69262a5b30f74e5d743c8b9415bbb4b1ce9)), closes [#69](https://github.com/enisdenjo/graphql-sse/issues/69)
+
 ## [2.2.2](https://github.com/enisdenjo/graphql-sse/compare/v2.2.1...v2.2.2) (2023-08-22)
 
 
