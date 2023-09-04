@@ -82,18 +82,17 @@
     "website"
   ],
   "scripts": {
-    "gendocs": "typedoc --options typedoc.js src/ && node scripts/post-gendocs.mjs",
-    "lint:eslint": "eslint src",
-    "lint:prettier": "prettier --check .",
-    "format": "yarn lint:prettier --write",
-    "lint": "yarn lint:eslint && yarn lint:prettier",
-    "type-check": "tsc --noEmit",
+    "check:format": "prettier --check .",
+    "format": "yarn check:format --write",
+    "check:lint": "eslint 'src'",
+    "check:type": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build:esm": "tsc -b tsconfig.esm.json && node scripts/esm-post-process.mjs",
     "build:cjs": "tsc -b tsconfig.cjs.json",
     "build:umd": "rollup --configPlugin typescript --config rollup.config.ts",
     "build": "yarn build:esm && yarn build:cjs && yarn build:umd",
-    "release": "semantic-release"
+    "release": "semantic-release",
+    "gendocs": "typedoc --options typedoc.js src/ && node scripts/post-gendocs.mjs"
   },
   "peerDependencies": {
     "graphql": ">=0.11 <=16"

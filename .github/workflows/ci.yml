@@ -1,48 +1,37 @@
-name: Continuous integration
+name: CI
 
 on:
   push:
     branches:
       - master
   pull_request:
-    types: [opened, synchronize, reopened]
     branches:
       - master
 
 jobs:
-  lint:
-    name: Lint
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - format
+          - lint
+          - type
+    name: Check ${{ matrix.check }}
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up node
+      - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: yarn
       - name: Install
         run: yarn install --immutable
-      - name: Lint
-        run: yarn lint
-
-  type-check:
-    name: Type check
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: yarn
-      - name: Install
-        run: yarn install --immutable
-      - name: Type check
-        run: yarn workspaces foreach run type-check
+      - name: Check
+        run: yarn workspaces foreach -v run check:${{ matrix.check }}
 
   test:
     name: Test
@@ -51,7 +40,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up node
+      - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -59,5 +48,4 @@ jobs:
       - name: Install
         run: yarn install --immutable
       - name: Test
-        timeout-minutes: 1 # detectOpenHandles will probably hang if leaking
-        run: yarn test --detectOpenHandles
+        run: yarn test
