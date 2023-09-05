@@ -1,12 +1,13 @@
+import { afterAll, it, expect } from 'vitest';
 import net from 'net';
 import http from 'http';
 import express from 'express';
 import Fastify from 'fastify';
 import { schema, pong } from './fixtures/simple';
 
-import { createHandler as createHttpHandler } from '../use/http';
-import { createHandler as createExpressHandler } from '../use/express';
-import { createHandler as createFastifyHandler } from '../use/fastify';
+import { createHandler as createHttpHandler } from '../src/use/http';
+import { createHandler as createExpressHandler } from '../src/use/express';
+import { createHandler as createFastifyHandler } from '../src/use/fastify';
 
 type Dispose = () => Promise<void>;
 

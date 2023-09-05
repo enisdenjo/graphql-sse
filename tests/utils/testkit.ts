@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { HandlerOptions, OperationContext } from '../../handler';
+import { HandlerOptions, OperationContext } from '../../src/handler';
 
 export function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));

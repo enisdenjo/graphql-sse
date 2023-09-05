@@ -1,11 +1,11 @@
-import { jest } from '@jest/globals';
+import { vitest, it, expect, describe } from 'vitest';
 import http from 'http';
-import { createClient, StreamMessage, StreamEvent } from '../client';
+import { createClient, StreamMessage, StreamEvent } from '../src/client';
 import { createTFetch } from './utils/tfetch';
 import { tsubscribe } from './utils/tsubscribe';
 import { pong } from './fixtures/simple';
 import { sleep } from './utils/testkit';
-import { createHandler } from '../use/http';
+import { createHandler } from '../src/use/http';
 import { schema } from './fixtures/simple';
 import EventSource from 'eventsource';
 import { startDisposableServer } from './utils/tserver';
@@ -605,7 +605,7 @@ describe('retries', () => {
   it('should retry network errors even if they occur during event emission', async () => {
     const { fetch, dispose } = createTFetch();
 
-    const retryFn = jest.fn(async () => {
+    const retryFn = vitest.fn(async () => {
       // noop
     });
     const client = createClient({
@@ -633,7 +633,7 @@ describe('retries', () => {
 
     let msgsCount = 0;
     const fatalErr = new Error('Boom, I am fatal');
-    const retryFn = jest.fn(async () => {
+    const retryFn = vitest.fn(async () => {
       // noop
     });
 
@@ -817,7 +817,7 @@ describe('iterate', () => {
     const iterator = client.iterate({
       query: `subscription { ping(key: "${pingKey}") }`,
     });
-    iterator.return = jest.fn(iterator.return);
+    iterator.return = vitest.fn(iterator.return!);
 
     const req = await waitForRequest();
 
@@ -852,7 +852,7 @@ describe('iterate', () => {
     const iterator = client.iterate({
       query: `subscription { ping(key: "${pingKey}") }`,
     });
-    iterator.return = jest.fn(iterator.return);
+    iterator.return = vitest.fn(iterator.return!);
 
     const req = await waitForRequest();
 
@@ -948,11 +948,11 @@ it('should support distinct connections mode with EventSource', async () => {
     }),
   ).resolves.toMatchInlineSnapshot(`
     [
-      "{"data":{"greetings":"Hi"}}",
-      "{"data":{"greetings":"Bonjour"}}",
-      "{"data":{"greetings":"Hola"}}",
-      "{"data":{"greetings":"Ciao"}}",
-      "{"data":{"greetings":"Zdravo"}}",
+      "{\\"data\\":{\\"greetings\\":\\"Hi\\"}}",
+      "{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}",
+      "{\\"data\\":{\\"greetings\\":\\"Hola\\"}}",
+      "{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}",
+      "{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}",
     ]
   `);
 });

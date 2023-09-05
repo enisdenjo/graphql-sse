@@ -1,8 +1,9 @@
-import { createParser } from '../parser';
+import { it } from 'vitest';
+import { createParser } from '../src/parser';
 
 const encoder = new TextEncoder();
 
-it('should parse whole message', () => {
+it('should parse whole message', ({ expect }) => {
   const parse = createParser();
 
   // with space
@@ -19,7 +20,7 @@ it('should parse whole message', () => {
   expect(parse(encoder.encode('event: complete\n\n'))).toMatchSnapshot();
 });
 
-it('should parse message with prepended ping', () => {
+it('should parse message with prepended ping', ({ expect }) => {
   const parse = createParser();
 
   expect(
@@ -27,7 +28,7 @@ it('should parse message with prepended ping', () => {
   ).toMatchSnapshot();
 });
 
-it('should parse chunked message', () => {
+it('should parse chunked message', ({ expect }) => {
   const parse = createParser();
 
   parse(encoder.encode('even'));
@@ -42,7 +43,7 @@ it('should parse chunked message', () => {
   expect(msg).toMatchSnapshot();
 });
 
-it('should parse message whose lines are separated by \\r\\n', () => {
+it('should parse message whose lines are separated by \\r\\n', ({ expect }) => {
   const parse = createParser();
 
   const msg = parse(
@@ -52,7 +53,7 @@ it('should parse message whose lines are separated by \\r\\n', () => {
   expect(msg).toMatchSnapshot();
 });
 
-it('should ignore comments', () => {
+it('should ignore comments', ({ expect }) => {
   const parse = createParser();
 
   const msg = parse(
@@ -62,7 +63,7 @@ it('should ignore comments', () => {
   expect(msg).toMatchSnapshot();
 });
 
-it('should accept valid events only', () => {
+it('should accept valid events only', ({ expect }) => {
   expect(() => {
     const parse = createParser();
     parse(encoder.encode('event: done\ndata: {}\n\n'));
@@ -84,13 +85,13 @@ it('should accept valid events only', () => {
   }).not.toThrow();
 });
 
-it('should ignore server pings', () => {
+it('should ignore server pings', ({ expect }) => {
   const parse = createParser();
 
   expect(parse(encoder.encode(':\n\n'))).toEqual([]);
 });
 
-it('should parse multiple messages from one chunk', () => {
+it('should parse multiple messages from one chunk', ({ expect }) => {
   const parse = createParser();
 
   expect(
