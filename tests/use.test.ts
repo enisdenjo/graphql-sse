@@ -124,15 +124,13 @@ it.each([
     await expect(reader.next()).resolves.toBeDefined(); // keepalive
 
     pong(pingKey);
-    await expect(reader.next()).resolves.toMatchInlineSnapshot(`
-      {
-        "done": false,
-        "value": "event: next
-      data: {"data":{"ping":"pong"}}
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: `event: next
+data: {"data":{"ping":"pong"}}
 
-      ",
-      }
-    `);
+`,
+    });
 
     ctrl.abort();
     await expect(reader.next()).rejects.toEqual(
