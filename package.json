@@ -86,7 +86,7 @@
     "format": "yarn check:format --write",
     "check:lint": "eslint 'src'",
     "check:type": "tsc --noEmit",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "vitest",
     "build:esm": "tsc -b tsconfig.esm.json && node scripts/esm-post-process.mjs",
     "build:cjs": "tsc -b tsconfig.cjs.json",
     "build:umd": "rollup --configPlugin typescript --config rollup.config.ts",
@@ -132,6 +132,7 @@
     "tslib": "^2.6.2",
     "typedoc": "^0.24.8",
     "typedoc-plugin-markdown": "^3.15.4",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.3"
   }
 }
