@@ -10,7 +10,7 @@ const opts = {
   excludePrivate: true,
   categorizeByGroup: false, // removes redundant category names in matching modules
   githubPages: false,
-  exclude: ['**/index.ts', '**/utils.ts', '**/parser.ts', '**/__tests__/**/*'],
+  exclude: ['**/index.ts', '**/utils.ts', '**/parser.ts', '**/tests/**/*'],
   entryDocument: 'index.md',
   hideInPageTOC: true,
   publicPath: '/docs/',

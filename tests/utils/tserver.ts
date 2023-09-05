@@ -1,3 +1,4 @@
+import { afterAll } from 'vitest';
 import net from 'net';
 import http from 'http';
 

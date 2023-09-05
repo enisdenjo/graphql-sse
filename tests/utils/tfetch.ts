@@ -1,6 +1,6 @@
 import { schema } from '../fixtures/simple';
-import { HandlerOptions } from '../../handler';
-import { createHandler, RequestContext } from '../../use/fetch';
+import { HandlerOptions } from '../../src/handler';
+import { createHandler, RequestContext } from '../../src/use/fetch';
 import { injectTestKit, queue, TestKit } from './testkit';
 
 export interface TFetch extends TestKit<Request, RequestContext> {

@@ -4,8 +4,8 @@ import {
   HandlerOptions,
   Response,
   Request,
-} from '../../handler';
-import { isAsyncGenerator, RequestParams } from '../../common';
+} from '../../src/handler';
+import { isAsyncGenerator, RequestParams } from '../../src/common';
 import { TestKit, injectTestKit, queue } from './testkit';
 
 export interface THandler extends TestKit {

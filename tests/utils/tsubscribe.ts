@@ -1,7 +1,7 @@
 import { ExecutionResult } from 'graphql';
 import { EventEmitter } from 'events';
-import { Client } from '../../client';
-import { RequestParams } from '../../common';
+import { Client } from '../../src/client';
+import { RequestParams } from '../../src/common';
 
 interface TSubscribe<T> {
   waitForNext: () => Promise<ExecutionResult<T, unknown>>;

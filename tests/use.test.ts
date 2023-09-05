@@ -1,12 +1,13 @@
+import { afterAll, it, expect } from 'vitest';
 import net from 'net';
 import http from 'http';
 import express from 'express';
 import Fastify from 'fastify';
 import { schema, pong } from './fixtures/simple';
 
-import { createHandler as createHttpHandler } from '../use/http';
-import { createHandler as createExpressHandler } from '../use/express';
-import { createHandler as createFastifyHandler } from '../use/fastify';
+import { createHandler as createHttpHandler } from '../src/use/http';
+import { createHandler as createExpressHandler } from '../src/use/express';
+import { createHandler as createFastifyHandler } from '../src/use/fastify';
 
 type Dispose = () => Promise<void>;
 
@@ -123,15 +124,13 @@ it.each([
     await expect(reader.next()).resolves.toBeDefined(); // keepalive
 
     pong(pingKey);
-    await expect(reader.next()).resolves.toMatchInlineSnapshot(`
-      {
-        "done": false,
-        "value": "event: next
-      data: {"data":{"ping":"pong"}}
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: `event: next
+data: {"data":{"ping":"pong"}}
 
-      ",
-      }
-    `);
+`,
+    });
 
     ctrl.abort();
     await expect(reader.next()).rejects.toEqual(
