@@ -13,7 +13,7 @@ export interface RequestContext {
 }
 
 /**
- * @category Server/fetch
+ * @category Server/express
  */
 export type HandlerOptions<Context extends OperationContext = undefined> =
   RawHandlerOptions<Request, RequestContext, Context>;

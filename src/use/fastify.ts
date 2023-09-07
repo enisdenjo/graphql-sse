@@ -13,7 +13,7 @@ export interface RequestContext {
 }
 
 /**
- * @category Server/fetch
+ * @category Server/fastify
  */
 export type HandlerOptions<Context extends OperationContext = undefined> =
   RawHandlerOptions<FastifyRequest, RequestContext, Context>;
