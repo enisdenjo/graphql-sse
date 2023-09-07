@@ -22,7 +22,7 @@ export type HandlerOptions<Context extends OperationContext = undefined> =
   RawHandlerOptions<IncomingMessage, RequestContext, Context>;
 
 /**
- * The ready-to-use handler for [express](https://expressjs.com).
+ * The ready-to-use handler for [Koa](https://expressjs.com).
  *
  * Errors thrown from the provided options or callbacks (or even due to
  * library misuse or potential bugs) will reject the handler or bubble to the
@@ -33,25 +33,26 @@ export type HandlerOptions<Context extends OperationContext = undefined> =
  * error details to the client, but instead report to an error logging tool or simply
  * the console.
  *
- * ```ts
- * import express from 'express'; // yarn add express
- * import { createHandler } from 'graphql-sse/lib/use/express';
+ * ```js
+ * import Koa from 'koa'; // yarn add koa
+ * import mount from 'koa-mount'; // yarn add koa-mount
+ * import { createHandler } from 'graphql-sse/lib/use/koa';
  * import { schema } from './my-graphql';
  *
- * const handler = createHandler({ schema });
+ * const app = new Koa();
+ * app.use(
+ *   mount('/graphql/stream', async (ctx, next) => {
+ *     try {
+ *       await handler(ctx, next);
+ *     } catch (err) {
+ *       console.error(err);
+ *       ctx.response.status = 500;
+ *       ctx.response.message = 'Internal Server Error';
+ *     }
+ *   }),
+ * );
  *
- * const app = express();
- *
- * app.use('/graphql/stream', async (req, res) => {
- *   try {
- *     await handler(req, res);
- *   } catch (err) {
- *     console.error(err);
- *     res.writeHead(500).end();
- *   }
- * });
- *
- * server.listen(4000);
+ * app.listen({ port: 4000 });
  * console.log('Listening to port 4000');
  * ```
  *
