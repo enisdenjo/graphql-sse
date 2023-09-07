@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/enisdenjo/graphql-sse/compare/v2.2.3...v2.3.0) (2023-09-07)
+
+
+### Features
+
+* **handler:** Use Koa ([#80](https://github.com/enisdenjo/graphql-sse/issues/80)) ([283b453](https://github.com/enisdenjo/graphql-sse/commit/283b453bd41abbd14c88f5076bf9149b3104ffd9)), closes [#78](https://github.com/enisdenjo/graphql-sse/issues/78)
+
 ## [2.2.3](https://github.com/enisdenjo/graphql-sse/compare/v2.2.2...v2.2.3) (2023-08-23)
 
 
