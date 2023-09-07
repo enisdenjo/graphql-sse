@@ -3,11 +3,14 @@ import net from 'net';
 import http from 'http';
 import express from 'express';
 import Fastify from 'fastify';
+import Koa from 'koa';
+import mount from 'koa-mount';
 import { schema, pong } from './fixtures/simple';
 
 import { createHandler as createHttpHandler } from '../src/use/http';
 import { createHandler as createExpressHandler } from '../src/use/express';
 import { createHandler as createFastifyHandler } from '../src/use/fastify';
+import { createHandler as createKoaHandler } from '../src/use/koa';
 
 type Dispose = () => Promise<void>;
 
@@ -90,6 +93,19 @@ it.each([
       fastify.all('/', createFastifyHandler({ schema }));
       const url = await fastify.listen({ port: 0 });
       return [url, makeDisposeForServer(fastify.server)] as const;
+    },
+  },
+  {
+    name: 'koa',
+    startServer: async () => {
+      const app = new Koa();
+      app.use(mount('/', createKoaHandler({ schema })));
+      const server = app.listen({ port: 0 });
+      const port = (server.address() as net.AddressInfo).port;
+      return [
+        `http://localhost:${port}`,
+        makeDisposeForServer(server),
+      ] as const;
     },
   },
   // no need to test fetch because the handler is pure (gets request, returns response)
