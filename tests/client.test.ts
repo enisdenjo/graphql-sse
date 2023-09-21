@@ -181,6 +181,32 @@ it('should report error to sink if server goes away during generator emission', 
   );
 });
 
+it('should accept and handle multiline responses', async () => {
+  const { fetch, dispose } = createTFetch();
+
+  const client = createClient({
+    fetchFn: fetch,
+    url: 'http://localhost',
+    retryAttempts: 0,
+  });
+
+  const sub = tsubscribe(client, {
+    query: '{ getMultiline }',
+  });
+
+  await expect(sub.waitForNext()).resolves.toMatchInlineSnapshot(`
+    {
+      "data": {
+        "getMultiline": "some
+
+    thing",
+      },
+    }
+  `);
+
+  await dispose();
+});
+
 describe('single connection mode', () => {
   it('should not call complete after subscription error', async () => {
     const { fetch } = createTFetch();

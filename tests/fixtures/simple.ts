@@ -26,6 +26,10 @@ export const schemaConfig: GraphQLSchemaConfig = {
         type: new GraphQLNonNull(GraphQLString),
         resolve: () => 'value',
       },
+      getMultiline: {
+        type: new GraphQLNonNull(GraphQLString),
+        resolve: () => 'some\n\nthing',
+      },
     },
   }),
   subscription: new GraphQLObjectType({

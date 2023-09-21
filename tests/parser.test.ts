@@ -111,3 +111,26 @@ it('should parse multiple messages from one chunk', ({ expect }) => {
     ),
   ).toMatchSnapshot();
 });
+
+it('should parse with new lines in the data json', ({ expect }) => {
+  const parse = createParser();
+
+  expect(
+    parse(
+      encoder.encode(
+        `event: next\ndata: ${JSON.stringify({ multi: 'li\n\ne' })}\n\n`,
+      ),
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "data": {
+          "multi": "li
+
+    e",
+        },
+        "event": "next",
+      },
+    ]
+  `);
+});
