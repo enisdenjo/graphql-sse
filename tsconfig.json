@@ -21,6 +21,5 @@
     "jest.config.js",
     ".eslintrc.js",
     "typedoc.js"
-  ],
-  "exclude": ["node_modules"]
+  ]
 }

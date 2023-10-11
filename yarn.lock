@@ -1996,7 +1996,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@theguild/components@npm:6.0.0":
+"@theguild/components@npm:^6.0.0":
   version: 6.0.0
   resolution: "@theguild/components@npm:6.0.0"
   dependencies:
@@ -13687,7 +13687,7 @@ __metadata:
   resolution: "website@workspace:website"
   dependencies:
     "@theguild/algolia": ^1.1.9
-    "@theguild/components": 6.0.0
+    "@theguild/components": ^6.0.0
     "@theguild/tailwind-config": ^0.3.0
     "@types/react": ^18.2.21
     clsx: ^2.0.0

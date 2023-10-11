@@ -11,4 +11,5 @@ dist/
 .idea/
 website/src/pages/docs/
 website/algolia-lockfile.json
+website/public/sitemap.xml
 tsconfig.tsbuildinfo
