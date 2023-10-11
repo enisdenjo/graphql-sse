@@ -17,5 +17,6 @@
     "tailwind.config.cjs",
     "theme.config.tsx",
     "next-sitemap.config.cjs"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }
