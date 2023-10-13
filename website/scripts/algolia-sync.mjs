@@ -9,12 +9,14 @@ if (!domain) {
 
 indexToAlgolia({
   nextra: {
+    docsBaseDir: 'src/pages/',
     source,
     domain,
-    docsBaseDir: 'src/pages/',
+    sitemapXmlPath: 'public/sitemap.xml',
   },
   source,
   domain,
+  sitemapXmlPath: 'public/sitemap.xml',
   lockfilePath: 'algolia-lockfile.json',
   dryMode: process.env.ALGOLIA_DRY_RUN === 'true',
 });
