@@ -107,15 +107,15 @@ export interface ExecutionPatchResult<
 export type StreamData<E extends StreamEvent> = E extends 'next'
   ? ExecutionResult | ExecutionPatchResult
   : E extends 'complete'
-  ? null
-  : never;
+    ? null
+    : never;
 
 /** @category Common */
 export type StreamDataForID<E extends StreamEvent> = E extends 'next'
   ? { id: string; payload: ExecutionResult | ExecutionPatchResult }
   : E extends 'complete'
-  ? { id: string }
-  : never;
+    ? { id: string }
+    : never;
 
 /** @category Common */
 export function parseStreamData<ForID extends boolean, E extends StreamEvent>(

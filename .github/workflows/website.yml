@@ -21,7 +21,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version-file: .nvmrc
           cache: yarn
       - name: Install
         run: yarn install --immutable
@@ -40,4 +40,4 @@ jobs:
           prId: ${{ github.event.pull_request.number }}
           websiteDirectory: website
           buildScript: yarn build
-          artifactDir: dist
+          artifactDir: out

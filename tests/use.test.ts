@@ -149,10 +149,8 @@ data: {"data":{"ping":"pong"}}
     });
 
     ctrl.abort();
-    await expect(reader.next()).rejects.toEqual(
-      expect.objectContaining({
-        message: 'The operation was aborted.',
-      }),
+    await expect(reader.next()).rejects.toThrowError(
+      'This operation was aborted',
     );
 
     // wait for one tick

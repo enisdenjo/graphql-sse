@@ -2,14 +2,12 @@
 node_modules/
 lib/
 umd/
-dist/
 .vscode/
 .yarn/*
-!.yarn/releases
-!.yarn/plugins
-.next/
+!.yarn/releases/
 .idea/
+website/.next/
 website/src/pages/docs/
+website/out/
 website/algolia-lockfile.json
-website/public/sitemap.xml
 tsconfig.tsbuildinfo
