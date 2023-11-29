@@ -34,7 +34,7 @@ export interface EventListeners<SingleConnection extends boolean = false> {
   /**
    * Emitted when the client has successfully connected to the server.
    *
-   * @param reconnecting - Whether the client has reconnected after the connection was broken.
+   * @param reconnected - Whether the client has reconnected after the connection was broken.
    */
   connected?: (reconnected: boolean) => void;
 }
