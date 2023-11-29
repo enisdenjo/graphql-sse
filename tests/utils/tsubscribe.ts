@@ -11,10 +11,10 @@ interface TSubscribe<T> {
   dispose: () => void;
 }
 
-export function tsubscribe<T = unknown>(
-  client: Client,
-  payload: RequestParams,
-): TSubscribe<T> {
+export function tsubscribe<
+  SingleConnection extends boolean = false,
+  T = unknown,
+>(client: Client<SingleConnection>, payload: RequestParams): TSubscribe<T> {
   const emitter = new EventEmitter();
   const results: ExecutionResult<T, unknown>[] = [];
   let error: unknown,

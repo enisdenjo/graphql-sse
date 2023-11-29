@@ -74,7 +74,7 @@ it('should supply all valid messages received to onMessage', async () => {
 
   // single connection mode
   let msgs: StreamMessage<boolean, StreamEvent>[] = [];
-  let client = createClient({
+  const singleConnClient = createClient({
     singleConnection: true,
     url: 'http://localhost',
     fetchFn: fetch,
@@ -82,7 +82,7 @@ it('should supply all valid messages received to onMessage', async () => {
     generateID: () => 'veryunique',
     onMessage: (msg) => msgs.push(msg),
   });
-  let sub = tsubscribe(client, {
+  let sub = tsubscribe(singleConnClient, {
     query: '{ getValue }',
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
@@ -110,7 +110,7 @@ it('should supply all valid messages received to onMessage', async () => {
 
   // distinct connection mode
   msgs = [];
-  client = createClient({
+  const distinctConnsClient = createClient({
     singleConnection: false,
     url: 'http://localhost',
     fetchFn: fetch,
@@ -118,7 +118,7 @@ it('should supply all valid messages received to onMessage', async () => {
     generateID: () => 'veryunique',
     onMessage: (msg) => msgs.push(msg),
   });
-  sub = tsubscribe(client, {
+  sub = tsubscribe(distinctConnsClient, {
     query: '{ getValue }',
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
@@ -597,35 +597,35 @@ describe('retries', () => {
 
     // lazy
     tried = 0;
-    let client = createClient({
+    const singleConnClient = createClient({
       singleConnection: true,
       url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 2,
       retry: () => Promise.resolve(),
     });
-    let sub = tsubscribe(client, { query: '{ getValue }' });
+    let sub = tsubscribe(singleConnClient, { query: '{ getValue }' });
     await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
       `[NetworkError: Server responded with 403: Forbidden]`,
     );
     expect(tried).toBe(3); // initial + 2 retries
-    client.dispose();
+    singleConnClient.dispose();
 
     // distinct connections mode
     tried = 0;
-    client = createClient({
+    const distinctConnsClient = createClient({
       singleConnection: false,
       url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 2,
       retry: () => Promise.resolve(),
     });
-    sub = tsubscribe(client, { query: '{ getValue }' });
+    sub = tsubscribe(distinctConnsClient, { query: '{ getValue }' });
     await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
       `[NetworkError: Server responded with 403: Forbidden]`,
     );
     expect(tried).toBe(3); // initial + 2 retries
-    client.dispose();
+    distinctConnsClient.dispose();
   });
 
   it('should retry network errors even if they occur during event emission', async () => {
