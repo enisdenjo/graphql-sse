@@ -380,6 +380,27 @@ describe('single connection mode', () => {
 
       expect(stream.signal.aborted).toBeTruthy();
     });
+
+    it('should reconnect even if no subscriptions are active', async () => {
+      const { fetch, waitForRequest, dispose } = createTFetch();
+
+      createClient({
+        singleConnection: true,
+        lazy: false,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 1,
+        retry: () => Promise.resolve(),
+      });
+
+      await waitForRequest(); // reservation
+      await waitForRequest(); // stream
+      await dispose();
+
+      // reconnect
+      await waitForRequest(); // reservation
+      await waitForRequest(); // stream
+    });
   });
 
   it('should respect retry attempts when server goes away after connecting', async () => {
