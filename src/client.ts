@@ -21,8 +21,21 @@ export * from './common';
 
 /** @category Client */
 export interface EventListeners<SingleConnection extends boolean = false> {
+  /**
+   * Emitted when the client starts connecting to the server.
+   *
+   * @param reconnecting - Whether the client is reconnecting after the connection was broken.
+   */
   connecting?: (reconnecting: boolean) => void;
+  /**
+   * Emitted when the client receives a message from the server.
+   */
   message?: (message: StreamMessage<SingleConnection, StreamEvent>) => void;
+  /**
+   * Emitted when the client has successfully connected to the server.
+   *
+   * @param reconnecting - Whether the client has reconnected after the connection was broken.
+   */
   connected?: (reconnected: boolean) => void;
 }
 
