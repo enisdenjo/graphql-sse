@@ -23,6 +23,7 @@ export * from './common';
 export interface EventListeners<SingleConnection extends boolean = false> {
   connecting?: (reconnecting: boolean) => void;
   message?: (message: StreamMessage<SingleConnection, StreamEvent>) => void;
+  connected?: (reconnected: boolean) => void;
 }
 
 /** @category Client */
@@ -412,6 +413,8 @@ export function createClient<SingleConnection extends boolean = false>(
             },
           });
 
+          clientOn?.connected?.(!!retryingErr);
+
           connected.waitForThrow().catch(() => (conn = undefined));
 
           return connected;
@@ -516,6 +519,9 @@ export function createClient<SingleConnection extends boolean = false>(
                 onMessage?.(msg); // @deprecated
               },
             });
+
+            clientOn?.connected?.(!!retryingErr);
+            on?.connected?.(!!retryingErr);
 
             for await (const result of getResults()) {
               // only after receiving results are future connects not considered retries.

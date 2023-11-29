@@ -985,29 +985,37 @@ it('should support distinct connections mode with EventSource', async () => {
 
 describe('event listeners', () => {
   describe('single connection mode', () => {
-    it('should emit "connecting" events', async () => {
+    it('should emit connection events', async () => {
       const { fetch } = createTFetch();
 
       const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
 
-      createClient({
+      const client = createClient({
         singleConnection: true,
-        lazy: false,
         url: 'http://localhost',
         fetchFn: fetch,
         retryAttempts: 0,
         on: {
           connecting: onConnecting,
+          connected: onConnected,
         },
       });
 
+      const iter = client.iterate({ query: '{ getValue }' });
+
+      await iter.next(); // next
+      await iter.next(); // complete
+
       expect(onConnecting).toHaveBeenCalledWith(false);
+      expect(onConnected).toHaveBeenCalledWith(false);
     });
 
-    it('should emit "connecting" events when reconnecting', async () => {
-      const { fetch, waitForRequest, dispose } = createTFetch();
+    it('should emit connection events when reconnecting', async () => {
+      const { fetch, dispose } = createTFetch();
 
       const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
 
       const client = createClient({
         singleConnection: true,
@@ -1017,21 +1025,28 @@ describe('event listeners', () => {
         retry: () => Promise.resolve(),
         on: {
           connecting: onConnecting,
+          connected: onConnected,
         },
       });
 
-      client.iterate({
-        query: `subscription { ping(key: "${Math.random()}") }`,
+      const pingId = Math.random() + '';
+      const iter = client.iterate({
+        query: `subscription { ping(key: "${pingId}") }`,
       });
+      pong(pingId);
 
-      await waitForRequest(); // reservation
-      await waitForRequest(); // connect
+      await iter.next(); // next
+
       expect(onConnecting).toHaveBeenCalledWith(false);
-      await dispose();
+      expect(onConnected).toHaveBeenCalledWith(false);
 
-      await waitForRequest(); // reservation
-      await waitForRequest(); // connect
+      await dispose();
+      pong(pingId);
+
+      await iter.next(); // next
+
       expect(onConnecting).toHaveBeenCalledWith(true);
+      expect(onConnected).toHaveBeenCalledWith(true);
     });
 
     it('should emit "message" events', async () => {
@@ -1089,6 +1104,7 @@ describe('event listeners', () => {
 
       const onConnecting = vitest.fn();
       const onMessage = vitest.fn();
+      const onConnected = vitest.fn();
 
       const client = createClient({
         singleConnection: true,
@@ -1101,23 +1117,34 @@ describe('event listeners', () => {
         on: {
           connecting: onConnecting,
           message: onMessage,
+          connected: onConnected,
         },
       });
 
-      const iter = client.iterate({ query: '{ getValue }' });
+      const iter = client.iterate(
+        { query: '{ getValue }' },
+        // @ts-expect-error testing
+        {
+          connecting: onConnecting,
+          message: onMessage,
+          connected: onConnected,
+        },
+      );
       await iter.next(); // next
       await iter.next(); // complete
 
       expect(onConnecting).toBeCalledTimes(1);
       expect(onMessage).toBeCalledTimes(2); // next + complete
+      expect(onConnected).toBeCalledTimes(1);
     });
   });
 
   describe('distinct connections mode', () => {
-    it('should emit "connecting" events', async () => {
+    it('should emit connection events', async () => {
       const { fetch } = createTFetch();
 
       const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
 
       const client = createClient({
         singleConnection: false,
@@ -1126,19 +1153,28 @@ describe('event listeners', () => {
         retryAttempts: 0,
         on: {
           connecting: onConnecting,
+          connected: onConnected,
         },
       });
 
-      client.iterate({ query: '{ getValue }' }, { connecting: onConnecting });
+      const iter = client.iterate(
+        { query: '{ getValue }' },
+        { connecting: onConnecting, connected: onConnected },
+      );
+      await iter.next(); // next
+      await iter.next(); // complete
 
       expect(onConnecting).toHaveBeenCalledTimes(2);
       expect(onConnecting).toHaveBeenCalledWith(false);
+      expect(onConnected).toHaveBeenCalledTimes(2);
+      expect(onConnected).toHaveBeenCalledWith(false);
     });
 
-    it('should emit "connecting" events when reconnecting', async () => {
+    it('should emit connection events when reconnecting', async () => {
       const { fetch, waitForRequest, dispose } = createTFetch();
 
       const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
 
       const client = createClient({
         singleConnection: false,
@@ -1148,6 +1184,7 @@ describe('event listeners', () => {
         retry: () => Promise.resolve(),
         on: {
           connecting: onConnecting,
+          connected: onConnected,
         },
       });
 
@@ -1155,7 +1192,7 @@ describe('event listeners', () => {
         {
           query: `subscription { ping(key: "${Math.random()}") }`,
         },
-        { connecting: onConnecting },
+        { connecting: onConnecting, connected: onConnected },
       );
       await waitForRequest();
 
@@ -1164,6 +1201,22 @@ describe('event listeners', () => {
       await waitForRequest();
 
       expect(onConnecting.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            false,
+          ],
+          [
+            false,
+          ],
+          [
+            true,
+          ],
+          [
+            true,
+          ],
+        ]
+      `);
+      expect(onConnected.mock.calls).toMatchInlineSnapshot(`
         [
           [
             false,
