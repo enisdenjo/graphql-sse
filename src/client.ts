@@ -20,6 +20,26 @@ import {
 export * from './common';
 
 /** @category Client */
+export interface EventListeners<SingleConnection extends boolean = false> {
+  /**
+   * Emitted when the client starts connecting to the server.
+   *
+   * @param reconnecting - Whether the client is reconnecting after the connection was broken.
+   */
+  connecting?: (reconnecting: boolean) => void;
+  /**
+   * Emitted when the client receives a message from the server.
+   */
+  message?: (message: StreamMessage<SingleConnection, StreamEvent>) => void;
+  /**
+   * Emitted when the client has successfully connected to the server.
+   *
+   * @param reconnecting - Whether the client has reconnected after the connection was broken.
+   */
+  connected?: (reconnected: boolean) => void;
+}
+
+/** @category Client */
 export interface ClientOptions<SingleConnection extends boolean = false> {
   /**
    * Reuses a single SSE connection for all GraphQL operations.
@@ -44,7 +64,7 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    * - `true`: Establish a connection on first subscribe and close on last unsubscribe.
    *
    * Note that the `lazy` option has NO EFFECT when using the client
-   * in "distinct connection mode" (`singleConnection = false`).
+   * in "distinct connections mode" (`singleConnection = false`).
    *
    * @default true
    */
@@ -56,7 +76,7 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    * Meant to be used in combination with `lazy`.
    *
    * Note that the `lazy` option has NO EFFECT when using the client
-   * in "distinct connection mode" (`singleConnection = false`).
+   * in "distinct connections mode" (`singleConnection = false`).
    *
    * @default 0
    */
@@ -190,28 +210,44 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    * and because `graphql-sse` implements a custom SSE parser - received messages will **not** appear in browser's DevTools.
    *
    * Use this function if you want to inspect valid messages received through the active SSE connection.
+   *
+   * @deprecated Consider using {@link ClientOptions.on} instead.
    */
   onMessage?: (message: StreamMessage<SingleConnection, StreamEvent>) => void;
+  /**
+   * Event listeners for events happening in teh SSE connection.
+   *
+   * Will emit events for both the "single connection mode" and the default "distinct connections mode".
+   *
+   * Beware that the `connecting` event will be called for **each** subscription when using with "distinct connections mode".
+   */
+  on?: EventListeners<SingleConnection>;
 }
 
 /** @category Client */
-export interface Client {
+export interface Client<SingleConnection extends boolean = false> {
   /**
    * Subscribes to receive through a SSE connection.
    *
    * It uses the `sink` to emit received data or errors. Returns a _dispose_
    * function used for dropping the subscription and cleaning up.
+   *
+   * @param on - The event listener for "distinct connections mode". Note that **no events will be emitted** in "single connection mode"; for that, consider using the event listener in {@link ClientOptions}.
    */
   subscribe<Data = Record<string, unknown>, Extensions = unknown>(
     request: RequestParams,
     sink: Sink<ExecutionResult<Data, Extensions>>,
+    on?: SingleConnection extends true ? never : EventListeners<false>,
   ): () => void;
   /**
    * Subscribes and iterates over emitted results from an SSE connection
    * through the returned async iterator.
+   *
+   * @param on - The event listener for "distinct connections mode". Note that **no events will be emitted** in "single connection mode"; for that, consider using the event listener in {@link ClientOptions}.
    */
   iterate<Data = Record<string, unknown>, Extensions = unknown>(
     request: RequestParams,
+    on?: SingleConnection extends true ? never : EventListeners<false>,
   ): AsyncIterableIterator<ExecutionResult<Data, Extensions>>;
   /**
    * Dispose of the client, destroy connections and clean up resources.
@@ -235,7 +271,7 @@ export interface Client {
  */
 export function createClient<SingleConnection extends boolean = false>(
   options: ClientOptions<SingleConnection>,
-): Client {
+): Client<SingleConnection> {
   const {
     singleConnection = false,
     lazy = true,
@@ -274,6 +310,7 @@ export function createClient<SingleConnection extends boolean = false>(
     referrer,
     referrerPolicy,
     onMessage,
+    on: clientOn,
   } = options;
   const fetchFn = (options.fetchFn || fetch) as typeof fetch;
   const AbortControllerImpl = (options.abortControllerImpl ||
@@ -333,6 +370,8 @@ export function createClient<SingleConnection extends boolean = false>(
             retries++;
           }
 
+          clientOn?.connecting?.(!!retryingErr);
+
           // we must create a new controller here because lazy mode aborts currently active ones
           connCtrl = new AbortControllerImpl();
           const unlistenDispose = client.onDispose(() => connCtrl.abort());
@@ -381,8 +420,13 @@ export function createClient<SingleConnection extends boolean = false>(
             referrerPolicy,
             url,
             fetchFn,
-            onMessage,
+            onMessage: (msg) => {
+              clientOn?.message?.(msg);
+              onMessage?.(msg); // @deprecated
+            },
           });
+
+          clientOn?.connected?.(!!retryingErr);
 
           connected.waitForThrow().catch(() => (conn = undefined));
 
@@ -423,7 +467,11 @@ export function createClient<SingleConnection extends boolean = false>(
     })();
   }
 
-  function subscribe(request: RequestParams, sink: Sink) {
+  function subscribe(
+    request: RequestParams,
+    sink: Sink,
+    on?: EventListeners<false>,
+  ) {
     if (!singleConnection) {
       // distinct connections mode
 
@@ -448,6 +496,9 @@ export function createClient<SingleConnection extends boolean = false>(
 
               retries++;
             }
+
+            clientOn?.connecting?.(!!retryingErr);
+            on?.connecting?.(!!retryingErr);
 
             const url =
               typeof options.url === 'function'
@@ -475,8 +526,15 @@ export function createClient<SingleConnection extends boolean = false>(
               url,
               body: JSON.stringify(request),
               fetchFn,
-              onMessage,
+              onMessage: (msg) => {
+                clientOn?.message?.(msg);
+                on?.message?.(msg);
+                onMessage?.(msg); // @deprecated
+              },
             });
+
+            clientOn?.connected?.(!!retryingErr);
+            on?.connected?.(!!retryingErr);
 
             for await (const result of getResults()) {
               // only after receiving results are future connects not considered retries.
@@ -645,7 +703,7 @@ export function createClient<SingleConnection extends boolean = false>(
 
   return {
     subscribe,
-    iterate(request) {
+    iterate(request, on) {
       const pending: ExecutionResult<
         // TODO: how to not use `any` and not have a redundant function signature?
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -660,22 +718,26 @@ export function createClient<SingleConnection extends boolean = false>(
           // noop
         },
       };
-      const dispose = subscribe(request, {
-        next(val) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pending.push(val as any);
-          deferred.resolve();
+      const dispose = subscribe(
+        request,
+        {
+          next(val) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pending.push(val as any);
+            deferred.resolve();
+          },
+          error(err) {
+            deferred.done = true;
+            deferred.error = err;
+            deferred.resolve();
+          },
+          complete() {
+            deferred.done = true;
+            deferred.resolve();
+          },
         },
-        error(err) {
-          deferred.done = true;
-          deferred.error = err;
-          deferred.resolve();
-        },
-        complete() {
-          deferred.done = true;
-          deferred.resolve();
-        },
-      });
+        on,
+      );
 
       const iterator = (async function* iterator() {
         for (;;) {

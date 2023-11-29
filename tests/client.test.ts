@@ -74,7 +74,7 @@ it('should supply all valid messages received to onMessage', async () => {
 
   // single connection mode
   let msgs: StreamMessage<boolean, StreamEvent>[] = [];
-  let client = createClient({
+  const singleConnClient = createClient({
     singleConnection: true,
     url: 'http://localhost',
     fetchFn: fetch,
@@ -82,7 +82,7 @@ it('should supply all valid messages received to onMessage', async () => {
     generateID: () => 'veryunique',
     onMessage: (msg) => msgs.push(msg),
   });
-  let sub = tsubscribe(client, {
+  let sub = tsubscribe(singleConnClient, {
     query: '{ getValue }',
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
@@ -110,7 +110,7 @@ it('should supply all valid messages received to onMessage', async () => {
 
   // distinct connection mode
   msgs = [];
-  client = createClient({
+  const distinctConnsClient = createClient({
     singleConnection: false,
     url: 'http://localhost',
     fetchFn: fetch,
@@ -118,7 +118,7 @@ it('should supply all valid messages received to onMessage', async () => {
     generateID: () => 'veryunique',
     onMessage: (msg) => msgs.push(msg),
   });
-  sub = tsubscribe(client, {
+  sub = tsubscribe(distinctConnsClient, {
     query: '{ getValue }',
   });
   await Promise.race([sub.throwOnError(), sub.waitForComplete()]);
@@ -597,35 +597,35 @@ describe('retries', () => {
 
     // lazy
     tried = 0;
-    let client = createClient({
+    const singleConnClient = createClient({
       singleConnection: true,
       url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 2,
       retry: () => Promise.resolve(),
     });
-    let sub = tsubscribe(client, { query: '{ getValue }' });
+    let sub = tsubscribe(singleConnClient, { query: '{ getValue }' });
     await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
       `[NetworkError: Server responded with 403: Forbidden]`,
     );
     expect(tried).toBe(3); // initial + 2 retries
-    client.dispose();
+    singleConnClient.dispose();
 
     // distinct connections mode
     tried = 0;
-    client = createClient({
+    const distinctConnsClient = createClient({
       singleConnection: false,
       url: 'http://localhost',
       fetchFn: fetch,
       retryAttempts: 2,
       retry: () => Promise.resolve(),
     });
-    sub = tsubscribe(client, { query: '{ getValue }' });
+    sub = tsubscribe(distinctConnsClient, { query: '{ getValue }' });
     await expect(sub.waitForError()).resolves.toMatchInlineSnapshot(
       `[NetworkError: Server responded with 403: Forbidden]`,
     );
     expect(tried).toBe(3); // initial + 2 retries
-    client.dispose();
+    distinctConnsClient.dispose();
   });
 
   it('should retry network errors even if they occur during event emission', async () => {
@@ -981,4 +981,320 @@ it('should support distinct connections mode with EventSource', async () => {
       "{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}",
     ]
   `);
+});
+
+describe('event listeners', () => {
+  describe('single connection mode', () => {
+    it('should emit connection events', async () => {
+      const { fetch } = createTFetch();
+
+      const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
+
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+        on: {
+          connecting: onConnecting,
+          connected: onConnected,
+        },
+      });
+
+      const iter = client.iterate({ query: '{ getValue }' });
+
+      await iter.next(); // next
+      await iter.next(); // complete
+
+      expect(onConnecting).toHaveBeenCalledWith(false);
+      expect(onConnected).toHaveBeenCalledWith(false);
+    });
+
+    it('should emit connection events when reconnecting', async () => {
+      const { fetch, dispose } = createTFetch();
+
+      const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
+
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 1,
+        retry: () => Promise.resolve(),
+        on: {
+          connecting: onConnecting,
+          connected: onConnected,
+        },
+      });
+
+      const pingId = Math.random() + '';
+      const iter = client.iterate({
+        query: `subscription { ping(key: "${pingId}") }`,
+      });
+      pong(pingId);
+
+      await iter.next(); // next
+
+      expect(onConnecting).toHaveBeenCalledWith(false);
+      expect(onConnected).toHaveBeenCalledWith(false);
+
+      await dispose();
+      pong(pingId);
+
+      await iter.next(); // next
+
+      expect(onConnecting).toHaveBeenCalledWith(true);
+      expect(onConnected).toHaveBeenCalledWith(true);
+    });
+
+    it('should emit "message" events', async () => {
+      const { fetch } = createTFetch();
+
+      const onMessage = vitest.fn();
+
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+        generateID() {
+          return '1';
+        },
+        on: {
+          message: onMessage,
+        },
+      });
+
+      const iter = client.iterate({ query: '{ getValue }' });
+
+      await iter.next(); // next
+      await iter.next(); // complete
+
+      expect(onMessage.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            {
+              "data": {
+                "id": "1",
+                "payload": {
+                  "data": {
+                    "getValue": "value",
+                  },
+                },
+              },
+              "event": "next",
+            },
+          ],
+          [
+            {
+              "data": {
+                "id": "1",
+              },
+              "event": "complete",
+            },
+          ],
+        ]
+      `);
+    });
+
+    it('should not emit events on subscription listeners', async () => {
+      const { fetch } = createTFetch();
+
+      const onConnecting = vitest.fn();
+      const onMessage = vitest.fn();
+      const onConnected = vitest.fn();
+
+      const client = createClient({
+        singleConnection: true,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+        generateID() {
+          return '1';
+        },
+        on: {
+          connecting: onConnecting,
+          message: onMessage,
+          connected: onConnected,
+        },
+      });
+
+      const iter = client.iterate(
+        { query: '{ getValue }' },
+        // @ts-expect-error testing
+        {
+          connecting: onConnecting,
+          message: onMessage,
+          connected: onConnected,
+        },
+      );
+      await iter.next(); // next
+      await iter.next(); // complete
+
+      expect(onConnecting).toBeCalledTimes(1);
+      expect(onMessage).toBeCalledTimes(2); // next + complete
+      expect(onConnected).toBeCalledTimes(1);
+    });
+  });
+
+  describe('distinct connections mode', () => {
+    it('should emit connection events', async () => {
+      const { fetch } = createTFetch();
+
+      const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
+
+      const client = createClient({
+        singleConnection: false,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 0,
+        on: {
+          connecting: onConnecting,
+          connected: onConnected,
+        },
+      });
+
+      const iter = client.iterate(
+        { query: '{ getValue }' },
+        { connecting: onConnecting, connected: onConnected },
+      );
+      await iter.next(); // next
+      await iter.next(); // complete
+
+      expect(onConnecting).toHaveBeenCalledTimes(2);
+      expect(onConnecting).toHaveBeenCalledWith(false);
+      expect(onConnected).toHaveBeenCalledTimes(2);
+      expect(onConnected).toHaveBeenCalledWith(false);
+    });
+
+    it('should emit connection events when reconnecting', async () => {
+      const { fetch, waitForRequest, dispose } = createTFetch();
+
+      const onConnecting = vitest.fn();
+      const onConnected = vitest.fn();
+
+      const client = createClient({
+        singleConnection: false,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 1,
+        retry: () => Promise.resolve(),
+        on: {
+          connecting: onConnecting,
+          connected: onConnected,
+        },
+      });
+
+      client.iterate(
+        {
+          query: `subscription { ping(key: "${Math.random()}") }`,
+        },
+        { connecting: onConnecting, connected: onConnected },
+      );
+      await waitForRequest();
+
+      await dispose();
+
+      await waitForRequest();
+
+      expect(onConnecting.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            false,
+          ],
+          [
+            false,
+          ],
+          [
+            true,
+          ],
+          [
+            true,
+          ],
+        ]
+      `);
+      expect(onConnected.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            false,
+          ],
+          [
+            false,
+          ],
+          [
+            true,
+          ],
+          [
+            true,
+          ],
+        ]
+      `);
+    });
+
+    it('should emit "message" events', async () => {
+      const { fetch } = createTFetch();
+
+      const onMessage = vitest.fn();
+
+      const client = createClient({
+        singleConnection: false,
+        url: 'http://localhost',
+        fetchFn: fetch,
+        retryAttempts: 1,
+        retry: () => Promise.resolve(),
+        on: {
+          message: onMessage,
+        },
+      });
+
+      const iter = client.iterate(
+        {
+          query: '{ getValue }',
+        },
+        { message: onMessage },
+      );
+      await iter.next(); // next
+      await iter.next(); // complete
+
+      expect(onMessage.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            {
+              "data": {
+                "data": {
+                  "getValue": "value",
+                },
+              },
+              "event": "next",
+            },
+          ],
+          [
+            {
+              "data": {
+                "data": {
+                  "getValue": "value",
+                },
+              },
+              "event": "next",
+            },
+          ],
+          [
+            {
+              "data": null,
+              "event": "complete",
+            },
+          ],
+          [
+            {
+              "data": null,
+              "event": "complete",
+            },
+          ],
+        ]
+      `);
+    });
+  });
 });
