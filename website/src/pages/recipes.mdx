@@ -236,6 +236,62 @@ export const link = new SSELink({
 });
 ```
 
+### With [TypedDocumentNode](https://github.com/dotansimha/graphql-typed-document-node)
+
+```ts
+import {
+  createClient,
+  Client,
+  ClientOptions,
+  ExecutionResult,
+  Sink,
+} from 'graphql-sse';
+import { TypedDocumentNode } from '@graphql-typed-document-node/core'; // yarn add @graphql-typed-document-node/core
+import { print } from 'graphql';
+
+export interface TypedClient
+  extends Omit<
+    Client,
+    'iterate' | 'subscribe' // we're replacing the `iterate` and `subscribe` implementations
+  > {
+  iterate<
+    Result extends ExecutionResult,
+    Variables extends Record<string, unknown>,
+  >(
+    document: TypedDocumentNode<Result, Variables>,
+    variables: Variables,
+  ): AsyncIterableIterator<Result>;
+  subscribe<
+    Result extends ExecutionResult,
+    Variables extends Record<string, unknown>,
+  >(
+    document: TypedDocumentNode<Result, Variables>,
+    variables: Variables,
+    sink: Sink<Result>,
+  ): () => void;
+}
+
+export function createTypedClient(options: ClientOptions): TypedClient {
+  const client = createClient(options);
+  return {
+    ...client,
+    iterate: (document, variables) =>
+      client.iterate.bind(client)({
+        query: print(document),
+        variables,
+      }),
+    subscribe: (document, variables, sink) =>
+      client.subscribe.bind(client)(
+        {
+          query: print(document),
+          variables,
+        },
+        sink,
+      ),
+  };
+}
+```
+
 ### For HTTP/1 (aka. [single connection mode](https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md#single-connection-mode))
 
 ```js
