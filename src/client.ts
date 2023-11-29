@@ -423,99 +423,9 @@ export function createClient<SingleConnection extends boolean = false>(
     })();
   }
 
-  return {
-    subscribe(request, sink) {
-      if (!singleConnection) {
-        // distinct connections mode
-
-        const control = new AbortControllerImpl();
-        const unlisten = client.onDispose(() => {
-          unlisten();
-          control.abort();
-        });
-
-        (async () => {
-          let retryingErr = null as unknown,
-            retries = 0;
-
-          for (;;) {
-            try {
-              if (retryingErr) {
-                await retry(retries);
-
-                // connection might've been aborted while waiting for retry
-                if (control.signal.aborted)
-                  throw new Error('Connection aborted by the client');
-
-                retries++;
-              }
-
-              const url =
-                typeof options.url === 'function'
-                  ? await options.url()
-                  : options.url;
-              if (control.signal.aborted)
-                throw new Error('Connection aborted by the client');
-
-              const headers =
-                typeof options.headers === 'function'
-                  ? await options.headers()
-                  : options.headers ?? {};
-              if (control.signal.aborted)
-                throw new Error('Connection aborted by the client');
-
-              const { getResults } = await connect({
-                signal: control.signal,
-                headers: {
-                  ...headers,
-                  'content-type': 'application/json; charset=utf-8',
-                },
-                credentials,
-                referrer,
-                referrerPolicy,
-                url,
-                body: JSON.stringify(request),
-                fetchFn,
-                onMessage,
-              });
-
-              for await (const result of getResults()) {
-                // only after receiving results are future connects not considered retries.
-                // this is because a client might successfully connect, but the server
-                // ends up terminating the connection afterwards before streaming anything.
-                // of course, if the client completes the subscription, this loop will
-                // break and therefore stop the stream (it wont reconnect)
-                retryingErr = null;
-                retries = 0;
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                sink.next(result as any);
-              }
-
-              return control.abort();
-            } catch (err) {
-              if (control.signal.aborted) return;
-
-              // all non-network errors are worth reporting immediately
-              if (!(err instanceof NetworkError)) throw err;
-
-              // retries are not allowed or we tried to many times, report error
-              if (!retryAttempts || retries >= retryAttempts) throw err;
-
-              // try again
-              retryingErr = err;
-            }
-          }
-        })()
-          .then(() => sink.complete())
-          .catch((err) => sink.error(err));
-
-        return () => control.abort();
-      }
-
-      // single connection mode
-
-      locks++;
+  function subscribe(request: RequestParams, sink: Sink) {
+    if (!singleConnection) {
+      // distinct connections mode
 
       const control = new AbortControllerImpl();
       const unlisten = client.onDispose(() => {
@@ -524,64 +434,51 @@ export function createClient<SingleConnection extends boolean = false>(
       });
 
       (async () => {
-        const operationId = generateID();
+        let retryingErr = null as unknown,
+          retries = 0;
 
-        request = {
-          ...request,
-          extensions: { ...request.extensions, operationId },
-        };
-
-        let complete: (() => Promise<void>) | null = null;
         for (;;) {
-          complete = null;
           try {
-            const { url, headers, getResults } = await getOrConnect();
+            if (retryingErr) {
+              await retry(retries);
 
-            let res;
-            try {
-              res = await fetchFn(url, {
-                signal: control.signal,
-                method: 'POST',
-                credentials,
-                referrer,
-                referrerPolicy,
-                headers: {
-                  ...headers,
-                  'content-type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify(request),
-              });
-            } catch (err) {
-              throw new NetworkError(err);
+              // connection might've been aborted while waiting for retry
+              if (control.signal.aborted)
+                throw new Error('Connection aborted by the client');
+
+              retries++;
             }
-            if (res.status !== 202) throw new NetworkError(res);
 
-            complete = async () => {
-              let res;
-              try {
-                const control = new AbortControllerImpl();
-                const unlisten = client.onDispose(() => {
-                  unlisten();
-                  control.abort();
-                });
-                res = await fetchFn(url + '?operationId=' + operationId, {
-                  signal: control.signal,
-                  method: 'DELETE',
-                  credentials,
-                  referrer,
-                  referrerPolicy,
-                  headers,
-                });
-              } catch (err) {
-                throw new NetworkError(err);
-              }
-              if (res.status !== 200) throw new NetworkError(res);
-            };
+            const url =
+              typeof options.url === 'function'
+                ? await options.url()
+                : options.url;
+            if (control.signal.aborted)
+              throw new Error('Connection aborted by the client');
 
-            for await (const result of getResults({
+            const headers =
+              typeof options.headers === 'function'
+                ? await options.headers()
+                : options.headers ?? {};
+            if (control.signal.aborted)
+              throw new Error('Connection aborted by the client');
+
+            const { getResults } = await connect({
               signal: control.signal,
-              operationId,
-            })) {
+              headers: {
+                ...headers,
+                'content-type': 'application/json; charset=utf-8',
+              },
+              credentials,
+              referrer,
+              referrerPolicy,
+              url,
+              body: JSON.stringify(request),
+              fetchFn,
+              onMessage,
+            });
+
+            for await (const result of getResults()) {
               // only after receiving results are future connects not considered retries.
               // this is because a client might successfully connect, but the server
               // ends up terminating the connection afterwards before streaming anything.
@@ -594,47 +491,18 @@ export function createClient<SingleConnection extends boolean = false>(
               sink.next(result as any);
             }
 
-            complete = null; // completed by the server
-
             return control.abort();
           } catch (err) {
-            if (control.signal.aborted) return await complete?.();
+            if (control.signal.aborted) return;
 
             // all non-network errors are worth reporting immediately
-            if (!(err instanceof NetworkError)) {
-              control.abort(); // TODO: tests for making sure the control's aborted
-              throw err;
-            }
-
-            // was a network error, get rid of the current connection to ensure retries
-            // but only if the client is running in lazy mode (otherwise the non-lazy lock will get rid of the connection)
-            if (lazy) {
-              conn = undefined;
-            }
+            if (!(err instanceof NetworkError)) throw err;
 
             // retries are not allowed or we tried to many times, report error
-            if (!retryAttempts || retries >= retryAttempts) {
-              control.abort(); // TODO: tests for making sure the control's aborted
-              throw err;
-            }
+            if (!retryAttempts || retries >= retryAttempts) throw err;
 
             // try again
             retryingErr = err;
-          } finally {
-            // release lock if subscription is aborted
-            if (control.signal.aborted && --locks === 0) {
-              if (isFinite(lazyCloseTimeout) && lazyCloseTimeout > 0) {
-                // allow for the specified calmdown time and then close the
-                // connection, only if no lock got created in the meantime and
-                // if the connection is still open
-                setTimeout(() => {
-                  if (!locks) connCtrl.abort();
-                }, lazyCloseTimeout);
-              } else {
-                // otherwise close immediately
-                connCtrl.abort();
-              }
-            }
           }
         }
       })()
@@ -642,7 +510,141 @@ export function createClient<SingleConnection extends boolean = false>(
         .catch((err) => sink.error(err));
 
       return () => control.abort();
-    },
+    }
+
+    // single connection mode
+
+    locks++;
+
+    const control = new AbortControllerImpl();
+    const unlisten = client.onDispose(() => {
+      unlisten();
+      control.abort();
+    });
+
+    (async () => {
+      const operationId = generateID();
+
+      request = {
+        ...request,
+        extensions: { ...request.extensions, operationId },
+      };
+
+      let complete: (() => Promise<void>) | null = null;
+      for (;;) {
+        complete = null;
+        try {
+          const { url, headers, getResults } = await getOrConnect();
+
+          let res;
+          try {
+            res = await fetchFn(url, {
+              signal: control.signal,
+              method: 'POST',
+              credentials,
+              referrer,
+              referrerPolicy,
+              headers: {
+                ...headers,
+                'content-type': 'application/json; charset=utf-8',
+              },
+              body: JSON.stringify(request),
+            });
+          } catch (err) {
+            throw new NetworkError(err);
+          }
+          if (res.status !== 202) throw new NetworkError(res);
+
+          complete = async () => {
+            let res;
+            try {
+              const control = new AbortControllerImpl();
+              const unlisten = client.onDispose(() => {
+                unlisten();
+                control.abort();
+              });
+              res = await fetchFn(url + '?operationId=' + operationId, {
+                signal: control.signal,
+                method: 'DELETE',
+                credentials,
+                referrer,
+                referrerPolicy,
+                headers,
+              });
+            } catch (err) {
+              throw new NetworkError(err);
+            }
+            if (res.status !== 200) throw new NetworkError(res);
+          };
+
+          for await (const result of getResults({
+            signal: control.signal,
+            operationId,
+          })) {
+            // only after receiving results are future connects not considered retries.
+            // this is because a client might successfully connect, but the server
+            // ends up terminating the connection afterwards before streaming anything.
+            // of course, if the client completes the subscription, this loop will
+            // break and therefore stop the stream (it wont reconnect)
+            retryingErr = null;
+            retries = 0;
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            sink.next(result as any);
+          }
+
+          complete = null; // completed by the server
+
+          return control.abort();
+        } catch (err) {
+          if (control.signal.aborted) return await complete?.();
+
+          // all non-network errors are worth reporting immediately
+          if (!(err instanceof NetworkError)) {
+            control.abort(); // TODO: tests for making sure the control's aborted
+            throw err;
+          }
+
+          // was a network error, get rid of the current connection to ensure retries
+          // but only if the client is running in lazy mode (otherwise the non-lazy lock will get rid of the connection)
+          if (lazy) {
+            conn = undefined;
+          }
+
+          // retries are not allowed or we tried to many times, report error
+          if (!retryAttempts || retries >= retryAttempts) {
+            control.abort(); // TODO: tests for making sure the control's aborted
+            throw err;
+          }
+
+          // try again
+          retryingErr = err;
+        } finally {
+          // release lock if subscription is aborted
+          if (control.signal.aborted && --locks === 0) {
+            if (isFinite(lazyCloseTimeout) && lazyCloseTimeout > 0) {
+              // allow for the specified calmdown time and then close the
+              // connection, only if no lock got created in the meantime and
+              // if the connection is still open
+              setTimeout(() => {
+                if (!locks) connCtrl.abort();
+              }, lazyCloseTimeout);
+            } else {
+              // otherwise close immediately
+              connCtrl.abort();
+            }
+          }
+        }
+      }
+    })()
+      .then(() => sink.complete())
+      .catch((err) => sink.error(err));
+
+    return () => control.abort();
+  }
+
+  return {
+    subscribe,
     iterate(request) {
       const pending: ExecutionResult<
         // TODO: how to not use `any` and not have a redundant function signature?
@@ -658,9 +660,10 @@ export function createClient<SingleConnection extends boolean = false>(
           // noop
         },
       };
-      const dispose = this.subscribe(request, {
+      const dispose = subscribe(request, {
         next(val) {
-          pending.push(val);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          pending.push(val as any);
           deferred.resolve();
         },
         error(err) {

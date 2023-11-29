@@ -276,12 +276,12 @@ export function createTypedClient(options: ClientOptions): TypedClient {
   return {
     ...client,
     iterate: (document, variables) =>
-      client.iterate.bind(client)({
+      client.iterate({
         query: print(document),
         variables,
-      }),
+      }) as any,
     subscribe: (document, variables, sink) =>
-      client.subscribe.bind(client)(
+      client.subscribe(
         {
           query: print(document),
           variables,
