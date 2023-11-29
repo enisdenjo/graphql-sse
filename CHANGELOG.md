@@ -1,3 +1,15 @@
+# [2.4.0](https://github.com/enisdenjo/graphql-sse/compare/v2.3.0...v2.4.0) (2023-11-29)
+
+
+### Bug Fixes
+
+* **client:** Use closures instead of bindings (with `this`) ([8ecdf3c](https://github.com/enisdenjo/graphql-sse/commit/8ecdf3cffb5e013466defbbb131b7faeb39ec27a))
+
+
+### Features
+
+* **client:** Event listeners for both operation modes ([#84](https://github.com/enisdenjo/graphql-sse/issues/84)) ([6274f44](https://github.com/enisdenjo/graphql-sse/commit/6274f44983e3c5ca7e343c880d10faf928597848))
+
 # [2.3.0](https://github.com/enisdenjo/graphql-sse/compare/v2.2.3...v2.3.0) (2023-09-07)
 
 
