@@ -62,6 +62,11 @@
       "require": "./lib/use/fastify.js",
       "import": "./lib/use/fastify.mjs"
     },
+    "./lib/use/koa": {
+      "types": "./lib/use/koa.d.ts",
+      "require": "./lib/use/koa.js",
+      "import": "./lib/use/koa.mjs"
+    },
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
