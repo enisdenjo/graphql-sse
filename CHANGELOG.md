@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/enisdenjo/graphql-sse/compare/v2.4.0...v2.4.1) (2023-12-13)
+
+
+### Bug Fixes
+
+* Add koa exports to package.json ([#85](https://github.com/enisdenjo/graphql-sse/issues/85)) ([e99cf99](https://github.com/enisdenjo/graphql-sse/commit/e99cf99d6c011e931353fdf876f91989e6cd3d70))
+
 # [2.4.0](https://github.com/enisdenjo/graphql-sse/compare/v2.3.0...v2.4.0) (2023-11-29)
 
 
