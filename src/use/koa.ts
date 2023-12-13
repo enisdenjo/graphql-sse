@@ -1,4 +1,9 @@
-import type { Middleware, Response } from 'koa';
+import type {
+  Middleware,
+  ParameterizedContext,
+  DefaultState,
+  DefaultContext,
+} from 'koa';
 import type { IncomingMessage } from 'http';
 import {
   createHandler as createRawHandler,
@@ -7,19 +12,19 @@ import {
 } from '../handler';
 
 /**
- * @category Server/koa
- */
-export interface RequestContext {
-  res: Response;
-}
-
-/**
  * Handler options when using the koa adapter.
  *
  * @category Server/koa
  */
-export type HandlerOptions<Context extends OperationContext = undefined> =
-  RawHandlerOptions<IncomingMessage, RequestContext, Context>;
+export type HandlerOptions<
+  Context extends OperationContext = undefined,
+  KoaState = DefaultState,
+  KoaContext = DefaultContext,
+> = RawHandlerOptions<
+  IncomingMessage,
+  ParameterizedContext<KoaState, KoaContext>,
+  Context
+>;
 
 /**
  * The ready-to-use handler for [Koa](https://expressjs.com).
@@ -58,9 +63,13 @@ export type HandlerOptions<Context extends OperationContext = undefined> =
  *
  * @category Server/koa
  */
-export function createHandler<Context extends OperationContext = undefined>(
-  options: HandlerOptions<Context>,
-): Middleware {
+export function createHandler<
+  Context extends OperationContext = undefined,
+  KoaState = DefaultState,
+  KoaContext = DefaultContext,
+>(
+  options: HandlerOptions<Context, KoaState, KoaContext>,
+): Middleware<KoaState, KoaContext> {
   const handler = createRawHandler(options);
   return async function requestListener(ctx) {
     const [body, init] = await handler({
@@ -84,7 +93,7 @@ export function createHandler<Context extends OperationContext = undefined>(
         });
       },
       raw: ctx.req,
-      context: { res: ctx.response },
+      context: ctx,
     });
     ctx.response.status = init.status;
     ctx.response.message = init.statusText;
