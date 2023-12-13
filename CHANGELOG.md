@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/enisdenjo/graphql-sse/compare/v2.4.1...v2.5.0) (2023-12-13)
+
+
+### Features
+
+* **use/koa:** expose full Koa context to options ([#86](https://github.com/enisdenjo/graphql-sse/issues/86)) ([b37a6f9](https://github.com/enisdenjo/graphql-sse/commit/b37a6f92f32ac15bb40df2753545c48b054141de))
+
 ## [2.4.1](https://github.com/enisdenjo/graphql-sse/compare/v2.4.0...v2.4.1) (2023-12-13)
 
 
