@@ -26,6 +26,8 @@ export type HandlerOptions<
   Context
 >;
 
+type WithPossibleBody = { body?: string | Record<PropertyKey, unknown> };
+
 /**
  * The ready-to-use handler for [Koa](https://expressjs.com).
  *
@@ -82,10 +84,14 @@ export function createHandler<
         },
       },
       body: () => {
-        if (ctx.body) {
-          // in case koa has a body parser
-          return ctx.body;
+        // in case koa has a body parser
+        const body =
+          (ctx.request as WithPossibleBody).body ||
+          (ctx.req as WithPossibleBody).body;
+        if (body) {
+          return body;
         }
+
         return new Promise<string>((resolve) => {
           let body = '';
           ctx.req.on('data', (chunk) => (body += chunk));
