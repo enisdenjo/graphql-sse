@@ -5,6 +5,7 @@ import express from 'express';
 import Fastify from 'fastify';
 import Koa from 'koa';
 import mount from 'koa-mount';
+import bodyparser from 'koa-bodyparser';
 import { schema, pong } from './fixtures/simple';
 
 import { createHandler as createHttpHandler } from '../src/use/http';
@@ -99,6 +100,20 @@ it.each([
     name: 'koa',
     startServer: async () => {
       const app = new Koa();
+      app.use(mount('/', createKoaHandler({ schema })));
+      const server = app.listen({ port: 0 });
+      const port = (server.address() as net.AddressInfo).port;
+      return [
+        `http://localhost:${port}`,
+        makeDisposeForServer(server),
+      ] as const;
+    },
+  },
+  {
+    name: 'koa with bodyparser',
+    startServer: async () => {
+      const app = new Koa();
+      app.use(bodyparser());
       app.use(mount('/', createKoaHandler({ schema })));
       const server = app.listen({ port: 0 });
       const port = (server.address() as net.AddressInfo).port;
