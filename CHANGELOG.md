@@ -1,3 +1,10 @@
+## [2.5.1](https://github.com/enisdenjo/graphql-sse/compare/v2.5.0...v2.5.1) (2023-12-14)
+
+
+### Bug Fixes
+
+* **use/koa:** Use parsed body from request ([#87](https://github.com/enisdenjo/graphql-sse/issues/87)) ([b290b90](https://github.com/enisdenjo/graphql-sse/commit/b290b90920f98236963b6e6ddfd095e19254634c))
+
 # [2.5.0](https://github.com/enisdenjo/graphql-sse/compare/v2.4.1...v2.5.0) (2023-12-13)
 
 
