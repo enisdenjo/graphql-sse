@@ -1,3 +1,10 @@
+## [2.5.2](https://github.com/enisdenjo/graphql-sse/compare/v2.5.1...v2.5.2) (2023-12-20)
+
+
+### Bug Fixes
+
+* remove package.json workspaces entry in release ([c6dc093](https://github.com/enisdenjo/graphql-sse/commit/c6dc0933dc776657adaaa7b9a6183839bca35836))
+
 ## [2.5.1](https://github.com/enisdenjo/graphql-sse/compare/v2.5.0...v2.5.1) (2023-12-14)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "graphql-sse",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "Zero-dependency, HTTP/1 safe, simple, GraphQL over Server-Sent Events Protocol server and client",
   "keywords": [
     "graphql",
@@ -83,9 +83,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "workspaces": [
-    "website"
-  ],
   "scripts": {
     "check:format": "prettier --check .",
     "format": "yarn check:format --write",
