@@ -24,7 +24,7 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - name: Install
-        run: yarn install --immutable
+        run: yarn install
       - name: Generate documentation
         run: yarn gendocs
       - name: Deploy

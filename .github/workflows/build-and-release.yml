@@ -15,7 +15,7 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - name: Install
-        run: yarn install --immutable
+        run: yarn install
       - name: Build
         run: yarn build
       - name: Upload build
@@ -40,7 +40,7 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - name: Install
-        run: yarn install --immutable
+        run: yarn install
       - name: Changelog
         run: |
           yarn semantic-release \
@@ -66,7 +66,7 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - name: Install
-        run: yarn install --immutable
+        run: yarn install
       - name: Download build
         uses: actions/download-artifact@v3
         with:
