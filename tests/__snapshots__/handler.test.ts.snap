@@ -8,7 +8,7 @@ exports[`distinct connections mode > should stream query operations to connected
 
 exports[`distinct connections mode > should stream query operations to connected event stream and then disconnect 2`] = `
 "event: next
-data: {\\"data\\":{\\"getValue\\":\\"value\\"}}
+data: {"data":{"getValue":"value"}}
 
 "
 `;
@@ -28,7 +28,7 @@ exports[`distinct connections mode > should stream query operations to connected
 
 exports[`distinct connections mode > should stream query operations to connected event stream and then disconnect 5`] = `
 "event: next
-data: {\\"data\\":{\\"getValue\\":\\"value\\"}}
+data: {"data":{"getValue":"value"}}
 
 "
 `;
@@ -48,35 +48,35 @@ exports[`distinct connections mode > should stream subscription operations to co
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 2`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+data: {"data":{"greetings":"Hi"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 3`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+data: {"data":{"greetings":"Bonjour"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 4`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Hola\\"}}
+data: {"data":{"greetings":"Hola"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 5`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Ciao\\"}}
+data: {"data":{"greetings":"Ciao"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 6`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}
+data: {"data":{"greetings":"Zdravo"}}
 
 "
 `;
@@ -96,35 +96,35 @@ exports[`distinct connections mode > should stream subscription operations to co
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 9`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+data: {"data":{"greetings":"Hi"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 10`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+data: {"data":{"greetings":"Bonjour"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 11`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Hola\\"}}
+data: {"data":{"greetings":"Hola"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 12`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Ciao\\"}}
+data: {"data":{"greetings":"Ciao"}}
 
 "
 `;
 
 exports[`distinct connections mode > should stream subscription operations to connected event stream and then disconnect 13`] = `
 "event: next
-data: {\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}
+data: {"data":{"greetings":"Zdravo"}}
 
 "
 `;
@@ -138,42 +138,42 @@ data:
 
 exports[`single connection mode > should stream subscription operations to connected event stream 2`] = `
 "event: next
-data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hi\\"}}}
+data: {"id":"1","payload":{"data":{"greetings":"Hi"}}}
 
 "
 `;
 
 exports[`single connection mode > should stream subscription operations to connected event stream 3`] = `
 "event: next
-data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}}
+data: {"id":"1","payload":{"data":{"greetings":"Bonjour"}}}
 
 "
 `;
 
 exports[`single connection mode > should stream subscription operations to connected event stream 4`] = `
 "event: next
-data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Hola\\"}}}
+data: {"id":"1","payload":{"data":{"greetings":"Hola"}}}
 
 "
 `;
 
 exports[`single connection mode > should stream subscription operations to connected event stream 5`] = `
 "event: next
-data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}}
+data: {"id":"1","payload":{"data":{"greetings":"Ciao"}}}
 
 "
 `;
 
 exports[`single connection mode > should stream subscription operations to connected event stream 6`] = `
 "event: next
-data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}}
+data: {"id":"1","payload":{"data":{"greetings":"Zdravo"}}}
 
 "
 `;
 
 exports[`single connection mode > should stream subscription operations to connected event stream 7`] = `
 "event: complete
-data: {\\"id\\":\\"1\\"}
+data: {"id":"1"}
 
 "
 `;

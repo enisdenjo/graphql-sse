@@ -1,8 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`should accept valid events only 1`] = `"Invalid stream event \\"done\\""`;
+exports[`should accept valid events only 1`] = `[Error: Invalid stream event "done"]`;
 
-exports[`should accept valid events only 2`] = `"Invalid stream event \\"value\\""`;
+exports[`should accept valid events only 2`] = `[Error: Invalid stream event "value"]`;
 
 exports[`should ignore comments 1`] = `
 [

@@ -974,11 +974,11 @@ it('should support distinct connections mode with EventSource', async () => {
     }),
   ).resolves.toMatchInlineSnapshot(`
     [
-      "{\\"data\\":{\\"greetings\\":\\"Hi\\"}}",
-      "{\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}",
-      "{\\"data\\":{\\"greetings\\":\\"Hola\\"}}",
-      "{\\"data\\":{\\"greetings\\":\\"Ciao\\"}}",
-      "{\\"data\\":{\\"greetings\\":\\"Zdravo\\"}}",
+      "{"data":{"greetings":"Hi"}}",
+      "{"data":{"greetings":"Bonjour"}}",
+      "{"data":{"greetings":"Hola"}}",
+      "{"data":{"greetings":"Ciao"}}",
+      "{"data":{"greetings":"Zdravo"}}",
     ]
   `);
 });

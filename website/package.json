@@ -9,18 +9,18 @@
     "build": "next build && next-sitemap --config next-sitemap.config.cjs"
   },
   "dependencies": {
-    "@theguild/components": "^6.1.0",
-    "clsx": "^2.0.0",
-    "next": "^14.0.3",
+    "@theguild/components": "^6.1.1",
+    "clsx": "^2.1.0",
+    "next": "^14.0.4",
     "next-sitemap": "^4.2.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^4.12.0"
+    "react-icons": "^5.0.1"
   },
   "devDependencies": {
     "@theguild/algolia": "^2.1.0",
-    "@theguild/tailwind-config": "^0.3.0",
-    "@types/react": "^18.2.39",
-    "typescript": "^5.3.2"
+    "@theguild/tailwind-config": "^0.3.1",
+    "@types/react": "^18.2.48",
+    "typescript": "^5.3.3"
   }
 }

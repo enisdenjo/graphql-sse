@@ -34,7 +34,7 @@ it('should only accept valid accept headers', async () => {
     'application/json; charset=utf-8',
   );
   expect(body).toMatchInlineSnapshot(
-    '"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"',
+    `"{"errors":[{"message":"Missing query"}]}"`,
   );
 
   [body, init] = await handler('GET', {
@@ -47,7 +47,7 @@ it('should only accept valid accept headers', async () => {
     'application/json; charset=utf-8',
   );
   expect(body).toMatchInlineSnapshot(
-    '"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"',
+    `"{"errors":[{"message":"Missing query"}]}"`,
   );
 });
 
@@ -159,7 +159,7 @@ it('should detect execution args in onSubscribe return value', async () => {
     {
       "done": false,
       "value": "event: next
-    data: {\\"data\\":{\\"getValue\\":\\"value\\"}}
+    data: {"data":{"getValue":"value"}}
 
     ",
     }
@@ -182,7 +182,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"',
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
 
     const search = new URLSearchParams();
@@ -194,7 +194,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"',
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
 
     [body, init] = await handler('DELETE', { search });
@@ -203,7 +203,7 @@ describe('single connection mode', () => {
       'application/json; charset=utf-8',
     );
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Stream not found\\"}]}"',
+      `"{"errors":[{"message":"Stream not found"}]}"`,
     );
   });
 
@@ -231,7 +231,7 @@ describe('single connection mode', () => {
     });
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Missing query\\"}]}"',
+      `"{"errors":[{"message":"Missing query"}]}"`,
     );
   });
 
@@ -280,7 +280,7 @@ describe('single connection mode', () => {
 
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Operation ID is missing\\"}]}"',
+      `"{"errors":[{"message":"Operation ID is missing"}]}"`,
     );
   });
 
@@ -318,7 +318,7 @@ describe('single connection mode', () => {
       {
         "done": false,
         "value": "event: next
-      data: {\\"id\\":\\"1\\",\\"payload\\":{\\"data\\":{\\"getValue\\":\\"value\\"}}}
+      data: {"id":"1","payload":{"data":{"getValue":"value"}}}
 
       ",
       }
@@ -328,7 +328,7 @@ describe('single connection mode', () => {
       {
         "done": false,
         "value": "event: complete
-      data: {\\"id\\":\\"1\\"}
+      data: {"id":"1"}
 
       ",
       }
@@ -425,7 +425,7 @@ describe('single connection mode', () => {
     });
     expect(init.status).toBe(400);
     expect(body).toMatchInlineSnapshot(
-      '"{\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Subscription\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":16}]}]}"',
+      `"{"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Subscription\\".","locations":[{"line":1,"column":16}]}]}"`,
     );
 
     // stream remains open
@@ -477,7 +477,7 @@ describe('single connection mode', () => {
       {
         "done": false,
         "value": "event: next
-      data: {\\"id\\":\\"1\\",\\"payload\\":{\\"errors\\":[{\\"message\\":\\"Kaboom!\\",\\"locations\\":[{\\"line\\":1,\\"column\\":16}],\\"path\\":[\\"throwing\\"]}]}}
+      data: {"id":"1","payload":{"errors":[{"message":"Kaboom!","locations":[{"line":1,"column":16}],"path":["throwing"]}]}}
 
       ",
       }
@@ -575,7 +575,7 @@ describe('distinct connections mode', () => {
       {
         "done": false,
         "value": "event: next
-      data: {\\"errors\\":[{\\"message\\":\\"Cannot query field \\\\\\"notExists\\\\\\" on type \\\\\\"Query\\\\\\".\\",\\"locations\\":[{\\"line\\":1,\\"column\\":3}]}]}
+      data: {"errors":[{"message":"Cannot query field \\"notExists\\" on type \\"Query\\".","locations":[{"line":1,"column":3}]}]}
 
       ",
       }
@@ -641,7 +641,7 @@ describe('distinct connections mode', () => {
     for await (const msg of stream) {
       expect(msg).toMatchInlineSnapshot(`
         "event: next
-        data: {\\"data\\":{\\"greetings\\":\\"Hi\\"}}
+        data: {"data":{"greetings":"Hi"}}
 
         "
       `);
@@ -655,7 +655,7 @@ describe('distinct connections mode', () => {
       {
         "done": false,
         "value": "event: next
-      data: {\\"data\\":{\\"greetings\\":\\"Bonjour\\"}}
+      data: {"data":{"greetings":"Bonjour"}}
 
       ",
       }
