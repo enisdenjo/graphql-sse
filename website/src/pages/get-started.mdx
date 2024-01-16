@@ -192,12 +192,7 @@ await serve(
 );
 ```
 
-### With [`Bun@>=0.5.7`](https://bun.sh/)
-
-<Callout type="warning">
-  Bun's fetch does not support streaming ([see
-  issue](https://github.com/oven-sh/bun/issues/2103#issuecomment-1435652020)).
-</Callout>
+### With [`Bun@>=0.8.0`](https://bun.sh/)
 
 ```js
 import { createHandler } from 'graphql-sse/lib/use/fetch'; // bun install graphql-sse
