@@ -94,6 +94,7 @@
     "build:umd": "rollup --configPlugin typescript --config rollup.config.ts",
     "build": "yarn build:esm && yarn build:cjs && yarn build:umd",
     "prepack": "npm pkg delete workspaces",
+    "postpack": "npm pkg set 'workspaces[]=website'",
     "release": "semantic-release",
     "gendocs": "typedoc --options typedoc.js src/ && node scripts/post-gendocs.mjs"
   },
@@ -133,5 +134,8 @@
     "typedoc-plugin-markdown": "^3.17.1",
     "typescript": "^5.3.2",
     "vitest": "^0.34.6"
-  }
+  },
+  "workspaces": [
+    "website"
+  ]
 }
