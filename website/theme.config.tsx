@@ -1,6 +1,8 @@
-import { defineConfig } from '@theguild/components';
+import { defineConfig, PRODUCTS } from '@theguild/components';
 
 export default defineConfig({
-  siteName: 'SSE',
+  description: PRODUCTS.SSE.title,
   docsRepositoryBase: 'https://github.com/enisdenjo/graphql-sse',
+  logo: PRODUCTS.SSE.logo,
+  websiteName: 'SSE',
 });
