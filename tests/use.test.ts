@@ -177,3 +177,38 @@ data: {"data":{"ping":"pong"}}
     // nothing should explode
   },
 );
+
+it("should include middleware headers with 'fastify' handler", async () => {
+  const fastify = Fastify();
+
+  fastify.addHook('onRequest', (_, reply, done) => {
+    reply.header('x-custom', 'cust');
+    done();
+  });
+  fastify.all(
+    '/',
+    createFastifyHandler({
+      schema,
+      onConnect(req) {
+        expect(req.headers.get('x-custom')).toBe('cust');
+      },
+    }),
+  );
+
+  const url = await fastify.listen({ port: 0 });
+  makeDisposeForServer(fastify.server);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      accept: 'text/event-stream',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: '{ getValue }',
+    }),
+  });
+
+  expect(res.ok).toBeTruthy();
+  expect(res.headers.get('x-custom')).toBe('cust');
+});

@@ -63,8 +63,8 @@ export function createHandler<Context extends OperationContext = undefined>(
       url: req.url,
       headers: {
         get(key) {
-          const header = req.headers[key];
-          return Array.isArray(header) ? header.join('\n') : header;
+          const header = reply.getHeader(key) ?? req.headers[key];
+          return Array.isArray(header) ? header.join('\n') : String(header);
         },
       },
       body: () =>
@@ -87,7 +87,16 @@ export function createHandler<Context extends OperationContext = undefined>(
       context: { reply },
     });
 
-    reply.raw.writeHead(init.status, init.statusText, init.headers);
+    const middlewareHeaders: Record<string, string> = {};
+    for (const [key, val] of Object.entries(reply.getHeaders())) {
+      middlewareHeaders[key] = Array.isArray(val)
+        ? val.join('\n')
+        : String(val);
+    }
+    reply.raw.writeHead(init.status, init.statusText, {
+      ...middlewareHeaders,
+      ...init.headers,
+    });
 
     if (!body || typeof body === 'string') {
       return new Promise<void>((resolve) =>
