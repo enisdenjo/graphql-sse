@@ -1,3 +1,10 @@
+## [2.5.3](https://github.com/enisdenjo/graphql-sse/compare/v2.5.2...v2.5.3) (2024-03-27)
+
+
+### Bug Fixes
+
+* **use/fastify:** Include middleware headers ([134c1b0](https://github.com/enisdenjo/graphql-sse/commit/134c1b022599e5c403d7204eda61106bac34216a)), closes [#91](https://github.com/enisdenjo/graphql-sse/issues/91)
+
 ## [2.5.2](https://github.com/enisdenjo/graphql-sse/compare/v2.5.1...v2.5.2) (2023-12-20)
 
 
