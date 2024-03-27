@@ -525,6 +525,33 @@ export const handler = createHandler({
 });
 ```
 
+## With custom subscribe method that gracefully handles thrown errors
+
+`graphql-js` does not catch errors thrown from async iterables ([see issue](https://github.com/graphql/graphql-js/issues/4001)). This will bubble the error to the server handler and cause issues like writing headers after they've already been sent if not handled properly.
+
+Note that `graphql-sse` does not offer built-in handling of internal errors because there's no one-glove-fits-all. Errors are important and should be handled with care, exactly to the needs of the user - not the library author.
+
+Therefore, you may instead implement your own `subscribe` function that gracefully handles thrown errors.
+
+```typescript
+import { subscribe } from 'graphql';
+import { createHandler } from 'graphql-sse';
+import { getSchema } from './my-graphql';
+
+export const handler = createHandler({
+  async subscribe(...args) {
+    const result = await subscribe(...args);
+    if ('next' in result) {
+      // is an async iterable, augment the next method to handle thrown errors
+      const originalNext = result.next;
+      result.next = () =>
+        originalNext().catch((err) => ({ value: { errors: [err] } }));
+    }
+    return result;
+  },
+});
+```
+
 ## Server Handler and Client Usage
 
 ### With Persisted Queries
