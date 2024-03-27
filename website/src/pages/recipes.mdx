@@ -525,7 +525,7 @@ export const handler = createHandler({
 });
 ```
 
-## With custom subscribe method that gracefully handles thrown errors
+### With custom subscribe method that gracefully handles thrown errors
 
 `graphql-js` does not catch errors thrown from async iterables ([see issue](https://github.com/graphql/graphql-js/issues/4001)). This will bubble the error to the server handler and cause issues like writing headers after they've already been sent if not handled properly.
 
