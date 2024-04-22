@@ -99,12 +99,18 @@ import { schema } from './previous-step';
 const handler = createHandler({ schema });
 
 // Create an HTTP/2 server using the handler on `/graphql/stream`
-const server = http2.createServer((req, res) => {
-  if (req.url.startsWith('/graphql/stream')) {
-    return handler(req, res);
-  }
-  res.writeHead(404).end();
-});
+const server = http2.createSecureServer(
+  {
+    key: fs.readFileSync('localhost-privkey.pem'),
+    cert: fs.readFileSync('localhost-cert.pem'),
+  },
+  (req, res) => {
+    if (req.url.startsWith('/graphql/stream')) {
+      return handler(req, res);
+    }
+    return res.writeHead(404).end();
+  },
+);
 
 server.listen(4000);
 console.log('Listening to port 4000');
