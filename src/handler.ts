@@ -117,7 +117,7 @@ export type Response = readonly [body: ResponseBody | null, init: ResponseInit];
 /**
  * A concrete GraphQL execution context value type.
  *
- * Mainly used because TypeScript collapes unions
+ * Mainly used because TypeScript collapses unions
  * with `any` or `unknown` to `any` or `unknown`. So,
  * we use a custom type to allow definitions such as
  * the `context` server option.
@@ -271,7 +271,7 @@ export interface HandlerOptions<
     | void;
   /**
    * Executed after the operation call resolves. For streaming
-   * operations, triggering this callback does not necessarely
+   * operations, triggering this callback does not necessarily
    * mean that there is already a result available - it means
    * that the subscription process for the stream has resolved
    * and that the client is now subscribed.
@@ -343,7 +343,7 @@ export type Handler<RequestRaw = unknown, RequestContext = unknown> = (
 ) => Promise<Response>;
 
 /**
- * Makes a Protocol complient HTTP GraphQL server handler. The handler can
+ * Makes a Protocol compliant HTTP GraphQL server handler. The handler can
  * be used with your favourite server library.
  *
  * Read more about the Protocol in the PROTOCOL.md documentation file.
@@ -1038,13 +1038,13 @@ async function parseReq(
         if (!isObject(data)) {
           throw new Error('JSON body must be an object');
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be checked below.
         params.operationName = data.operationName as any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be checked below.
         params.query = data.query as any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be checked below.
         params.variables = data.variables as any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be chacked below.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Any is ok because values will be checked below.
         params.extensions = data.extensions as any;
         break;
       }
