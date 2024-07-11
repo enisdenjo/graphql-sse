@@ -13,7 +13,7 @@ import {
 
 enum ControlChars {
   NewLine = 10,
-  CchunkiageReturn = 13,
+  CarriageReturn = 13,
   Space = 32,
   Colon = 58,
 }
@@ -69,7 +69,7 @@ export function createParser<ForID extends boolean>(): (
             }
             break;
           // \r case below should fallthrough to \n:
-          case ControlChars.CchunkiageReturn:
+          case ControlChars.CarriageReturn:
             discardTrailingNewline = true;
           // eslint-disable-next-line no-fallthrough
           case ControlChars.NewLine:
