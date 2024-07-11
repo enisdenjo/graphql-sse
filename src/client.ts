@@ -70,7 +70,7 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    */
   lazy?: SingleConnection extends true ? boolean : never;
   /**
-   * How long should the client wait before closing the connection after the last oparation has
+   * How long should the client wait before closing the connection after the last operation has
    * completed. You might want to have a calmdown time before actually closing the connection.
    *
    * Meant to be used in combination with `lazy`.
@@ -215,7 +215,7 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    */
   onMessage?: (message: StreamMessage<SingleConnection, StreamEvent>) => void;
   /**
-   * Event listeners for events happening in teh SSE connection.
+   * Event listeners for events happening in the SSE connection.
    *
    * Will emit events for both the "single connection mode" and the default "distinct connections mode".
    *
@@ -796,7 +796,7 @@ export class NetworkError<
   Response extends ResponseLike = ResponseLike,
 > extends Error {
   /**
-   * The underlyig response thats considered an error.
+   * The underlying response that's considered an error.
    *
    * Will be undefined when no response is received,
    * instead an unexpected network error.
