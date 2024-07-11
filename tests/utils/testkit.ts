@@ -5,7 +5,7 @@ export function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-export type OnOpeartionArgs<
+export type OnOperationArgs<
   RequestRaw = unknown,
   RequestContext = unknown,
   Context extends OperationContext = undefined,
@@ -21,7 +21,7 @@ export interface TestKit<
   Context extends OperationContext = undefined,
 > {
   waitForOperation(): Promise<
-    OnOpeartionArgs<RequestRaw, RequestContext, Context>
+    OnOperationArgs<RequestRaw, RequestContext, Context>
   >;
 }
 
@@ -33,7 +33,7 @@ export function injectTestKit<
   opts: Partial<HandlerOptions<RequestRaw, RequestContext, Context>> = {},
 ): TestKit<RequestRaw, RequestContext, Context> {
   const onOperation =
-    queue<OnOpeartionArgs<RequestRaw, RequestContext, Context>>();
+    queue<OnOperationArgs<RequestRaw, RequestContext, Context>>();
   const origOnOperation = opts.onOperation;
   opts.onOperation = async (...args) => {
     onOperation.add(args);
