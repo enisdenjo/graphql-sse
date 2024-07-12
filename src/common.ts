@@ -146,14 +146,14 @@ export function parseStreamData<ForID extends boolean, E extends StreamEvent>(
 export interface Sink<T = unknown> {
   /** Next value arriving. */
   next(value: T): void;
-  /** An error that has occured. This function "closes" the sink. */
+  /** An error that has occurred. This function "closes" the sink. */
   error(error: unknown): void;
   /** The sink has completed. This function "closes" the sink. */
   complete(): void;
 }
 
 /**
- * Checkes whether the provided value is an async iterable.
+ * Checks whether the provided value is an async iterable.
  *
  * @category Common
  */
@@ -162,7 +162,7 @@ export function isAsyncIterable<T>(val: unknown): val is AsyncIterable<T> {
 }
 
 /**
- * Checkes whether the provided value is an async generator.
+ * Checks whether the provided value is an async generator.
  *
  * @category Common
  */
