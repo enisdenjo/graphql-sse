@@ -919,7 +919,7 @@ async function connect<SingleConnection extends boolean>(
       const parse = createParser<SingleConnection>();
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      for await (const chunk of toAsyncIterator(res.body!)) {
+      for await (const chunk of toAsyncIterable(res.body!)) {
         if (typeof chunk === 'string')
           throw (error = new Error(`Unexpected string chunk "${chunk}"`)); // set error as fatal indicator
 
@@ -1031,13 +1031,13 @@ async function connect<SingleConnection extends boolean>(
 }
 
 /** Isomorphic ReadableStream to AsyncIterator converter. */
-function toAsyncIterator(
+function toAsyncIterable(
   val: ReadableStream | NodeJS.ReadableStream,
 ): AsyncIterable<string | Buffer | Uint8Array> {
   // node stream is already async iterable
   if (typeof Object(val)[Symbol.asyncIterator] === 'function') {
     val = val as NodeJS.ReadableStream;
-    return val[Symbol.asyncIterator]();
+    return val;
   }
 
   // convert web stream to async iterable
