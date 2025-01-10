@@ -1,3 +1,10 @@
+## [2.5.4](https://github.com/enisdenjo/graphql-sse/compare/v2.5.3...v2.5.4) (2025-01-10)
+
+
+### Bug Fixes
+
+* **client:** Conversion to async iterable from Response.body ([#114](https://github.com/enisdenjo/graphql-sse/issues/114)) ([f2adc92](https://github.com/enisdenjo/graphql-sse/commit/f2adc9241944b3b6fc6b6d201bc97aca9f131df7))
+
 ## [2.5.3](https://github.com/enisdenjo/graphql-sse/compare/v2.5.2...v2.5.3) (2024-03-27)
 
 
