@@ -14,27 +14,36 @@ interface TSubscribe<T> {
 export function tsubscribe<
   SingleConnection extends boolean = false,
   T = unknown,
->(client: Client<SingleConnection>, payload: RequestParams): TSubscribe<T> {
+>(
+  client: Client<SingleConnection>,
+  payload: RequestParams,
+  headers?: SingleConnection extends true ? never : Record<string, string>,
+): TSubscribe<T> {
   const emitter = new EventEmitter();
   const results: ExecutionResult<T, unknown>[] = [];
   let error: unknown,
     completed = false;
-  const dispose = client.subscribe<T>(payload, {
-    next: (value) => {
-      results.push(value);
-      emitter.emit('next');
+  const dispose = client.subscribe<T>(
+    payload,
+    {
+      next: (value) => {
+        results.push(value);
+        emitter.emit('next');
+      },
+      error: (err) => {
+        error = err;
+        emitter.emit('err');
+        emitter.removeAllListeners();
+      },
+      complete: () => {
+        completed = true;
+        emitter.emit('complete');
+        emitter.removeAllListeners();
+      },
     },
-    error: (err) => {
-      error = err;
-      emitter.emit('err');
-      emitter.removeAllListeners();
-    },
-    complete: () => {
-      completed = true;
-      emitter.emit('complete');
-      emitter.removeAllListeners();
-    },
-  });
+    undefined,
+    headers,
+  );
   function waitForError() {
     return new Promise((resolve) => {
       function done() {

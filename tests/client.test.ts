@@ -69,6 +69,48 @@ it('should use the provided headers', async () => {
   expect(headers.get('x-distinct')).toBe('header');
 });
 
+it('should use the request headers on a subscribe call', async () => {
+  let headers!: Headers;
+  // distinct connections mode
+  const { fetch } = createTFetch({
+    authenticate: (req) => {
+      headers = req.raw.headers;
+      return '';
+    },
+  });
+
+  const distinctConnClient = createClient({
+    singleConnection: false,
+    url: 'http://localhost',
+    fetchFn: fetch,
+    retryAttempts: 0,
+    headers: () => {
+      return {
+        'x-distinct': 'header',
+        'x-overridden': 'client',
+      };
+    },
+  });
+
+  const client = tsubscribe(
+    distinctConnClient,
+    {
+      query: '{ getValue }',
+    },
+    {
+      'x-subscribe': 'header',
+      'x-overridden': 'request',
+    },
+  );
+  await Promise.race([client.throwOnError(), client.waitForComplete()]);
+  client.dispose();
+
+  expect(headers.get('x-distinct')).toBe('header');
+  expect(headers.get('x-subscribe')).toBe('header');
+  // subscribe header should override the client header
+  expect(headers.get('x-overridden')).toBe('request');
+});
+
 it('should supply all valid messages received to onMessage', async () => {
   const { fetch } = createTFetch();
 

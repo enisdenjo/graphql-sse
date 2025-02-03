@@ -233,11 +233,13 @@ export interface Client<SingleConnection extends boolean = false> {
    * function used for dropping the subscription and cleaning up.
    *
    * @param on - The event listener for "distinct connections mode". Note that **no events will be emitted** in "single connection mode"; for that, consider using the event listener in {@link ClientOptions}.
+   * @param headers - Additional request headers to send for this subscribe request on. If a header is specified on the client and here, this one will take precedence.
    */
   subscribe<Data = Record<string, unknown>, Extensions = unknown>(
     request: RequestParams,
     sink: Sink<ExecutionResult<Data, Extensions>>,
     on?: SingleConnection extends true ? never : EventListeners<false>,
+    headers?: SingleConnection extends true ? never : Record<string, string>,
   ): () => void;
   /**
    * Subscribes and iterates over emitted results from an SSE connection
@@ -471,6 +473,7 @@ export function createClient<SingleConnection extends boolean = false>(
     request: RequestParams,
     sink: Sink,
     on?: EventListeners<false>,
+    requestHeaders?: Record<string, string>,
   ) {
     if (!singleConnection) {
       // distinct connections mode
@@ -518,6 +521,7 @@ export function createClient<SingleConnection extends boolean = false>(
               signal: control.signal,
               headers: {
                 ...headers,
+                ...requestHeaders,
                 'content-type': 'application/json; charset=utf-8',
               },
               credentials,
