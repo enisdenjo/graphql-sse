@@ -236,6 +236,92 @@ export const link = new SSELink({
 });
 ```
 
+### With [Apollo](https://www.apollographql.com) and Custom URL or Headers per Request
+
+Note: This only works in distinct connection mode
+
+```ts
+import {
+  ApolloLink,
+  Operation,
+  FetchResult,
+  Observable,
+} from '@apollo/client/core';
+import { print, GraphQLError } from 'graphql';
+import {
+  createClient,
+  ClientOptions,
+  Client,
+  RequestParams,
+} from 'graphql-sse';
+
+class SSELink extends ApolloLink {
+  private client: Client;
+  private readonly operationsByRequest = new WeakMap<
+    RequestParams,
+    Operation
+  >();
+
+  // Feel free to adjust the options type here to be what you need to be dynamic
+  constructor(options: ClientOptions) {
+    super();
+    this.client = createClient({
+      ...options,
+      // Optionally append the operation name to url
+      url: (request) => {
+        const url =
+          typeof options.url === 'function' ? await options.url() : options.url;
+        return url + `/${request.operationName}`;
+      },
+      // Merge headers from each operation's context
+      headers: async (request) => {
+        const operation: Operation = this.operationsByRequest.get(request)!;
+        return {
+          // This can be omitted if your created link's options don't include headers
+          ...(typeof options.headers === 'function'
+            ? await options.headers(request)
+            : options.headers),
+
+          ...operation.getContext().headers,
+        };
+      },
+    });
+  }
+
+  public request(operation: Operation): Observable<FetchResult> {
+    const request: RequestParams = {
+      ...operation,
+      // This supports the persisted queries link to avoid sending printed query when cached
+      query:
+        operation.getContext().http?.includeQuery ?? true
+          ? print(op.query)
+          : undefined!,
+    };
+
+    this.operationsByRequest.set(request, operation);
+
+    return new Observable((sink) => {
+      return this.client.subscribe<FetchResult>(request, {
+        next: sink.next.bind(sink),
+        complete: sink.complete.bind(sink),
+        error: sink.error.bind(sink),
+      });
+    });
+  }
+}
+
+export const link = new SSELink({
+  url: 'http://where.is:4000/graphql/stream',
+  headers: () => {
+    const session = getSession();
+    if (!session) return {};
+    return {
+      Authorization: `Bearer ${session.token}`,
+    };
+  },
+});
+```
+
 ### With [TypedDocumentNode](https://github.com/dotansimha/graphql-typed-document-node)
 
 ```ts
