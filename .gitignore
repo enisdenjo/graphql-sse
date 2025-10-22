@@ -11,5 +11,4 @@ out/
 website/.next/
 website/src/pages/docs/
 website/out/
-website/algolia-lockfile.json
 tsconfig.tsbuildinfo

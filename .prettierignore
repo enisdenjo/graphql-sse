@@ -4,6 +4,5 @@ umd
 dist
 out
 website/src/pages/docs
-website/algolia-lockfile.json
 CHANGELOG.md
 .next

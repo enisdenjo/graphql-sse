@@ -18,7 +18,6 @@
     "react-icons": "^5.0.1"
   },
   "devDependencies": {
-    "@theguild/algolia": "^2.1.0",
     "@theguild/tailwind-config": "^0.3.1",
     "@types/react": "^18.2.48",
     "typescript": "^5.3.3"
