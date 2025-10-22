@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
@@ -19,7 +19,7 @@ jobs:
       - name: Build
         run: yarn build
       - name: Upload build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: |
@@ -31,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # necessary for correct changelog
       - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
@@ -56,19 +56,19 @@ jobs:
     environment: npm
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0 # necessary for correct CHANGELOGS
       - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
       - name: Install
         run: yarn install
       - name: Download build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
       - name: Release
