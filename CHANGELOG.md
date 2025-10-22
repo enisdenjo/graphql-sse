@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/enisdenjo/graphql-sse/compare/v2.5.4...v2.6.0) (2025-10-22)
+
+
+### Features
+
+* **client:** Support dynamic URLs and headers per request for distinct connection mode ([#124](https://github.com/enisdenjo/graphql-sse/issues/124)) ([7be7251](https://github.com/enisdenjo/graphql-sse/commit/7be7251b42d31fd55f459ee0b99ee5bfe0d4a1dd)), closes [#110](https://github.com/enisdenjo/graphql-sse/issues/110) [#113](https://github.com/enisdenjo/graphql-sse/issues/113)
+
 ## [2.5.4](https://github.com/enisdenjo/graphql-sse/compare/v2.5.3...v2.5.4) (2025-01-10)
 
 
