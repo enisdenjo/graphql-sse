@@ -55,18 +55,28 @@ it('should use the provided headers', async () => {
     url: 'http://localhost',
     fetchFn: fetch,
     retryAttempts: 0,
-    headers: () => {
-      return { 'x-distinct': 'header' };
-    },
+    headers: (request) => ({
+      'x-distinct': 'header',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(request.extensions?.http as any)?.headers,
+    }),
   });
 
   client = tsubscribe(distinctConnClient, {
     query: '{ getValue }',
+    extensions: {
+      http: {
+        headers: {
+          'x-per-request': 'getValue',
+        },
+      },
+    },
   });
   await Promise.race([client.throwOnError(), client.waitForComplete()]);
   client.dispose();
 
   expect(headers.get('x-distinct')).toBe('header');
+  expect(headers.get('x-per-request')).toBe('getValue');
 });
 
 it('should supply all valid messages received to onMessage', async () => {
@@ -425,6 +435,29 @@ describe('single connection mode', () => {
 });
 
 describe('distinct connections mode', () => {
+  it('should use the provided url', async () => {
+    const { fetch, waitForRequest, waitForOperation } = createTFetch();
+
+    const client = createClient({
+      singleConnection: false,
+      url: (request) => `http://localhost/${request.operationName}`,
+      retryAttempts: 0,
+      fetchFn: fetch,
+    });
+
+    const sub1 = tsubscribe(client, {
+      operationName: 'Ping1',
+      query: `subscription Ping1 { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+    const stream1 = await waitForRequest();
+
+    sub1.dispose();
+    await Promise.race([sub1.throwOnError(), sub1.waitForComplete()]);
+
+    expect(stream1.url).toBe('http://localhost/Ping1');
+  });
+
   it('should not call complete after subscription error', async () => {
     const { fetch } = createTFetch();
 

@@ -105,8 +105,14 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    * A good use-case for having a function is when using the URL for authentication,
    * where subsequent reconnects (due to auth) may have a refreshed identity token in
    * the URL.
+   *
+   * The request is passed for distinct connections mode only.
    */
-  url: string | (() => Promise<string> | string);
+  url:
+    | string
+    | ((
+        request: SingleConnection extends true ? undefined : RequestParams,
+      ) => Promise<string> | string);
   /**
    * Indicates whether the user agent should send cookies from the other domain in the case
    * of cross-origin requests.
@@ -159,10 +165,14 @@ export interface ClientOptions<SingleConnection extends boolean = false> {
    * A good use-case for having a function is when using the headers for authentication,
    * where subsequent reconnects (due to auth) may have a refreshed identity token in
    * the header.
+   *
+   * The request is passed for distinct connections mode only.
    */
   headers?:
     | Record<string, string>
-    | (() => Promise<Record<string, string>> | Record<string, string>);
+    | ((
+        request: SingleConnection extends true ? undefined : RequestParams,
+      ) => Promise<Record<string, string>> | Record<string, string>);
   /**
    * The Fetch function to use.
    *
@@ -380,17 +390,18 @@ export function createClient<SingleConnection extends boolean = false>(
             conn = undefined;
           });
 
+          const opts = options as ClientOptions<true>;
           const url =
-            typeof options.url === 'function'
-              ? await options.url()
-              : options.url;
+            typeof opts.url === 'function'
+              ? await opts.url(undefined)
+              : opts.url;
           if (connCtrl.signal.aborted)
             throw new Error('Connection aborted by the client');
 
           const headers =
-            typeof options.headers === 'function'
-              ? await options.headers()
-              : options.headers ?? {};
+            typeof opts.headers === 'function'
+              ? await opts.headers(undefined)
+              : opts.headers ?? {};
           if (connCtrl.signal.aborted)
             throw new Error('Connection aborted by the client');
 
@@ -500,17 +511,18 @@ export function createClient<SingleConnection extends boolean = false>(
             clientOn?.connecting?.(!!retryingErr);
             on?.connecting?.(!!retryingErr);
 
+            const opts = options as ClientOptions;
             const url =
-              typeof options.url === 'function'
-                ? await options.url()
-                : options.url;
+              typeof opts.url === 'function'
+                ? await opts.url(request)
+                : opts.url;
             if (control.signal.aborted)
               throw new Error('Connection aborted by the client');
 
             const headers =
-              typeof options.headers === 'function'
-                ? await options.headers()
-                : options.headers ?? {};
+              typeof opts.headers === 'function'
+                ? await opts.headers(request)
+                : opts.headers ?? {};
             if (control.signal.aborted)
               throw new Error('Connection aborted by the client');
 
