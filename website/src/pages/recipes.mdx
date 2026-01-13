@@ -405,7 +405,7 @@ const url = 'http://i.want.retry:4000/control/graphql/stream';
 
 export const client = createClient({
   url,
-  retryWait: async function waitForServerHealthyBeforeRetry() {
+  retry: async function waitForServerHealthyBeforeRetry() {
     // if you have a server healthcheck, you can wait for it to become
     // healthy before retrying after an abrupt disconnect (most commonly a restart)
     await waitForHealthy(url);
