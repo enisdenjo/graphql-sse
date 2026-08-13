@@ -664,6 +664,16 @@ describe('distinct connections mode', () => {
     await expect(stream.next()).resolves.toMatchInlineSnapshot(`
       {
         "done": false,
+        "value": "event: next
+      data: {"data":{"greetings":"Hola"}}
+
+      ",
+      }
+    `);
+
+    await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+      {
+        "done": false,
         "value": "event: complete
       data:
 
