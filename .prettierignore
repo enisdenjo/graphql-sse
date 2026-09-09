@@ -3,6 +3,5 @@ lib
 umd
 dist
 out
-website/src/pages/docs
+website/content/docs
 CHANGELOG.md
-.next

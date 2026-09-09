@@ -12,13 +12,13 @@
   <br />
 </div>
 
-## [Get started](https://the-guild.dev/graphql/sse/get-started)
+## [Get started](https://the-guild.dev/graphql/sse/guides)
 
-Swiftly start with the [get started guide on the website](https://the-guild.dev/graphql/sse/get-started).
+Swiftly start with the [get started guide on the website](https://the-guild.dev/graphql/sse/guides).
 
-## [Recipes](https://the-guild.dev/graphql/sse/recipes)
+## [Recipes](https://the-guild.dev/graphql/sse/guides/recipes)
 
-Short and concise code snippets for starting with common use-cases. [Available on the website.](https://the-guild.dev/graphql/sse/recipes)
+Short and concise code snippets for starting with common use-cases. [Available on the website.](https://the-guild.dev/graphql/sse/guides/recipes)
 
 </details>
 
