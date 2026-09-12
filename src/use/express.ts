@@ -93,7 +93,12 @@ export function createHandler<Context extends OperationContext = undefined>(
       return new Promise<void>((resolve) => res.end(body, () => resolve()));
     }
 
-    res.once('close', body.return);
+    let responseClosed = false;
+    const onClose = () => {
+      responseClosed = true;
+      body.return();
+    };
+    res.once('close', onClose);
     for await (const value of body) {
       const closed = await new Promise((resolve, reject) => {
         if (!res.writable) {
@@ -107,7 +112,16 @@ export function createHandler<Context extends OperationContext = undefined>(
         break;
       }
     }
-    res.off('close', body.return);
-    return new Promise((resolve) => res.end(resolve));
+    res.off('close', onClose);
+    if (responseClosed || res.destroyed) return;
+
+    return new Promise<void>((resolve) => {
+      const done = () => {
+        res.off('close', done);
+        resolve();
+      };
+      res.once('close', done);
+      res.end(done);
+    });
   };
 }

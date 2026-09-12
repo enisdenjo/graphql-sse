@@ -7,6 +7,7 @@ import Koa from 'koa';
 import mount from 'koa-mount';
 import bodyparser from 'koa-bodyparser';
 import { schema, pong } from './fixtures/simple';
+import { queue } from './utils/testkit';
 
 import { createHandler as createHttpHandler } from '../src/use/http';
 import { createHandler as createExpressHandler } from '../src/use/express';
@@ -211,4 +212,72 @@ it("should include middleware headers with 'fastify' handler", async () => {
 
   expect(res.ok).toBeTruthy();
   expect(res.headers.get('x-custom')).toBe('cust');
+});
+
+it.each([
+  { name: 'the client disconnects', mode: 'streaming' },
+  { name: 'the subscription completes', mode: 'complete' },
+  { name: 'the client disconnects while ending', mode: 'ending' },
+])('should resolve the express handler when $name', async ({ mode }) => {
+  const app = express();
+  const handler = createExpressHandler({ schema });
+  const ending = queue<void>();
+  const handled = new Promise<boolean>((resolve, reject) => {
+    app.all('/', (req, res) => {
+      if (mode === 'ending') {
+        res.end = () => {
+          ending.add(undefined);
+          return res;
+        };
+      }
+      handler(req, res).then(() => resolve(res.writableFinished), reject);
+    });
+  });
+  const server = app.listen(0);
+  makeDisposeForServer(server);
+  const port = (server.address() as net.AddressInfo).port;
+  const ctrl = new AbortController();
+  const pingKey = Math.random().toString();
+  const response = await fetch(`http://localhost:${port}`, {
+    signal: ctrl.signal,
+    method: 'POST',
+    headers: {
+      accept: 'text/event-stream',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      query:
+        mode === 'streaming'
+          ? `subscription { ping(key: "${pingKey}") }`
+          : 'subscription { greetings }',
+    }),
+  });
+
+  expect(response.ok).toBeTruthy();
+
+  if (mode === 'streaming') {
+    const reader = getStream(response.body);
+    await reader.next(); // keepalive
+    pong(pingKey);
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: 'event: next\ndata: {"data":{"ping":"pong"}}\n\n',
+    });
+    ctrl.abort();
+    await expect(reader.next()).rejects.toThrowError(
+      'This operation was aborted',
+    );
+    await expect(handled).resolves.toBe(false);
+  } else if (mode === 'ending') {
+    await ending.next();
+    const body = response.text();
+    ctrl.abort();
+    await expect(body).rejects.toThrowError('This operation was aborted');
+    await expect(handled).resolves.toBe(false);
+  } else {
+    const body = await response.text();
+    expect(body.match(/event: next/g)).toHaveLength(5);
+    expect(body).toContain('event: complete');
+    await expect(handled).resolves.toBe(true);
+  }
 });
