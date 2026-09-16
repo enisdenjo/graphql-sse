@@ -62,7 +62,7 @@ function getStream(body: ReadableStream<Uint8Array> | null) {
   };
 }
 
-it.each([
+const adapters = [
   {
     name: 'http',
     startServer: async () => {
@@ -72,6 +72,7 @@ it.each([
       return [
         `http://localhost:${port}`,
         makeDisposeForServer(server),
+        server,
       ] as const;
     },
   },
@@ -85,6 +86,7 @@ it.each([
       return [
         `http://localhost:${port}`,
         makeDisposeForServer(server),
+        server,
       ] as const;
     },
   },
@@ -94,7 +96,11 @@ it.each([
       const fastify = Fastify();
       fastify.all('/', createFastifyHandler({ schema }));
       const url = await fastify.listen({ port: 0 });
-      return [url, makeDisposeForServer(fastify.server)] as const;
+      return [
+        url,
+        makeDisposeForServer(fastify.server),
+        fastify.server,
+      ] as const;
     },
   },
   {
@@ -107,6 +113,7 @@ it.each([
       return [
         `http://localhost:${port}`,
         makeDisposeForServer(server),
+        server,
       ] as const;
     },
   },
@@ -121,6 +128,7 @@ it.each([
       return [
         `http://localhost:${port}`,
         makeDisposeForServer(server),
+        server,
       ] as const;
     },
   },
@@ -131,7 +139,9 @@ it.each([
   //     //
   //   },
   // },
-])(
+];
+
+it.each(adapters)(
   'should not write to stream after closed with $name handler',
   async ({ startServer }) => {
     const [url] = await startServer();
@@ -176,6 +186,56 @@ data: {"data":{"ping":"pong"}}
     pong(pingKey);
 
     // nothing should explode
+  },
+);
+
+it.each(adapters)(
+  'should not write to stream after response ended with $name handler',
+  async ({ startServer }) => {
+    const [url, , server] = await startServer();
+
+    let lastRes: http.ServerResponse | undefined;
+    server.on('request', (_req, res) => {
+      lastRes = res;
+    });
+
+    const pingKey = Math.random().toString();
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `subscription { ping(key: "${pingKey}") }`,
+      }),
+    });
+
+    const reader = getStream(res.body);
+    await expect(reader.next()).resolves.toBeDefined(); // keepalive
+
+    // end the response (e.g. a framework error handler or a timeout) while
+    // a message is being delivered and queue more behind it
+    pong(pingKey);
+    lastRes!.end();
+    for (let i = 0; i < 3; i++) {
+      pong(pingKey);
+    }
+
+    // give the handler a few ticks to flush queued messages
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // nothing should explode and the server should still work
+    const ok = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ query: 'subscription { greetings }' }),
+    });
+    await expect(ok.text()).resolves.toContain('event: complete');
   },
 );
 

@@ -114,21 +114,37 @@ export function createHandler<
       return;
     }
 
-    ctx.res.once('close', body.return);
+    let responseClosed = false;
+    const onClose = () => {
+      responseClosed = true;
+      body.return();
+    };
+    ctx.res.once('close', onClose);
     for await (const value of body) {
-      const closed = await new Promise((resolve, reject) => {
-        if (!ctx.res.writable) {
+      const closed = await new Promise<boolean>((resolve) => {
+        if (!ctx.res.writable || ctx.res.writableEnded || ctx.res.destroyed) {
           // response's close event might be late
           resolve(true);
         } else {
-          ctx.res.write(value, (err) => (err ? reject(err) : resolve(false)));
+          // a write error means the client can no longer receive events,
+          // treat it as a closed response instead of bubbling the error
+          ctx.res.write(value, (err) => resolve(!!err));
         }
       });
       if (closed) {
         break;
       }
     }
-    ctx.res.off('close', body.return);
-    return new Promise((resolve) => ctx.res.end(resolve));
+    ctx.res.off('close', onClose);
+    if (responseClosed || ctx.res.destroyed) return;
+
+    return new Promise<void>((resolve) => {
+      const done = () => {
+        ctx.res.off('close', done);
+        resolve();
+      };
+      ctx.res.once('close', done);
+      ctx.res.end(done);
+    });
   };
 }
