@@ -112,6 +112,38 @@ it('should parse multiple messages from one chunk', ({ expect }) => {
   ).toMatchSnapshot();
 });
 
+it('should parse complete messages when a chunk ends mid-line', ({
+  expect,
+}) => {
+  const parse = createParser();
+
+  expect(
+    parse(
+      encoder.encode(
+        'event: next\ndata: { "iAm": "data" }\n\n' +
+          'event: next\ndata: { "iAm": "more" }\n\n' +
+          'event: ne',
+      ),
+    ),
+  ).toEqual([
+    {
+      event: 'next',
+      data: { iAm: 'data' },
+    },
+    {
+      event: 'next',
+      data: { iAm: 'more' },
+    },
+  ]);
+
+  expect(parse(encoder.encode('xt\ndata: { "iAm": "last" }\n\n'))).toEqual([
+    {
+      event: 'next',
+      data: { iAm: 'last' },
+    },
+  ]);
+});
+
 it('should parse with new lines in the data json', ({ expect }) => {
   const parse = createParser();
 
