@@ -1,3 +1,12 @@
+## [2.6.2](https://github.com/enisdenjo/graphql-sse/compare/v2.6.1...v2.6.2) (2026-09-29)
+
+
+### Bug Fixes
+
+* **express:** resolve handler after client disconnects ([#130](https://github.com/enisdenjo/graphql-sse/issues/130)) ([8eb58f5](https://github.com/enisdenjo/graphql-sse/commit/8eb58f5287947b6cc11d189795a449df738a3a58))
+* **parser:** flush complete messages when a chunk ends mid-line ([#132](https://github.com/enisdenjo/graphql-sse/issues/132)) ([cc617c7](https://github.com/enisdenjo/graphql-sse/commit/cc617c7a858f24ad66093051b942b8aa463622fd))
+* **use/http,use/http2,use/express,use/fastify,use/koa:** stop writing to ended or destroyed responses ([#131](https://github.com/enisdenjo/graphql-sse/issues/131)) ([012d0d6](https://github.com/enisdenjo/graphql-sse/commit/012d0d61632b7f84ba26411bb43dd6160a342b85))
+
 ## [2.6.1](https://github.com/enisdenjo/graphql-sse/compare/v2.6.0...v2.6.1) (2026-08-25)
 
 
