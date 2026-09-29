@@ -125,14 +125,18 @@ export function createParser<ForID extends boolean>(): (
     if (lineStart === bufLength) {
       // finished reading
       buffer = undefined;
-      const messages = [...pending];
-      pending = [];
-      return messages;
     } else if (lineStart !== 0) {
       // create a new view into buffer beginning at lineStart so we don't
       // need to copy over the previous lines when we get the new chunk
       buffer = buffer.subarray(lineStart);
       position -= lineStart;
+    }
+
+    // flush complete messages even if the chunk ended mid-line
+    if (pending.length || lineStart === bufLength) {
+      const messages = [...pending];
+      pending = [];
+      return messages;
     }
   };
 }
