@@ -1,0 +1,22 @@
+{
+  "title": "Interfaces",
+  "pages": [
+    "client.Client",
+    "client.ClientOptions",
+    "client.EventListeners",
+    "common.ExecutionPatchResult",
+    "common.ExecutionResult",
+    "common.RequestParams",
+    "common.Sink",
+    "common.StreamMessage",
+    "handler.HandlerOptions",
+    "handler.Request",
+    "handler.RequestHeaders",
+    "handler.ResponseInit",
+    "use_express.RequestContext",
+    "use_fastify.RequestContext",
+    "use_fetch.RequestContext",
+    "use_http.RequestContext",
+    "use_http2.RequestContext"
+  ]
+}
