@@ -295,6 +295,39 @@ describe('single connection mode', () => {
     await sub.waitForComplete();
   });
 
+  it('should not leak client listeners when the subscription is disposed', async () => {
+    const { fetch, waitForOperation } = createTFetch();
+
+    let abortCalls = 0;
+    class TAbortController extends AbortController {
+      abort() {
+        abortCalls++;
+        super.abort();
+      }
+    }
+
+    const client = createClient({
+      singleConnection: true,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+      abortControllerImpl: TAbortController,
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+
+    sub.dispose();
+    await sub.waitForComplete();
+
+    // stale listeners would abort again on client dispose
+    const callsBeforeDispose = abortCalls;
+    client.dispose();
+    expect(abortCalls).toBe(callsBeforeDispose);
+  });
+
   describe('lazy', () => {
     it('should connect on first subscribe and disconnect on last complete', async () => {
       const { fetch, waitForOperation, waitForRequest } = createTFetch();
@@ -594,6 +627,39 @@ describe('distinct connections mode', () => {
     sub.dispose();
 
     expect(req.signal.aborted).toBeTruthy();
+  });
+
+  it('should not leak client listeners when the subscription is disposed', async () => {
+    const { fetch, waitForOperation } = createTFetch();
+
+    let abortCalls = 0;
+    class TAbortController extends AbortController {
+      abort() {
+        abortCalls++;
+        super.abort();
+      }
+    }
+
+    const client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+      abortControllerImpl: TAbortController,
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+
+    sub.dispose();
+    await sub.waitForComplete();
+
+    // stale listeners would abort again on client dispose
+    const callsBeforeDispose = abortCalls;
+    client.dispose();
+    expect(abortCalls).toBe(callsBeforeDispose);
   });
 });
 
