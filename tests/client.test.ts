@@ -661,6 +661,40 @@ describe('distinct connections mode', () => {
     client.dispose();
     expect(abortCalls).toBe(callsBeforeDispose);
   });
+
+  it('should not leak client listeners when the subscription errors', async () => {
+    const { fetch, waitForOperation, dispose } = createTFetch();
+
+    let abortCalls = 0;
+    class TAbortController extends AbortController {
+      abort() {
+        abortCalls++;
+        super.abort();
+      }
+    }
+
+    const client = createClient({
+      singleConnection: false,
+      url: 'http://localhost',
+      fetchFn: fetch,
+      retryAttempts: 0,
+      abortControllerImpl: TAbortController,
+    });
+
+    const sub = tsubscribe(client, {
+      query: `subscription { ping(key: "${Math.random()}") }`,
+    });
+    await waitForOperation();
+
+    await dispose(); // server goes away
+    await sub.waitForError();
+    await new Promise((resolve) => setTimeout(resolve, 0)); // flush finally
+
+    // stale listeners would abort again on client dispose
+    const callsBeforeDispose = abortCalls;
+    client.dispose();
+    expect(abortCalls).toBe(callsBeforeDispose);
+  });
 });
 
 describe('retries', () => {

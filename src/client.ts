@@ -578,7 +578,9 @@ export function createClient<SingleConnection extends boolean = false>(
         }
       })()
         .then(() => sink.complete())
-        .catch((err) => sink.error(err));
+        .catch((err) => sink.error(err))
+        // errors dont abort the control, so the abort listener alone wont unlisten
+        .finally(unlisten);
 
       return () => control.abort();
     }
