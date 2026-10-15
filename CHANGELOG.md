@@ -1,3 +1,10 @@
+## [2.6.3](https://github.com/enisdenjo/graphql-sse/compare/v2.6.2...v2.6.3) (2026-10-15)
+
+
+### Bug Fixes
+
+* **client:** drop onDispose listeners of ended subscriptions ([#133](https://github.com/enisdenjo/graphql-sse/issues/133)) ([8ae787a](https://github.com/enisdenjo/graphql-sse/commit/8ae787a7e7230589dd6d1b8b53be40b2685f505d))
+
 ## [2.6.2](https://github.com/enisdenjo/graphql-sse/compare/v2.6.1...v2.6.2) (2026-09-29)
 
 
