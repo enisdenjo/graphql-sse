@@ -345,7 +345,8 @@ export function createClient<SingleConnection extends boolean = false>(
         }
         listeners.push(cb);
         return () => {
-          listeners.splice(listeners.indexOf(cb), 1);
+          const index = listeners.indexOf(cb);
+          if (index > -1) listeners.splice(index, 1);
         };
       },
       dispose() {
@@ -487,9 +488,9 @@ export function createClient<SingleConnection extends boolean = false>(
       // distinct connections mode
 
       const control = new AbortControllerImpl();
-      const unlisten = client.onDispose(() => {
+      const unlisten = client.onDispose(() => control.abort());
+      control.signal.addEventListener('abort', () => {
         unlisten();
-        control.abort();
       });
 
       (async () => {
@@ -577,7 +578,9 @@ export function createClient<SingleConnection extends boolean = false>(
         }
       })()
         .then(() => sink.complete())
-        .catch((err) => sink.error(err));
+        .catch((err) => sink.error(err))
+        // errors dont abort the control, so the abort listener alone wont unlisten
+        .finally(unlisten);
 
       return () => control.abort();
     }
@@ -587,9 +590,9 @@ export function createClient<SingleConnection extends boolean = false>(
     locks++;
 
     const control = new AbortControllerImpl();
-    const unlisten = client.onDispose(() => {
+    const unlisten = client.onDispose(() => control.abort());
+    control.signal.addEventListener('abort', () => {
       unlisten();
-      control.abort();
     });
 
     (async () => {
@@ -626,13 +629,10 @@ export function createClient<SingleConnection extends boolean = false>(
           if (res.status !== 202) throw new NetworkError(res);
 
           complete = async () => {
+            const control = new AbortControllerImpl();
+            const unlisten = client.onDispose(() => control.abort());
             let res;
             try {
-              const control = new AbortControllerImpl();
-              const unlisten = client.onDispose(() => {
-                unlisten();
-                control.abort();
-              });
               res = await fetchFn(url + '?operationId=' + operationId, {
                 signal: control.signal,
                 method: 'DELETE',
@@ -643,6 +643,8 @@ export function createClient<SingleConnection extends boolean = false>(
               });
             } catch (err) {
               throw new NetworkError(err);
+            } finally {
+              unlisten();
             }
             if (res.status !== 200) throw new NetworkError(res);
           };
