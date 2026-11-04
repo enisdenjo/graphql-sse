@@ -8,7 +8,4 @@ out/
 .yarn/*
 !.yarn/releases/
 .idea/
-website/.next/
-website/src/pages/docs/
-website/out/
 tsconfig.tsbuildinfo
