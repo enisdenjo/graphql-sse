@@ -1104,8 +1104,8 @@ function isResponse(val: unknown): val is Response {
 }
 
 export function isExecutionResult(val: unknown): val is ExecutionResult {
-  return (
-    isObject(val) &&
-    ('data' in val || ('data' in val && val.data == null && 'errors' in val))
-  );
+  // an execution result may omit `data` when errors are raised before
+  // execution (like validation or authorization errors), but it will
+  // then always contain `errors`
+  return isObject(val) && ('data' in val || 'errors' in val);
 }
