@@ -1,5 +1,5 @@
 import { describe, it, expect, vitest } from 'vitest';
-import { parse, execute } from 'graphql';
+import { parse, execute, GraphQLError } from 'graphql';
 import {
   createTHandler,
   assertString,
@@ -166,6 +166,47 @@ it('should detect execution args in onSubscribe return value', async () => {
   `);
 
   expect(executeFn).toHaveBeenCalledWith(executionArgs);
+});
+
+it('should detect execution result with only errors in onSubscribe return value', async () => {
+  const executeFn = vitest.fn(execute);
+  const { handler } = createTHandler({
+    execute: executeFn,
+    onSubscribe() {
+      return { errors: [new GraphQLError('Not allowed')] };
+    },
+  });
+
+  const [stream, init] = await handler('POST', {
+    headers: {
+      accept: 'text/event-stream',
+    },
+    body: { query: '{ getValue }' },
+  });
+  expect(init.status).toBe(200);
+  assertAsyncGenerator(stream);
+
+  await stream.next(); // ping
+  await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+    {
+      "done": false,
+      "value": "event: next
+    data: {"errors":[{"message":"Not allowed"}]}
+
+    ",
+    }
+  `);
+  await expect(stream.next()).resolves.toMatchInlineSnapshot(`
+    {
+      "done": false,
+      "value": "event: complete
+    data:
+
+    ",
+    }
+  `);
+
+  expect(executeFn).not.toHaveBeenCalled();
 });
 
 describe('single connection mode', () => {
