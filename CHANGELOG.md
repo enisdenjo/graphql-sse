@@ -1,3 +1,10 @@
+## [2.6.4](https://github.com/enisdenjo/graphql-sse/compare/v2.6.3...v2.6.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* **handler:** detect execution results with only errors from onSubscribe ([#138](https://github.com/enisdenjo/graphql-sse/issues/138)) ([b5cd9d6](https://github.com/enisdenjo/graphql-sse/commit/b5cd9d63c168c64dc8d46a6e7a4fb22ee53da0a5))
+
 ## [2.6.3](https://github.com/enisdenjo/graphql-sse/compare/v2.6.2...v2.6.3) (2026-10-15)
 
 
