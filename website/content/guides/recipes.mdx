@@ -1,4 +1,9 @@
-# Recipes
+---
+title: Recipes
+description:
+  Short, copy-paste code snippets for common graphql-sse client and server use cases, from
+  EventSource, Relay, urql and Apollo clients to auth, dynamic schemas and persisted queries.
+---
 
 Short and concise code snippets for starting with common use-cases.
 
@@ -421,8 +426,6 @@ export const client = createClient({
 
 ### With Logging of Incoming Messages
 
-import { Callout } from '@theguild/components';
-
 <Callout type="warning">
   Browsers don't show them in the DevTools. [Read
   more](https://github.com/enisdenjo/graphql-sse/issues/20).
@@ -642,7 +645,7 @@ export const handler = createHandler({
 
 ### With Persisted Queries
 
-```ts filename="🛸 server"
+```ts title="🛸 server"
 import { parse, ExecutionArgs } from 'graphql';
 import { createHandler } from 'graphql-sse';
 import { schema } from './my-graphql';
@@ -677,7 +680,7 @@ export const handler = createHandler({
 });
 ```
 
-```ts filename="📺 client"
+```ts title="📺 client"
 import { createClient } from 'graphql-sse';
 
 const client = createClient({
