@@ -360,22 +360,34 @@ export function createClient<SingleConnection extends boolean = false>(
     };
   })();
 
-  let connCtrl: AbortController,
+  let connCtrl: AbortController | undefined,
     conn: Promise<Connection> | undefined,
     locks = 0,
     retryingErr = null as unknown,
     retries = 0;
   async function getOrConnect(): Promise<NonNullable<typeof conn>> {
-    try {
-      if (client.disposed) throw new Error('Client has been disposed');
+    if (client.disposed) throw new Error('Client has been disposed');
 
-      return await (conn ??
-        (conn = (async () => {
+    return await (conn ??
+      (conn = (async () => {
+        // we must create a new controller here because lazy mode aborts currently active ones
+        const ctrl = new AbortControllerImpl();
+        connCtrl = ctrl;
+
+        const unlistenDispose = client.onDispose(() => ctrl.abort());
+        ctrl.signal.addEventListener('abort', () => {
+          unlistenDispose();
+          if (connCtrl === ctrl) {
+            conn = undefined;
+          }
+        });
+
+        try {
           if (retryingErr) {
             await retry(retries);
 
             // connection might've been aborted while waiting for retry
-            if (connCtrl.signal.aborted)
+            if (ctrl.signal.aborted)
               throw new Error('Connection aborted by the client');
 
             retries++;
@@ -383,33 +395,25 @@ export function createClient<SingleConnection extends boolean = false>(
 
           clientOn?.connecting?.(!!retryingErr);
 
-          // we must create a new controller here because lazy mode aborts currently active ones
-          connCtrl = new AbortControllerImpl();
-          const unlistenDispose = client.onDispose(() => connCtrl.abort());
-          connCtrl.signal.addEventListener('abort', () => {
-            unlistenDispose();
-            conn = undefined;
-          });
-
           const opts = options as ClientOptions<true>;
           const url =
             typeof opts.url === 'function'
               ? await opts.url(undefined)
               : opts.url;
-          if (connCtrl.signal.aborted)
+          if (ctrl.signal.aborted)
             throw new Error('Connection aborted by the client');
 
           const headers =
             typeof opts.headers === 'function'
               ? await opts.headers(undefined)
               : opts.headers ?? {};
-          if (connCtrl.signal.aborted)
+          if (ctrl.signal.aborted)
             throw new Error('Connection aborted by the client');
 
           let res;
           try {
             res = await fetchFn(url, {
-              signal: connCtrl.signal,
+              signal: ctrl.signal,
               method: 'PUT',
               credentials,
               referrer,
@@ -425,7 +429,7 @@ export function createClient<SingleConnection extends boolean = false>(
           headers[TOKEN_HEADER_KEY] = token;
 
           const connected = await connect({
-            signal: connCtrl.signal,
+            signal: ctrl.signal,
             headers,
             credentials,
             referrer,
@@ -440,15 +444,20 @@ export function createClient<SingleConnection extends boolean = false>(
 
           clientOn?.connected?.(!!retryingErr);
 
-          connected.waitForThrow().catch(() => (conn = undefined));
+          connected.waitForThrow().catch(() => {
+            if (connCtrl === ctrl) {
+              conn = undefined;
+            }
+          });
 
           return connected;
-        })()));
-    } catch (err) {
-      // whatever problem happens during connect means the connection was not established
-      conn = undefined;
-      throw err;
-    }
+        } catch (err) {
+          if (connCtrl === ctrl) {
+            conn = undefined;
+          }
+          throw err;
+        }
+      })()));
   }
 
   // non-lazy mode always holds one lock to persist the connection
@@ -456,8 +465,9 @@ export function createClient<SingleConnection extends boolean = false>(
     (async () => {
       locks++;
       for (;;) {
+        let connection: Connection | undefined;
         try {
-          const { waitForThrow } = await getOrConnect();
+          const { waitForThrow } = (connection = await getOrConnect());
           await waitForThrow();
         } catch (err) {
           if (client.disposed) return;
@@ -466,7 +476,9 @@ export function createClient<SingleConnection extends boolean = false>(
           if (!(err instanceof NetworkError)) return onNonLazyError?.(err);
 
           // was a network error, get rid of the current connection to ensure retries
-          conn = undefined;
+          if (connCtrl && (!connection || connCtrl.signal === connection.signal)) {
+            connCtrl.abort();
+          }
 
           // retries are not allowed or we tried to many times, report error
           if (!retryAttempts || retries >= retryAttempts)
@@ -606,8 +618,10 @@ export function createClient<SingleConnection extends boolean = false>(
       let complete: (() => Promise<void>) | null = null;
       for (;;) {
         complete = null;
+        let connection: Connection | undefined;
         try {
-          const { url, headers, getResults } = await getOrConnect();
+          const { url, headers, getResults } = (connection =
+            await getOrConnect());
 
           let res;
           try {
@@ -680,7 +694,12 @@ export function createClient<SingleConnection extends boolean = false>(
           // was a network error, get rid of the current connection to ensure retries
           // but only if the client is running in lazy mode (otherwise the non-lazy lock will get rid of the connection)
           if (lazy) {
-            conn = undefined;
+            if (
+              connCtrl &&
+              (!connection || connCtrl.signal === connection.signal)
+            ) {
+              connCtrl.abort();
+            }
           }
 
           // retries are not allowed or we tried to many times, report error
@@ -699,11 +718,11 @@ export function createClient<SingleConnection extends boolean = false>(
               // connection, only if no lock got created in the meantime and
               // if the connection is still open
               setTimeout(() => {
-                if (!locks) connCtrl.abort();
+                if (!locks) connCtrl?.abort();
               }, lazyCloseTimeout);
             } else {
               // otherwise close immediately
-              connCtrl.abort();
+              connCtrl?.abort();
             }
           }
         }
@@ -853,6 +872,7 @@ function isResponseLike(val: unknown): val is ResponseLike {
 }
 
 interface Connection {
+  signal: AbortSignal;
   url: string;
   headers: Record<string, string> | undefined;
   waitForThrow: () => Promise<void>;
@@ -1004,6 +1024,7 @@ async function connect<SingleConnection extends boolean>(
   })();
 
   return {
+    signal,
     url,
     headers,
     waitForThrow: () =>

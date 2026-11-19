@@ -399,6 +399,60 @@ describe('single connection mode', () => {
       // but will disconnect after timeout
       expect(streamReq.signal.aborted).toBeTruthy();
     });
+
+    it('should not leak held event streams when an operation request fails', async () => {
+      const { fetch, waitForOperation, waitForRequest } = createTFetch();
+      let failPost = false;
+      const customFetch = (input: RequestInfo, init?: RequestInit) => {
+        if (failPost && init?.method === 'POST') {
+          failPost = false;
+          return Promise.resolve(new Response(null, { status: 404 }));
+        }
+        return fetch(input, init);
+      };
+
+      const client = createClient({
+        singleConnection: true,
+        lazy: true,
+        url: 'http://localhost',
+        fetchFn: customFetch,
+        retryAttempts: 1,
+      });
+
+      const sub1 = tsubscribe(client, {
+        query: 'subscription { ping(key: "1") }',
+      });
+      await waitForOperation();
+
+      // put
+      await waitForRequest();
+      // stream (1st GET)
+      const streamReq1 = await waitForRequest();
+
+      // make the next operation POST fail with 404
+      failPost = true;
+      const sub2 = tsubscribe(client, {
+        query: 'subscription { ping(key: "2") }',
+      });
+
+      // sub2 retry establishes a new stream (PUT + 2nd GET)
+      await waitForOperation();
+      // 2nd put
+      await waitForRequest();
+      // 2nd stream (2nd GET)
+      const streamReq2 = await waitForRequest();
+
+      // streamReq1 MUST have been aborted when the connection was torn down / replaced
+      expect(streamReq1.signal.aborted).toBeTruthy();
+
+      sub1.dispose();
+      await sub1.waitForComplete();
+      sub2.dispose();
+      await sub2.waitForComplete();
+
+      await sleep(20);
+      expect(streamReq2.signal.aborted).toBeTruthy();
+    });
   });
 
   describe('non-lazy', () => {
